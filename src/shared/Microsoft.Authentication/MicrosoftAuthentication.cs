@@ -66,10 +66,10 @@ namespace Microsoft.Authentication
             // If the user has expressed a preference in how the want to perform the interactive authentication flows then we respect that.
             // Otherwise, depending on the current platform and session type we try to show the most appropriate authentication interface:
             //
-            // MSAL only supports the embedded webview UI on Windows + .NET Framework. This means the only interactive
-            // authentication flows we have are the system webview flow (launch the user's browser), and the device-code flow.
+            // MSAL allows using a WebView2-based embedded runtime when run on Windows.
             //
-            //     Note: MSAL allows using a WebView2-based embedded runtime when run on Windows but we don't support this yet.
+            // On non-Windows platforms, the only interactive authentication flows we have are the system webview flow
+            // (launch the user's browser), and the device-code flow.
             //
             // The system webview flow requires that the redirect URI is a loopback address, and that we are in an interactive session.
             //
@@ -85,7 +85,7 @@ namespace Microsoft.Authentication
                 switch (flowType)
                 {
                     case MicrosoftAuthenticationFlowType.Auto:
-                        if (CanUseEmbeddedWebView())
+                        if (CanUseEmbeddedWebView(app))
                             goto case MicrosoftAuthenticationFlowType.EmbeddedWebView;
 
                         if (CanUseSystemWebView(app, redirectUri))
@@ -96,10 +96,11 @@ namespace Microsoft.Authentication
 
                     case MicrosoftAuthenticationFlowType.EmbeddedWebView:
                         Context.Trace.WriteLine("Performing interactive auth with embedded web view...");
-                        EnsureCanUseEmbeddedWebView();
+                        EnsureCanUseEmbeddedWebView(app);
                         result = await app.AcquireTokenInteractive(scopes)
                             .WithPrompt(Prompt.SelectAccount)
                             .WithUseEmbeddedWebView(true)
+                            .WithEmbeddedWebViewOptions(GetEmbeddedWebViewOptions())
                             .ExecuteAsync();
                         break;
 
@@ -315,6 +316,13 @@ namespace Microsoft.Authentication
             return builder.Build();
         }
 
+        private static EmbeddedWebViewOptions GetEmbeddedWebViewOptions()
+        {
+            return new EmbeddedWebViewOptions
+            {
+                Title = "Git Credential Manager"
+            };
+        }
 
         private static SystemWebViewOptions GetSystemWebViewOptions()
         {
@@ -358,14 +366,29 @@ namespace Microsoft.Authentication
 
         #region Auth flow capability detection
 
-        private bool CanUseEmbeddedWebView()
+        private bool CanUseEmbeddedWebView(IPublicClientApplication app)
         {
-            return false;
+            // MSAL on Windows supports a WebView2-based embedded browser (requires the runtime be present)
+            return PlatformUtils.IsWindows() && Context.SessionManager.IsDesktopSession &&
+                   app.IsEmbeddedWebViewAvailable();
         }
 
-        private void EnsureCanUseEmbeddedWebView()
+        private void EnsureCanUseEmbeddedWebView(IPublicClientApplication app)
         {
-            throw new InvalidOperationException("Embedded web view is not available on .NET Core.");
+            if (!PlatformUtils.IsWindows())
+            {
+                throw new InvalidOperationException("Embedded web view is only available on Windows.");
+            }
+
+            if (!Context.SessionManager.IsDesktopSession)
+            {
+                throw new InvalidOperationException("Embedded web view is requires an interactive session.");
+            }
+
+            if (!app.IsEmbeddedWebViewAvailable())
+            {
+                throw new InvalidOperationException("Embedded web view requires the WebView2 runtime which was not found.");
+            }
         }
 
         private bool CanUseSystemWebView(IPublicClientApplication app, Uri redirectUri)
