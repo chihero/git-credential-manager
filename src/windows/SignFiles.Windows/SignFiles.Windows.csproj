@@ -4,32 +4,23 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0-windows10.0.17763.0</TargetFramework>
-    <RuntimeIdentifier>win-x86</RuntimeIdentifier>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <!-- MicroBuild hack: override OutDir to make all files we want to sign under it. -->
+    <OutDir>$(RootDir)</OutDir>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\shared\Git-Credential-Manager\Git-Credential-Manager.csproj" />
-    <ProjectReference Include="..\Atlassian.Bitbucket.UI.Windows\Atlassian.Bitbucket.UI.Windows.csproj" />
-    <ProjectReference Include="..\GitHub.UI.Windows\GitHub.UI.Windows.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="MicroBuild.Core" Version="0.2.0">
+      <!-- Development dependency only -->
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
     <FilesToSign Include="
-      $(OutDir)Atlassian.Bitbucket.dll;
       $(OutDir)Atlassian.Bitbucket.UI.exe;
       $(OutDir)git-credential-manager-core.exe;
-      $(OutDir)GitHub.dll;
-      $(OutDir)GitHub.UI.exe;
-      $(OutDir)Microsoft.AzureRepos.dll;
-      $(OutDir)Microsoft.Git.CredentialManager.dll;
-      $(OutDir)Microsoft.Git.CredentialManager.UI.dll;">
+      $(OutDir)GitHub.UI.exe;">
       <Authenticode>Microsoft400</Authenticode>
       <InProject>false</InProject>
     </FilesToSign>
@@ -50,19 +41,16 @@
                       Overwrite="true" />
   </Target>
 
+    <!-- Check the RootDir property has been set -->
+  <Target Name="ValidateRootDirProperty"
+          BeforeTargets="ValidateSigningDependencies">
+    <Error Text="'RootDir' property must be set during build"
+           Condition="'$(RootDir)'==''" />
+  </Target>
+
   <!-- We don't want to produce a binary with this project -->
   <Target Name="CoreCompile" />
-
-  <!-- We only want to copy the dependent projects' outputs; no binary is produced for this project -->
-  <Target Name="CopyFilesToOutputDirectory"
-          DependsOnTargets="
-            ComputeIntermediateSatelliteAssemblies;
-            _CopyFilesMarkedCopyLocal;
-            _CopySourceItemsToOutputDirectory;
-            _CopyAppConfigFile;
-            _CopyManifestFiles;
-            _CheckForCompileOutputs;
-            _SGenCheckForOutputs" />
+  <Target Name="PrepareForRun" />
 
   <Target Name="CoreClean">
     <RemoveDir Directories="$(ProjectOutPath)" />
