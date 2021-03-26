@@ -18,7 +18,7 @@
         <WrapPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="0,0,0,12">
             <TextBlock Text="Two-factor authentication"
                        Padding="0"
-                       Margin="0,0,12,0"
+                       Margin="0,12,0,0"
                        Style="{DynamicResource GitHubH1TextBlock}"
                        x:Uid="titleBlock"/>
         </WrapPanel>

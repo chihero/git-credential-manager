@@ -2,7 +2,8 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net5.0-windows10.0.17763.0</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
+    <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
     <UseWPF>true</UseWPF>
     <RootNamespace>Atlassian.Bitbucket.UI</RootNamespace>
     <AssemblyName>Atlassian.Bitbucket.UI</AssemblyName>
@@ -10,6 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\shared\Atlassian.Bitbucket\Atlassian.Bitbucket.csproj" />
     <ProjectReference Include="..\..\shared\Microsoft.Git.CredentialManager\Microsoft.Git.CredentialManager.csproj" />
     <ProjectReference Include="..\Shared.UI.Windows\Shared.UI.Windows.csproj" />
   </ItemGroup>
@@ -29,19 +31,10 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>BitbucketResources.resx</DependentUpon>
     </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
     <EmbeddedResource Update="BitbucketResources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>BitbucketResources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Update="Styles.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
   </ItemGroup>
 
 </Project>

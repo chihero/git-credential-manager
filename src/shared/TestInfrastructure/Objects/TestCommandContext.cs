@@ -25,7 +25,6 @@ namespace Microsoft.Git.CredentialManager.Tests.Objects
             HttpClientFactory = new TestHttpClientFactory();
             Git = new TestGit();
             Environment = new TestEnvironment(FileSystem);
-            SystemPrompts = new TestSystemPrompts();
 
             Settings = new TestSettings {Environment = Environment, GitConfiguration = Git.Configuration};
         }
@@ -41,7 +40,6 @@ namespace Microsoft.Git.CredentialManager.Tests.Objects
         public TestHttpClientFactory HttpClientFactory { get; set; }
         public TestGit Git { get; set; }
         public TestEnvironment Environment { get; set; }
-        public TestSystemPrompts SystemPrompts { get; set; }
 
         #region ICommandContext
 
@@ -66,8 +64,6 @@ namespace Microsoft.Git.CredentialManager.Tests.Objects
         IGit ICommandContext.Git => Git;
 
         IEnvironment ICommandContext.Environment => Environment;
-
-        ISystemPrompts ICommandContext.SystemPrompts => SystemPrompts;
 
         #endregion
 

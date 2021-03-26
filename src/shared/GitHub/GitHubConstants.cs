@@ -9,8 +9,6 @@ namespace GitHub
         public const string GitHubBaseUrlHost = "github.com";
         public const string GistBaseUrlHost = "gist." + GitHubBaseUrlHost;
 
-        public const string DefaultAuthenticationHelper = "GitHub.UI";
-
         public const string OAuthClientId = "0120e057bd645470c1ed";
 
         // [SuppressMessage("Microsoft.Security", "CS002:SecretInNextLine", Justification="OAuth2 public client application 'secrets' are required and permitted to be public")]
@@ -56,7 +54,6 @@ namespace GitHub
 
         public static class EnvironmentVariables
         {
-            public const string AuthenticationHelper = "GCM_GITHUB_HELPER";
             public const string AuthenticationModes = "GCM_GITHUB_AUTHMODES";
             public const string DevOAuthClientId = "GCM_DEV_GITHUB_CLIENTID";
             public const string DevOAuthClientSecret = "GCM_DEV_GITHUB_CLIENTSECRET";
@@ -67,7 +64,6 @@ namespace GitHub
         {
             public static class Credential
             {
-                public const string AuthenticationHelper = "gitHubHelper";
                 public const string AuthenticationModes = "gitHubAuthModes";
                 public const string DevOAuthClientId = "gitHubDevClientId";
                 public const string DevOAuthClientSecret = "gitHubDevClientSecret";

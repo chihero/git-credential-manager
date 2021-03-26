@@ -10,21 +10,26 @@ namespace Microsoft.Git.CredentialManager
 {
     public class GenericHostProvider : HostProvider
     {
-        private readonly IBasicAuthentication _basicAuth;
+        public static readonly string[] AuthorityIds =
+        {
+            "basic",
+        };
+
+        private readonly IBasicPrompts _prompts;
         private readonly IWindowsIntegratedAuthentication _winAuth;
 
-        public GenericHostProvider(ICommandContext context)
-            : this(context, new BasicAuthentication(context), new WindowsIntegratedAuthentication(context)) { }
+        public GenericHostProvider(ICommandContext context, IBasicPrompts prompts)
+            : this(context, prompts, new WindowsIntegratedAuthentication(context)) { }
 
         public GenericHostProvider(ICommandContext context,
-                                   IBasicAuthentication basicAuth,
+                                   IBasicPrompts prompts,
                                    IWindowsIntegratedAuthentication winAuth)
             : base(context)
         {
-            EnsureArgument.NotNull(basicAuth, nameof(basicAuth));
+            EnsureArgument.NotNull(prompts, nameof(prompts));
             EnsureArgument.NotNull(winAuth, nameof(winAuth));
 
-            _basicAuth = basicAuth;
+            _prompts = prompts;
             _winAuth = winAuth;
         }
 
@@ -36,7 +41,7 @@ namespace Microsoft.Git.CredentialManager
 
         public override IEnumerable<string> SupportedAuthorityIds =>
             EnumerableExtensions.ConcatMany(
-                BasicAuthentication.AuthorityIds,
+                AuthorityIds,
                 WindowsIntegratedAuthentication.AuthorityIds
             );
 
@@ -84,7 +89,8 @@ namespace Microsoft.Git.CredentialManager
             }
 
             Context.Trace.WriteLine("Prompting for basic credentials...");
-            return _basicAuth.GetCredentials(uri.AbsoluteUri, input.UserName);
+
+            return await _prompts.ShowCredentialPromptAsync(uri.AbsoluteUri, input.UserName);
         }
 
         /// <summary>
@@ -105,7 +111,7 @@ namespace Microsoft.Git.CredentialManager
                      *
                      *         We take this old setting into account to ensure a good migration experience.
                      */
-                    return !BasicAuthentication.AuthorityIds.Contains(Context.Settings.LegacyAuthorityOverride, StringComparer.OrdinalIgnoreCase);
+                    return !AuthorityIds.Contains(Context.Settings.LegacyAuthorityOverride, StringComparer.OrdinalIgnoreCase);
                 }
 
                 return false;

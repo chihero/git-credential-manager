@@ -23,8 +23,8 @@ namespace Microsoft.AzureRepos
         private readonly IAzureDevOpsAuthorityCache _authorityCache;
         private readonly IAzureReposBindingManager _bindingManager;
 
-        public AzureReposHostProvider(ICommandContext context)
-            : this(context, new AzureDevOpsRestApi(context), new MicrosoftAuthentication(context),
+        public AzureReposHostProvider(ICommandContext context, IMicrosoftPrompts prompts)
+            : this(context, new AzureDevOpsRestApi(context), new MicrosoftAuthentication(context, prompts),
                 new AzureDevOpsAuthorityCache(context), new AzureReposBindingManager(context))
         {
         }

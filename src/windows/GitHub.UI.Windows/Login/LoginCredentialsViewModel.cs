@@ -165,4 +165,11 @@ namespace GitHub.UI.Login
             Accept();
         }
     }
+
+    public enum CredentialPromptResult
+    {
+        BasicAuthentication,
+        PersonalAccessToken,
+        OAuthAuthentication,
+    }
 }

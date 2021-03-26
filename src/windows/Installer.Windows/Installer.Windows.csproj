@@ -3,13 +3,12 @@
   <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
 
   <PropertyGroup>
-    <TargetFramework>net5.0-windows10.0.17763.0</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <EnableDefaultItems>false</EnableDefaultItems>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="Setup.iss" />
+    <None Include="**/*" />
   </ItemGroup>
 
   <ItemGroup>
@@ -23,18 +22,13 @@
   <!-- Implicit SDK targets import (so we can override the default targets below) -->
   <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
 
-  <!-- <Target Name="_PublishBinaries">
-      <InnoSetupCommandSystem>$(NuGetPackageRoot)Tools.InnoSetup\6.0.5\tools\ISCC.exe /DPayloadDir=$(PayloadPath) /DInstallTarget=system Setup.iss /O$(OutputPath)</InnoSetupCommandSystem>
-      <InnoSetupCommandUser>$(NuGetPackageRoot)Tools.InnoSetup\6.0.5\tools\ISCC.exe /DPayloadDir=$(PayloadPath) /DInstallTarget=user Setup.iss /O$(OutputPath)</InnoSetupCommandUser>
-  </Target> -->
-
   <Target Name="CoreCompile" DependsOnTargets="GetBuildVersion" Condition="'$(OSPlatform)'=='windows'">
     <PropertyGroup>
       <ISCCPath>$(NuGetPackageRoot)Tools.InnoSetup\6.0.5\tools\ISCC.exe</ISCCPath>
-      <BuildCommand>$(MSBuildProjectDirectory)\build.cmd $(Configuration) $(ISCCPath)</BuildCommand>
+      <BuildCommandX86>powershell.exe -File $(MSBuildProjectDirectory)\build.ps1 -Configuration $(Configuration) -Version $(BuildVersion) -Framework $(TargetFramework) -Runtime win-x86 -ISCCPath $(ISCCPath)</BuildCommandX86>
     </PropertyGroup>
-    <Message Text="$(BuildCommand)" Importance="High" />
-    <Exec Command="$(BuildCommand)" />
+    <Message Text="$(BuildCommandX86)" Importance="High" />
+    <Exec Command="$(BuildCommandX86)" />
   </Target>
 
   <Target Name="CoreClean">

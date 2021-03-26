@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Git.CredentialManager;
 using Microsoft.Git.CredentialManager.Authentication.OAuth;
@@ -11,6 +12,11 @@ namespace GitHub
 {
     public class GitHubHostProvider : HostProvider
     {
+        public static readonly string[] AuthorityIds =
+        {
+            "github",
+        };
+
         private static readonly string[] GitHubOAuthScopes =
         {
             GitHubConstants.OAuthScopes.Repo,
@@ -25,26 +31,29 @@ namespace GitHub
         };
 
         private readonly IGitHubRestApi _gitHubApi;
-        private readonly IGitHubAuthentication _gitHubAuth;
+        private readonly IGitHubPrompts _prompts;
+        private readonly Func<Uri, IOAuth2Client> _oauthClientFunc;
 
-        public GitHubHostProvider(ICommandContext context)
-            : this(context, new GitHubRestApi(context), new GitHubAuthentication(context)) { }
+        public GitHubHostProvider(ICommandContext context, IGitHubPrompts prompts)
+            : this(context, new GitHubRestApi(context), prompts) { }
 
-        public GitHubHostProvider(ICommandContext context, IGitHubRestApi gitHubApi, IGitHubAuthentication gitHubAuth)
+        public GitHubHostProvider(ICommandContext context, IGitHubRestApi gitHubApi, IGitHubPrompts prompts,
+            Func<Uri, IOAuth2Client> oauthClientFunc = null)
             : base(context)
         {
             EnsureArgument.NotNull(gitHubApi, nameof(gitHubApi));
-            EnsureArgument.NotNull(gitHubAuth, nameof(gitHubAuth));
+            EnsureArgument.NotNull(prompts, nameof(prompts));
 
             _gitHubApi = gitHubApi;
-            _gitHubAuth = gitHubAuth;
+            _prompts = prompts;
+            _oauthClientFunc = oauthClientFunc ?? (uri => new GitHubOAuth2Client(HttpClient, Context.Settings, uri));
         }
 
         public override string Id => "github";
 
         public override string Name => "GitHub";
 
-        public override IEnumerable<string> SupportedAuthorityIds => GitHubAuthentication.AuthorityIds;
+        public override IEnumerable<string> SupportedAuthorityIds => AuthorityIds;
 
         public override bool IsSupported(InputArguments input)
         {
@@ -132,7 +141,7 @@ namespace GitHub
 
             AuthenticationModes authModes = await GetSupportedAuthenticationModesAsync(remoteUri);
 
-            AuthenticationPromptResult promptResult = await _gitHubAuth.GetAuthenticationAsync(remoteUri, input.UserName, authModes);
+            AuthenticationPromptResult promptResult = await _prompts.ShowAuthenticationPromptAsync(remoteUri, input.UserName, authModes);
 
             switch (promptResult.AuthenticationMode)
             {
@@ -150,7 +159,7 @@ namespace GitHub
                     return patCredential;
 
                 case AuthenticationModes.OAuth:
-                    return await GenerateOAuthCredentialAsync(remoteUri);
+                    return await GenerateOAuthCredentialAsync(remoteUri, GitHubOAuthScopes);
 
                 case AuthenticationModes.Pat:
                     // The token returned by the user should be good to use directly as the password for Git
@@ -173,14 +182,42 @@ namespace GitHub
             }
         }
 
-        private async Task<GitCredential> GenerateOAuthCredentialAsync(Uri targetUri)
+        private async Task<GitCredential> GenerateOAuthCredentialAsync(Uri targetUri, IEnumerable<string> scopes)
         {
-            OAuth2TokenResult result = await _gitHubAuth.GetOAuthTokenAsync(targetUri, GitHubOAuthScopes);
+            IOAuth2Client oauthClient = _oauthClientFunc(targetUri);
+
+            OAuth2TokenResult oauthResult;
+
+            // If we have a desktop session try authentication using the user's default web browser
+            if (Context.SessionManager.IsDesktopSession)
+            {
+                var browserOptions = new OAuth2WebBrowserOptions
+                {
+                    SuccessResponseHtml = GitHubResources.AuthenticationResponseSuccessHtml,
+                    FailureResponseHtmlFormat = GitHubResources.AuthenticationResponseFailureHtmlFormat
+                };
+                var browser = new OAuth2SystemWebBrowser(Context.Environment, browserOptions);
+
+                // Write message to the terminal (if any is attached) for some feedback that we're waiting for a web response
+                Context.Terminal.WriteLine("info: please complete authentication in your browser...");
+
+                OAuth2AuthorizationCodeResult authCodeResult = await oauthClient.GetAuthorizationCodeAsync(scopes, browser, CancellationToken.None);
+
+                oauthResult = await oauthClient.GetTokenByAuthorizationCodeAsync(authCodeResult, CancellationToken.None);
+            }
+            else
+            {
+                OAuth2DeviceCodeResult deviceCodeResult = await oauthClient.GetDeviceCodeAsync(scopes, CancellationToken.None);
+
+                Task _ = _prompts.ShowDeviceCodeAsync(deviceCodeResult);
+
+                oauthResult = await oauthClient.GetTokenByDeviceCodeAsync(deviceCodeResult, CancellationToken.None);
+            }
 
             // Resolve the GitHub user handle
-            GitHubUserInfo userInfo = await _gitHubApi.GetUserInfoAsync(targetUri, result.AccessToken);
+            GitHubUserInfo userInfo = await _gitHubApi.GetUserInfoAsync(targetUri, oauthResult.AccessToken);
 
-            return new GitCredential(userInfo.Login, result.AccessToken);
+            return new GitCredential(userInfo.Login, oauthResult.AccessToken);
         }
 
         private async Task<GitCredential> GeneratePersonalAccessTokenAsync(Uri targetUri, ICredential credentials)
@@ -201,7 +238,8 @@ namespace GitHub
             {
                 bool isSms = result.Type == GitHubAuthenticationResultType.TwoFactorSms;
 
-                string authCode = await _gitHubAuth.GetTwoFactorCodeAsync(targetUri, isSms);
+                TwoFactorCodePromptResult promptResult = await _prompts.ShowTwoFactorCodePromptAsync(targetUri, isSms);
+                string authCode = promptResult.AuthenticationCode;
 
                 result = await _gitHubApi.CreatePersonalTokenAsync(targetUri, credentials, authCode, GitHubCredentialScopes);
 
@@ -283,16 +321,17 @@ namespace GitHub
             }
         }
 
+        private HttpClient _httpClient;
+        private HttpClient HttpClient => _httpClient ??= Context.HttpClientFactory.CreateClient();
+
         protected override void ReleaseManagedResources()
         {
             _gitHubApi.Dispose();
-            _gitHubAuth.Dispose();
+            _httpClient?.Dispose();
             base.ReleaseManagedResources();
         }
 
-        #region Private Methods
-
-        internal static bool IsGitHubDotCom(Uri targetUri)
+        public static bool IsGitHubDotCom(Uri targetUri)
         {
             return StringComparer.OrdinalIgnoreCase.Equals(targetUri.Host, GitHubConstants.GitHubBaseUrlHost);
         }
@@ -314,7 +353,5 @@ namespace GitHub
 
             return uri;
         }
-
-        #endregion
     }
 }

@@ -61,6 +61,15 @@ namespace GitHub.UI {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Device authentication.
+        /// </summary>
+        internal static string DeviceTitle {
+            get {
+                return ResourceManager.GetString("DeviceTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Connect to GitHub.
         /// </summary>
         internal static string LoginTitle {
@@ -97,7 +106,7 @@ namespace GitHub.UI {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Enter a sign in authentication code here.
+        ///   Looks up a localized string similar to Enter a sign in authentication code here..
         /// </summary>
         internal static string TwoFactorUnknown {
             get {

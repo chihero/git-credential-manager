@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System;
 using Microsoft.Git.CredentialManager.Tests.Objects;
+using Moq;
 using Xunit;
 
 namespace Microsoft.Authentication.Tests
@@ -22,7 +23,7 @@ namespace Microsoft.Authentication.Tests
                 Settings = {IsInteractionAllowed = false},
             };
 
-            var msAuth = new MicrosoftAuthentication(context);
+            var msAuth = new MicrosoftAuthentication(context, Mock.Of<IMicrosoftPrompts>());
 
             await Assert.ThrowsAsync<InvalidOperationException>(
                 () => msAuth.GetTokenAsync(authority, clientId, redirectUri, scopes, userName));

@@ -30,7 +30,7 @@ namespace Microsoft.AzureRepos.Tests
                 ["path"] = "org/proj/_git/repo",
             });
 
-            var provider = new AzureReposHostProvider(new TestCommandContext());
+            var provider = new AzureReposHostProvider(new TestCommandContext(), Mock.Of<IMicrosoftPrompts>());
 
             // We report that we support unencrypted HTTP here so that we can fail and
             // show a helpful error message in the call to `CreateCredentialAsync` instead.
@@ -46,7 +46,7 @@ namespace Microsoft.AzureRepos.Tests
                 ["host"] = "org.visualstudio.com",
             });
 
-            var provider = new AzureReposHostProvider(new TestCommandContext());
+            var provider = new AzureReposHostProvider(new TestCommandContext(), Mock.Of<IMicrosoftPrompts>());
 
             // We report that we support unencrypted HTTP here so that we can fail and
             // show a helpful error message in the call to `CreateCredentialAsync` instead.
@@ -63,7 +63,7 @@ namespace Microsoft.AzureRepos.Tests
                 ["path"] = "org/proj/_git/repo",
             });
 
-            var provider = new AzureReposHostProvider(new TestCommandContext());
+            var provider = new AzureReposHostProvider(new TestCommandContext(), Mock.Of<IMicrosoftPrompts>());
             Assert.True(provider.IsSupported(input));
         }
 
@@ -76,7 +76,7 @@ namespace Microsoft.AzureRepos.Tests
                 ["host"] = "dev.azure.com",
             });
 
-            var provider = new AzureReposHostProvider(new TestCommandContext());
+            var provider = new AzureReposHostProvider(new TestCommandContext(), Mock.Of<IMicrosoftPrompts>());
             Assert.True(provider.IsSupported(input));
         }
 
@@ -89,7 +89,7 @@ namespace Microsoft.AzureRepos.Tests
                 ["host"] = "org.visualstudio.com",
             });
 
-            var provider = new AzureReposHostProvider(new TestCommandContext());
+            var provider = new AzureReposHostProvider(new TestCommandContext(), Mock.Of<IMicrosoftPrompts>());
             Assert.True(provider.IsSupported(input));
         }
 
@@ -102,7 +102,7 @@ namespace Microsoft.AzureRepos.Tests
                 ["host"] = "visualstudio.com",
             });
 
-            var provider = new AzureReposHostProvider(new TestCommandContext());
+            var provider = new AzureReposHostProvider(new TestCommandContext(), Mock.Of<IMicrosoftPrompts>());
             Assert.False(provider.IsSupported(input));
         }
 
@@ -116,7 +116,7 @@ namespace Microsoft.AzureRepos.Tests
                 ["path"] = "org/proj/_git/repo",
             });
 
-            var provider = new AzureReposHostProvider(new TestCommandContext());
+            var provider = new AzureReposHostProvider(new TestCommandContext(), Mock.Of<IMicrosoftPrompts>());
             Assert.False(provider.IsSupported(input));
         }
 
@@ -524,7 +524,7 @@ namespace Microsoft.AzureRepos.Tests
         public async Task AzureReposHostProvider_ConfigureAsync_UseHttpPathSetTrue_DoesNothing()
         {
             var context = new TestCommandContext();
-            var provider = new AzureReposHostProvider(context);
+            var provider = new AzureReposHostProvider(context, Mock.Of<IMicrosoftPrompts>());
 
             context.Git.Configuration.Global[AzDevUseHttpPathKey] = new List<string> {"true"};
 
@@ -540,7 +540,7 @@ namespace Microsoft.AzureRepos.Tests
         public async Task AzureReposHostProvider_ConfigureAsync_UseHttpPathSetFalse_SetsUseHttpPathTrue()
         {
             var context = new TestCommandContext();
-            var provider = new AzureReposHostProvider(context);
+            var provider = new AzureReposHostProvider(context, Mock.Of<IMicrosoftPrompts>());
 
             context.Git.Configuration.Global[AzDevUseHttpPathKey] = new List<string> {"false"};
 
@@ -556,7 +556,7 @@ namespace Microsoft.AzureRepos.Tests
         public async Task AzureReposHostProvider_ConfigureAsync_UseHttpPathUnset_SetsUseHttpPathTrue()
         {
             var context = new TestCommandContext();
-            var provider = new AzureReposHostProvider(context);
+            var provider = new AzureReposHostProvider(context, Mock.Of<IMicrosoftPrompts>());
 
             await provider.ConfigureAsync(ConfigurationTarget.User);
 
@@ -570,7 +570,7 @@ namespace Microsoft.AzureRepos.Tests
         public async Task AzureReposHostProvider_UnconfigureAsync_UseHttpPathSet_RemovesEntry()
         {
             var context = new TestCommandContext();
-            var provider = new AzureReposHostProvider(context);
+            var provider = new AzureReposHostProvider(context, Mock.Of<IMicrosoftPrompts>());
 
             context.Git.Configuration.Global[AzDevUseHttpPathKey] = new List<string> {"true"};
 
@@ -583,7 +583,7 @@ namespace Microsoft.AzureRepos.Tests
         public async Task AzureReposHostProvider_UnconfigureAsync_System_Windows_UseHttpPathSetAndManagerCoreHelper_DoesNotRemoveEntry()
         {
             var context = new TestCommandContext();
-            var provider = new AzureReposHostProvider(context);
+            var provider = new AzureReposHostProvider(context, Mock.Of<IMicrosoftPrompts>());
 
             context.Git.Configuration.System[HelperKey] = new List<string> {"manager-core"};
             context.Git.Configuration.System[AzDevUseHttpPathKey] = new List<string> {"true"};
@@ -599,7 +599,7 @@ namespace Microsoft.AzureRepos.Tests
         public async Task AzureReposHostProvider_UnconfigureAsync_System_Windows_UseHttpPathSetNoManagerCoreHelper_RemovesEntry()
         {
             var context = new TestCommandContext();
-            var provider = new AzureReposHostProvider(context);
+            var provider = new AzureReposHostProvider(context, Mock.Of<IMicrosoftPrompts>());
 
             context.Git.Configuration.System[AzDevUseHttpPathKey] = new List<string> {"true"};
 
@@ -612,7 +612,7 @@ namespace Microsoft.AzureRepos.Tests
         public async Task AzureReposHostProvider_UnconfigureAsync_User_Windows_UseHttpPathSetAndManagerCoreHelper_RemovesEntry()
         {
             var context = new TestCommandContext();
-            var provider = new AzureReposHostProvider(context);
+            var provider = new AzureReposHostProvider(context, Mock.Of<IMicrosoftPrompts>());
 
             context.Git.Configuration.Global[HelperKey] = new List<string> {"manager-core"};
             context.Git.Configuration.Global[AzDevUseHttpPathKey] = new List<string> {"true"};

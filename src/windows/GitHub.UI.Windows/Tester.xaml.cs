@@ -46,5 +46,13 @@ namespace GitHub.UI
             var window = new DialogWindow(model, view);
             Gui.ShowDialog(window, Handle);
         }
+
+        private void ShowDeviceCode(object sender, RoutedEventArgs e)
+        {
+            var model = new LoginDeviceViewModel(deviceCode.Text, new Uri(verificationUrl.Text));
+            var view = new LoginDeviceView();
+            var window = new DialogWindow(model, view);
+            Gui.ShowDialog(window, Handle);
+        }
     }
 }

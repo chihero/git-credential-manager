@@ -6,24 +6,17 @@ steps:
       version: 5.0.x
 
   - task: DotNetCoreCLI@2
-    displayName: Restore packages
-    inputs:
-      command: restore
-      projects: 'Git-Credential-Manager.sln'
-      arguments: '--configuration=Windows$(configuration)'
-
-  - task: DotNetCoreCLI@2
-    displayName: Compile common code and Windows Helpers
+    displayName: Compile
     inputs:
       command: build
       projects: 'Git-Credential-Manager.sln'
       arguments: '--configuration=Windows$(configuration)'
 
   - task: DotNetCoreCLI@2
-    displayName: Run common unit tests
+    displayName: Run unit tests
     inputs:
       command: test
       projects: 'Git-Credential-Manager.sln'
-      arguments: '--configuration=Mac$(configuration)'
+      arguments: '--configuration=Windows$(configuration)'
       publishTestResults: true
       testRunTitle: 'Unit tests (Windows)'

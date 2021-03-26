@@ -2,7 +2,8 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net5.0-windows10.0.17763.0</TargetFramework>
+    <TargetFramework>net472</TargetFramework>
+    <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
     <UseWPF>true</UseWPF>
     <RootNamespace>GitHub.UI</RootNamespace>
     <AssemblyName>GitHub.UI</AssemblyName>
@@ -10,6 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\shared\GitHub\GitHub.csproj" />
     <ProjectReference Include="..\..\shared\Microsoft.Git.CredentialManager\Microsoft.Git.CredentialManager.csproj" />
     <ProjectReference Include="..\Shared.UI.Windows\Shared.UI.Windows.csproj" />
   </ItemGroup>
@@ -20,9 +22,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>GitHubResources.resx</DependentUpon>
     </Compile>
-  </ItemGroup>
-
-  <ItemGroup>
     <EmbeddedResource Update="GitHubResources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>GitHubResources.Designer.cs</LastGenOutput>

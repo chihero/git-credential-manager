@@ -6,7 +6,6 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Git.CredentialManager;
-using Microsoft.Git.CredentialManager.Authentication;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Extensions.Msal;
 
@@ -32,8 +31,11 @@ namespace Microsoft.Authentication
         DeviceCode = 3
     }
 
-    public class MicrosoftAuthentication : AuthenticationBase, IMicrosoftAuthentication
+    public class MicrosoftAuthentication : PromptsBase, IMicrosoftAuthentication
     {
+        private readonly ICommandContext _context;
+        private readonly IMicrosoftPrompts _prompts;
+
         public static readonly string[] AuthorityIds =
         {
             "msa",  "microsoft",   "microsoftaccount",
@@ -41,8 +43,14 @@ namespace Microsoft.Authentication
             "live", "liveconnect", "liveid",
         };
 
-        public MicrosoftAuthentication(ICommandContext context)
-            : base(context) {}
+        public MicrosoftAuthentication(ICommandContext context, IMicrosoftPrompts prompts) : base(context.Settings)
+        {
+            EnsureArgument.NotNull(context, nameof(context));
+            EnsureArgument.NotNull(prompts, nameof(prompts));
+
+            _context = context;
+            _prompts = prompts;
+        }
 
         #region IMicrosoftAuthentication
 
@@ -95,7 +103,7 @@ namespace Microsoft.Authentication
                         goto case MicrosoftAuthenticationFlowType.DeviceCode;
 
                     case MicrosoftAuthenticationFlowType.EmbeddedWebView:
-                        Context.Trace.WriteLine("Performing interactive auth with embedded web view...");
+                        _context.Trace.WriteLine("Performing interactive auth with embedded web view...");
                         EnsureCanUseEmbeddedWebView(app);
                         result = await app.AcquireTokenInteractive(scopes)
                             .WithPrompt(Prompt.SelectAccount)
@@ -105,7 +113,7 @@ namespace Microsoft.Authentication
                         break;
 
                     case MicrosoftAuthenticationFlowType.SystemWebView:
-                        Context.Trace.WriteLine("Performing interactive auth with system web view...");
+                        _context.Trace.WriteLine("Performing interactive auth with system web view...");
                         EnsureCanUseSystemWebView(app, redirectUri);
                         result = await app.AcquireTokenInteractive(scopes)
                             .WithPrompt(Prompt.SelectAccount)
@@ -114,11 +122,12 @@ namespace Microsoft.Authentication
                         break;
 
                     case MicrosoftAuthenticationFlowType.DeviceCode:
-                        Context.Trace.WriteLine("Performing interactive auth with device code...");
-                        // We don't have a way to display a device code without a terminal at the moment
-                        // TODO: introduce a small GUI window to show a code if no TTY exists
-                        ThrowIfTerminalPromptsDisabled();
-                        result = await app.AcquireTokenWithDeviceCode(scopes, ShowDeviceCodeInTty).ExecuteAsync();
+                        _context.Trace.WriteLine("Performing interactive auth with device code...");
+                        result = await app.AcquireTokenWithDeviceCode(scopes, dcr =>
+                        {
+                            Task _ = _prompts.ShowDeviceCodeAsync(dcr);
+                            return Task.CompletedTask;
+                        }).ExecuteAsync();
                         break;
 
                     default:
@@ -131,13 +140,13 @@ namespace Microsoft.Authentication
 
         private MicrosoftAuthenticationFlowType GetFlowType()
         {
-            if (Context.Settings.TryGetSetting(
+            if (_context.Settings.TryGetSetting(
                 Constants.EnvironmentVariables.MsAuthFlow,
                 Constants.GitConfiguration.Credential.SectionName,
                 Constants.GitConfiguration.Credential.MsAuthFlow,
                 out string valueStr))
             {
-                Context.Trace.WriteLine($"Microsoft auth flow overriden to '{valueStr}'.");
+                _context.Trace.WriteLine($"Microsoft auth flow overriden to '{valueStr}'.");
                 switch (valueStr.ToLowerInvariant())
                 {
                     case "auto":
@@ -152,7 +161,7 @@ namespace Microsoft.Authentication
                         break;
                 }
 
-                Context.Streams.Error.WriteLine($"warning: unknown Microsoft Authentication flow type '{valueStr}'; using 'auto'");
+                _context.Streams.Error.WriteLine($"warning: unknown Microsoft Authentication flow type '{valueStr}'; using 'auto'");
             }
 
             return MicrosoftAuthenticationFlowType.Auto;
@@ -165,7 +174,7 @@ namespace Microsoft.Authentication
         {
             try
             {
-                Context.Trace.WriteLine($"Attempting to acquire token silently for user '{userName}'...");
+                _context.Trace.WriteLine($"Attempting to acquire token silently for user '{userName}'...");
 
                 // We can either call `app.GetAccountsAsync` and filter through the IAccount objects for the instance with the correct user name,
                 // or we can just pass the user name string we have as the `loginHint` and let MSAL do exactly that for us instead!
@@ -173,14 +182,14 @@ namespace Microsoft.Authentication
             }
             catch (MsalUiRequiredException)
             {
-                Context.Trace.WriteLine("Failed to acquire token silently; user interaction is required.");
+                _context.Trace.WriteLine("Failed to acquire token silently; user interaction is required.");
                 return null;
             }
         }
 
         private async Task<IPublicClientApplication> CreatePublicClientApplicationAsync(string authority, string clientId, Uri redirectUri)
         {
-            var httpFactoryAdaptor = new MsalHttpClientFactoryAdaptor(Context.HttpClientFactory);
+            var httpFactoryAdaptor = new MsalHttpClientFactoryAdaptor(_context.HttpClientFactory);
 
             var appBuilder = PublicClientApplicationBuilder.Create(clientId)
                 .WithAuthority(authority)
@@ -188,18 +197,18 @@ namespace Microsoft.Authentication
                 .WithHttpClientFactory(httpFactoryAdaptor);
 
             // Listen to MSAL logs if GCM_TRACE_MSAUTH is set
-            if (Context.Settings.IsMsalTracingEnabled)
+            if (_context.Settings.IsMsalTracingEnabled)
             {
                 // If GCM secret tracing is enabled also enable "PII" logging in MSAL
-                bool enablePiiLogging = Context.Trace.IsSecretTracingEnabled;
+                bool enablePiiLogging = _context.Trace.IsSecretTracingEnabled;
 
                 appBuilder.WithLogging(OnMsalLogMessage, LogLevel.Verbose, enablePiiLogging, false);
             }
 
             // If we have a parent window ID we should tell MSAL about it so it can parent any authentication dialogs
             // correctly. We only support this on Windows right now as MSAL only supports embedded/dialogs on Windows.
-            if (PlatformUtils.IsWindows() && !string.IsNullOrWhiteSpace(Context.Settings.ParentWindowId) &&
-                int.TryParse(Context.Settings.ParentWindowId, out int hWndInt) && hWndInt > 0)
+            if (PlatformUtils.IsWindows() && !string.IsNullOrWhiteSpace(_context.Settings.ParentWindowId) &&
+                int.TryParse(_context.Settings.ParentWindowId, out int hWndInt) && hWndInt > 0)
             {
                 appBuilder.WithParentActivityOrWindow(() => new IntPtr(hWndInt));
             }
@@ -218,13 +227,13 @@ namespace Microsoft.Authentication
 
         private async Task RegisterTokenCacheAsync(IPublicClientApplication app)
         {
-            Context.Trace.WriteLine(
+            _context.Trace.WriteLine(
                 "Configuring Microsoft Authentication token cache to instance shared with Microsoft developer tools...");
 
             if (!PlatformUtils.IsWindows() && !PlatformUtils.IsPosix())
             {
                 string osType = PlatformUtils.GetPlatformInformation().OperatingSystemType;
-                Context.Trace.WriteLine($"Token cache integration is not supported on {osType}.");
+                _context.Trace.WriteLine($"Token cache integration is not supported on {osType}.");
                 return;
             }
 
@@ -241,24 +250,24 @@ namespace Microsoft.Authentication
             }
             catch (MsalCachePersistenceException ex)
             {
-                Context.Streams.Error.WriteLine("warning: cannot persist Microsoft authentication token cache securely!");
-                Context.Trace.WriteLine("Cannot persist Microsoft Authentication data securely!");
-                Context.Trace.WriteException(ex);
+                _context.Streams.Error.WriteLine("warning: cannot persist Microsoft authentication token cache securely!");
+                _context.Trace.WriteLine("Cannot persist Microsoft Authentication data securely!");
+                _context.Trace.WriteException(ex);
 
                 if (PlatformUtils.IsMacOS())
                 {
                     // On macOS sometimes the Keychain returns the "errSecAuthFailed" error - we don't know why
                     // but it appears to be something to do with not being able to access the keychain.
                     // Locking and unlocking (or restarting) often fixes this.
-                    Context.Streams.Error.WriteLine(
+                    _context.Streams.Error.WriteLine(
                         "warning: there is a problem accessing the login Keychain - either manually lock and unlock the " +
                         "login Keychain, or restart the computer to remedy this");
                 }
                 else if (PlatformUtils.IsLinux())
                 {
                     // On Linux the SecretService/keyring might not be available so we must fall-back to a plaintext file.
-                    Context.Streams.Error.WriteLine("warning: using plain-text fallback token cache");
-                    Context.Trace.WriteLine("Using fall-back plaintext token cache on Linux.");
+                    _context.Streams.Error.WriteLine("warning: using plain-text fallback token cache");
+                    _context.Trace.WriteLine("Using fall-back plaintext token cache on Linux.");
                     var storageProps = CreateTokenCacheProps(useLinuxFallback: true);
                     helper = await MsalCacheHelper.CreateAsync(storageProps);
                 }
@@ -266,13 +275,13 @@ namespace Microsoft.Authentication
 
             if (helper is null)
             {
-                Context.Streams.Error.WriteLine("error: failed to set up Microsoft Authentication token cache!");
-                Context.Trace.WriteLine("Failed to integrate with shared token cache!");
+                _context.Streams.Error.WriteLine("error: failed to set up Microsoft Authentication token cache!");
+                _context.Trace.WriteLine("Failed to integrate with shared token cache!");
             }
             else
             {
                 helper.RegisterCache(app.UserTokenCache);
-                Context.Trace.WriteLine("Microsoft developer tools token cache configured.");
+                _context.Trace.WriteLine("Microsoft developer tools token cache configured.");
             }
         }
 
@@ -291,7 +300,7 @@ namespace Microsoft.Authentication
             else
             {
                 // The shared MSAL cache metadata is located at "~/.local/.IdentityService/msal.cache" on UNIX.
-                cacheDirectory = Path.Combine(Context.FileSystem.UserHomePath, ".local", ".IdentityService");
+                cacheDirectory = Path.Combine(_context.FileSystem.UserHomePath, ".local", ".IdentityService");
             }
 
             // The keychain is used on macOS with the following service & account names
@@ -328,16 +337,9 @@ namespace Microsoft.Authentication
             return new SystemWebViewOptions();
         }
 
-        private Task ShowDeviceCodeInTty(DeviceCodeResult dcr)
-        {
-            Context.Terminal.WriteLine(dcr.Message);
-
-            return Task.CompletedTask;
-        }
-
         private void OnMsalLogMessage(LogLevel level, string message, bool containspii)
         {
-            Context.Trace.WriteLine($"[{level.ToString()}] {message}", memberName: "MSAL");
+            _context.Trace.WriteLine($"[{level.ToString()}] {message}", memberName: "MSAL");
         }
 
         private class MsalHttpClientFactoryAdaptor : IMsalHttpClientFactory
@@ -367,7 +369,7 @@ namespace Microsoft.Authentication
         private bool CanUseEmbeddedWebView(IPublicClientApplication app)
         {
             // MSAL on Windows supports a WebView2-based embedded browser (requires the runtime be present)
-            return PlatformUtils.IsWindows() && Context.SessionManager.IsDesktopSession &&
+            return PlatformUtils.IsWindows() && _context.SessionManager.IsDesktopSession &&
                    app.IsEmbeddedWebViewAvailable();
         }
 
@@ -378,7 +380,7 @@ namespace Microsoft.Authentication
                 throw new InvalidOperationException("Embedded web view is only available on Windows.");
             }
 
-            if (!Context.SessionManager.IsDesktopSession)
+            if (!_context.SessionManager.IsDesktopSession)
             {
                 throw new InvalidOperationException("Embedded web view is requires an interactive session.");
             }
@@ -392,12 +394,12 @@ namespace Microsoft.Authentication
         private bool CanUseSystemWebView(IPublicClientApplication app, Uri redirectUri)
         {
             // MSAL requires the application redirect URI is a loopback address to use the System WebView
-            return Context.SessionManager.IsDesktopSession && app.IsSystemWebViewAvailable && redirectUri.IsLoopback;
+            return _context.SessionManager.IsDesktopSession && app.IsSystemWebViewAvailable && redirectUri.IsLoopback;
         }
 
         private void EnsureCanUseSystemWebView(IPublicClientApplication app, Uri redirectUri)
         {
-            if (!Context.SessionManager.IsDesktopSession)
+            if (!_context.SessionManager.IsDesktopSession)
             {
                 throw new InvalidOperationException("System web view is not available without a desktop session.");
             }

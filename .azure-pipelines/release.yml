@@ -13,7 +13,7 @@ jobs:
   pool:
     name: $(signPool)
   steps:
-  - template: templates/windows/compile.signed.yml
+  - template: templates/windows/compile.yml
   - template: templates/windows/pack.yml
 
 - job: osx_step1

@@ -3,23 +3,21 @@
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.Git.CredentialManager.Interop.Windows.Native;
 
 namespace Microsoft.Git.CredentialManager.Interop.Windows
 {
-    public class WindowsSystemPrompts : ISystemPrompts
+    public class WindowsBasicPrompts : PromptsBase, IBasicPrompts
     {
-        private IntPtr _parentHwd = IntPtr.Zero;
+        public WindowsBasicPrompts(ISettings settings)
+            : base(settings) { }
 
-        public object ParentWindowId
-        {
-            get => _parentHwd.ToString();
-            set => _parentHwd = ConvertUtils.TryToInt32(value, out int ptr) ? new IntPtr(ptr) : IntPtr.Zero;
-        }
-
-        public bool ShowCredentialPrompt(string resource, string userName, out ICredential credential)
+        public Task<ICredential> ShowCredentialPromptAsync(string resource, string userName)
         {
             EnsureArgument.NotNullOrWhiteSpace(resource, nameof(resource));
+
+            ThrowIfUserInteractionDisabled();
 
             string message = $"Enter credentials for '{resource}'";
 
@@ -27,7 +25,7 @@ namespace Microsoft.Git.CredentialManager.Interop.Windows
             {
                 BannerArt = IntPtr.Zero,
                 CaptionText = "Git Credential Manager", // TODO: make this a parameter?
-                Parent = _parentHwd,
+                Parent = GetParentHwnd(),
                 MessageText = message,
                 Size = Marshal.SizeOf(typeof(CredUi.CredentialUiInfo))
             };
@@ -47,7 +45,13 @@ namespace Microsoft.Git.CredentialManager.Interop.Windows
             {
                 CreateCredentialInfoBuffer(userName, packFlags, out inBufferSize, out inBufferPtr);
 
-                return DisplayCredentialPrompt(ref credUiInfo, ref packFlags, inBufferPtr, inBufferSize, false, uiFlags, out credential);
+                if (!DisplayCredentialPrompt(ref credUiInfo, ref packFlags, inBufferPtr, inBufferSize, false, uiFlags,
+                    out ICredential credential))
+                {
+                    throw new OperationCanceledException("User cancelled authentication.");
+                }
+
+                return Task.FromResult(credential);
             }
             finally
             {
@@ -153,6 +157,16 @@ namespace Microsoft.Git.CredentialManager.Interop.Windows
                     Marshal.FreeHGlobal(outBufferPtr);
                 }
             }
+        }
+
+        private IntPtr GetParentHwnd()
+        {
+            if (int.TryParse(Settings.ParentWindowId, out int hwnd))
+            {
+                return new IntPtr(hwnd);
+            }
+
+            return IntPtr.Zero;
         }
     }
 }

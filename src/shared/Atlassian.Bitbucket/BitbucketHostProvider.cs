@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Git.CredentialManager;
 using Microsoft.Git.CredentialManager.Authentication.OAuth;
@@ -12,21 +13,32 @@ namespace Atlassian.Bitbucket
 {
     public class BitbucketHostProvider : IHostProvider
     {
+        public static readonly string[] AuthorityIds =
+        {
+            "bitbucket",
+        };
+
+        private static readonly string[] Scopes =
+        {
+            BitbucketConstants.OAuthScopes.RepositoryWrite,
+            BitbucketConstants.OAuthScopes.Account,
+        };
+
         private readonly ICommandContext _context;
-        private readonly IBitbucketAuthentication _bitbucketAuth;
+        private readonly IBitbucketPrompts _prompts;
         private readonly IBitbucketRestApi _bitbucketApi;
 
-        public BitbucketHostProvider(ICommandContext context)
-            : this(context, new BitbucketAuthentication(context), new BitbucketRestApi(context)) { }
+        public BitbucketHostProvider(ICommandContext context, IBitbucketPrompts prompts)
+            : this(context, prompts, new BitbucketRestApi(context)) { }
 
-        public BitbucketHostProvider(ICommandContext context, IBitbucketAuthentication bitbucketAuth, IBitbucketRestApi bitbucketApi)
+        public BitbucketHostProvider(ICommandContext context, IBitbucketPrompts prompts, IBitbucketRestApi bitbucketApi)
         {
             EnsureArgument.NotNull(context, nameof(context));
-            EnsureArgument.NotNull(bitbucketAuth, nameof(bitbucketAuth));
+            EnsureArgument.NotNull(prompts, nameof(prompts));
             EnsureArgument.NotNull(bitbucketApi, nameof(bitbucketApi));
 
             _context = context;
-            _bitbucketAuth = bitbucketAuth;
+            _prompts = prompts;
             _bitbucketApi = bitbucketApi;
         }
 
@@ -36,7 +48,7 @@ namespace Atlassian.Bitbucket
 
         public string Name => "Bitbucket";
 
-        public IEnumerable<string> SupportedAuthorityIds => BitbucketAuthentication.AuthorityIds;
+        public IEnumerable<string> SupportedAuthorityIds => AuthorityIds;
 
         public bool IsSupported(InputArguments input)
         {
@@ -84,6 +96,8 @@ namespace Atlassian.Bitbucket
                 throw new Exception("Unencrypted HTTP is not supported for Bitbucket.org. Ensure the repository remote URL is using HTTPS.");
             }
 
+            var oauthClient = new BitbucketOAuth2Client(HttpClient, _context.Settings);
+
             // Check for presence of refresh_token entry in credential store
             string refreshTokenService = GetRefreshTokenServiceName(input);
 
@@ -103,7 +117,8 @@ namespace Atlassian.Bitbucket
                 {
                     // We don't have any credentials to use at all! Start with the assumption of no 2FA requirement
                     // and capture username and password via an interactive prompt.
-                    credential = await _bitbucketAuth.GetBasicCredentialsAsync(targetUri, input.UserName);
+                    BasicPromptResult basicPromptResult = await _prompts.ShowBasicPromptAsync(targetUri, input.UserName);
+                    credential = basicPromptResult.Credential;
                     if (credential is null)
                     {
                         throw new Exception("User cancelled authentication prompt.");
@@ -128,8 +143,8 @@ namespace Atlassian.Bitbucket
                 _context.Trace.WriteLine("Two-factor authentication is required - prompting for auth via OAuth...");
 
                 // Show the 2FA/OAuth authentication required prompt
-                bool @continue = await _bitbucketAuth.ShowOAuthRequiredPromptAsync();
-                if (!@continue)
+                OAuthPromptResult oauthPromptResult = await _prompts.ShowOAuthPromptAsync();
+                if (!oauthPromptResult.Continue)
                 {
                     throw new Exception("User cancelled OAuth authentication.");
                 }
@@ -148,7 +163,8 @@ namespace Atlassian.Bitbucket
                 {
                     _context.Trace.WriteLine("Refreshing OAuth credentials using refresh token...");
 
-                    OAuth2TokenResult refreshResult = await _bitbucketAuth.RefreshOAuthCredentialsAsync(refreshToken.Password);
+                    OAuth2TokenResult refreshResult = await oauthClient.GetTokenByRefreshTokenAsync(
+                        refreshToken.Password, CancellationToken.None);
 
                     // Resolve the username
                     _context.Trace.WriteLine("Resolving username for refreshed OAuth credential...");
@@ -177,7 +193,17 @@ namespace Atlassian.Bitbucket
 
             // Start OAuth authentication flow
             _context.Trace.WriteLine("Starting OAuth authentication flow...");
-            OAuth2TokenResult oauthResult = await _bitbucketAuth.CreateOAuthCredentialsAsync(targetUri);
+            var browserOptions = new OAuth2WebBrowserOptions
+            {
+                SuccessResponseHtml = BitbucketResources.AuthenticationResponseSuccessHtml,
+                FailureResponseHtmlFormat = BitbucketResources.AuthenticationResponseFailureHtmlFormat
+            };
+
+            var browser = new OAuth2SystemWebBrowser(_context.Environment, browserOptions);
+            OAuth2AuthorizationCodeResult authCodeResult = await oauthClient.GetAuthorizationCodeAsync(
+                Scopes, browser, CancellationToken.None);
+            OAuth2TokenResult oauthResult = await oauthClient.GetTokenByAuthorizationCodeAsync(
+                authCodeResult, CancellationToken.None);
 
             // Resolve the username
             _context.Trace.WriteLine("Resolving username for OAuth credential...");
@@ -289,10 +315,13 @@ namespace Atlassian.Bitbucket
 
         #endregion
 
+        private HttpClient _httpClient;
+        private HttpClient HttpClient => _httpClient ??= _context.HttpClientFactory.CreateClient();
+
         public void Dispose()
         {
             _bitbucketApi.Dispose();
-            _bitbucketAuth.Dispose();
+            _httpClient?.Dispose();
         }
     }
 }
