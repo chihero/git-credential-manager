@@ -23,13 +23,14 @@ namespace Microsoft.Git.CredentialManager
                 IGitHubPrompts ghUi = new GitHubTerminalPrompts(context);
                 IMicrosoftPrompts msUi = new MicrosoftTerminalPrompts(context);
 
-#if WINDOWS
-                if (context.SessionManager.IsDesktopSession)
+#if NETFRAMEWORK
+                if (PlatformUtils.IsWindows() && context.SessionManager.IsDesktopSession)
                 {
                     var gui = new UI.Gui();
                     basicUi = new Interop.Windows.WindowsBasicPrompts(context.Settings);
                     bbUi = new Atlassian.Bitbucket.UI.BitbucketWpfPrompts(context.Settings, gui);
                     ghUi = new GitHub.UI.GitHubWpfPrompts(context.Settings, gui);
+                    msUi = new Microsoft.Authentication.UI.MicrosoftWpfPrompts(context.Settings, gui);
                 }
 #endif
 

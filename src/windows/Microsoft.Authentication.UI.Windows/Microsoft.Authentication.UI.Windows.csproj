@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>Microsoft.Authentication.UI</RootNamespace>
+    <AssemblyName>Microsoft.Authentication.UI</AssemblyName>
+    <StartupObject>Microsoft.Authentication.UI.Program</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\shared\Microsoft.Authentication\Microsoft.Authentication.csproj" />
+    <ProjectReference Include="..\..\shared\Microsoft.Git.CredentialManager\Microsoft.Git.CredentialManager.csproj" />
+    <ProjectReference Include="..\Shared.UI.Windows\Shared.UI.Windows.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="MicrosoftAuthResources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>MicrosoftAuthResources.resx</DependentUpon>
+    </Compile>
+    <EmbeddedResource Update="MicrosoftAuthResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>MicrosoftAuthResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

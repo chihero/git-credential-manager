@@ -3,7 +3,7 @@ using System.Windows.Input;
 using Microsoft.Git.CredentialManager.UI;
 using Microsoft.Git.CredentialManager.UI.ViewModels;
 
-namespace GitHub.UI.Login
+namespace Microsoft.Authentication.UI.Login
 {
     public class LoginDeviceViewModel : WindowViewModel
     {
@@ -20,7 +20,7 @@ namespace GitHub.UI.Login
 
         public override bool IsValid => true;
 
-        public override string Title => GitHubResources.DeviceTitle;
+        public override string Title => MicrosoftAuthResources.DeviceTitle;
 
         public Uri VerificationUri
         {

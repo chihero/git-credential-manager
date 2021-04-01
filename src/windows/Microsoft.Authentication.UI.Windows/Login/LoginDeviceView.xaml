@@ -1,0 +1,79 @@
+﻿<UserControl x:Class="Microsoft.Authentication.UI.Login.LoginDeviceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:msauthui="clr-namespace:Microsoft.Authentication.UI"
+             Style="{DynamicResource DialogUserControl}">
+
+    <Control.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="..\Styles.xaml" />
+                <ResourceDictionary Source="..\Images.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Control.Resources>
+
+    <StackPanel Style="{DynamicResource DialogContainerStackPanel}">
+        <Image Source="{StaticResource MicrosoftLogoDrawingImage}" HorizontalAlignment="Center" Width="120"/>
+        <WrapPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="0,10,0,8">
+            <TextBlock Text="Device authentication"
+                       Padding="0"
+                       Margin="0,6,0,0"
+                       FontSize="20"/>
+        </WrapPanel>
+
+        <Rectangle Fill="#eee" Height="1" Margin="30,0,30,12"/>
+
+        <TextBlock Margin="30,0,30,16"
+                   HorizontalAlignment="Center"
+                   TextWrapping="Wrap"
+                   Text="Open a web browser at the location below and enter the unique device code."
+                   FontSize="16"
+                   FontWeight="Light"/>
+
+        <TextBlock Margin="30,0,30,16"
+                   HorizontalAlignment="Center"
+                   TextWrapping="Wrap"
+                   FontSize="16"
+                   FontWeight="Light">
+            <Hyperlink ToolTip="{Binding VerificationUri}"
+                       Command="{Binding NavigateVerificationCommand}">
+                <Run Text="{Binding VerificationUri, Mode=OneWay}"/>
+            </Hyperlink>
+        </TextBlock>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="30,10,30,0">
+            <TextBox x:Name="deviceCode"
+                 BorderThickness="0"
+                 Background="Transparent"
+                 FontWeight="Thin"
+                 Text="{Binding DeviceCode, Mode=OneWay}"
+                 FontSize="20"
+                 IsReadOnly="true"
+                 TextWrapping="Wrap"
+                 TextAlignment="Center"
+                 VerticalAlignment="Top"/>
+
+            <Button HorizontalAlignment="Center"
+                    Margin="6,0,0,0"
+                    ToolTip="Copy device code to clipboard."
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Padding="8,4"
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource HyperlinkBrush}"
+                    Click="CopyDeviceCodeButton_Click">
+                <Button.Style>
+                    <Style>
+                        <Style.Triggers>
+                            <Trigger Property="Button.IsMouseOver" Value="True">
+                                <Setter Property="Button.Cursor" Value="Hand" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <Run>Copy</Run>
+            </Button>
+        </StackPanel>
+    </StackPanel>
+</UserControl>
