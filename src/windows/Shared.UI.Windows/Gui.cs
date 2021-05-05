@@ -31,6 +31,15 @@ namespace Microsoft.Git.CredentialManager.UI
         /// <param name="viewModel">Window view model.</param>
         /// <param name="contentCreator">Window content factory.</param>
         bool ShowDialogWindow(WindowViewModel viewModel, Func<object> contentCreator);
+
+        /// <summary>
+        /// Show a simple message box.
+        /// </summary>
+        /// <param name="message">Message to display.</param>
+        /// <param name="title">Title of the message box.</param>
+        /// <param name="buttons">Message box buttons to display.</param>
+        /// <returns>Message box result.</returns>
+        MessageBoxResult ShowMessageBox(string message, string title, MessageBoxButton buttons);
     }
 
     public class Gui : IGui
@@ -64,6 +73,11 @@ namespace Microsoft.Git.CredentialManager.UI
         public bool ShowDialogWindow(WindowViewModel viewModel, Func<object> contentCreator)
         {
              return ShowWindow(() => new DialogWindow(viewModel, contentCreator())) && viewModel.IsValid;
+        }
+
+        public MessageBoxResult ShowMessageBox(string message, string title, MessageBoxButton buttons)
+        {
+            return MessageBox.Show(message, title, buttons);
         }
 
         private static Task StartSTATask(Action action)

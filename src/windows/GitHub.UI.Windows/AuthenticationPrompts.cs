@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Windows;
 using GitHub.UI.Login;
 using Microsoft.Git.CredentialManager.UI;
 
@@ -14,13 +15,13 @@ namespace GitHub.UI
         private readonly IGui _gui;
 
         public CredentialPromptResult ShowCredentialPrompt(
-            string enterpriseUrl, bool showBasic, bool showOAuth, bool showPat,
+            string enterpriseUrl, bool showBasic, bool showBrowser, bool showDevice, bool showPat,
             ref string username, out string password, out string token)
         {
             password = null;
             token = null;
 
-            var viewModel = new LoginCredentialsViewModel(showBasic, showOAuth, showPat)
+            var viewModel = new LoginCredentialsViewModel(showBasic, showBrowser, showDevice, showPat)
             {
                 GitHubEnterpriseUrl = enterpriseUrl,
                 UsernameOrEmail = username
@@ -39,8 +40,11 @@ namespace GitHub.UI
                     }
                     break;
 
-                case CredentialPromptResult.OAuthAuthentication:
-                    return CredentialPromptResult.OAuthAuthentication;
+                case CredentialPromptResult.BrowserAuthentication:
+                    return CredentialPromptResult.BrowserAuthentication;
+
+                case CredentialPromptResult.DeviceAuthentication:
+                    return CredentialPromptResult.DeviceAuthentication;
 
                 case CredentialPromptResult.PersonalAccessToken:
                     if (valid)
@@ -64,12 +68,21 @@ namespace GitHub.UI
 
             return valid;
         }
+
+        public bool ShowDeviceCodePrompt(string code, string verificationUrl)
+        {
+            string message = $"To complete authentication please visit {verificationUrl} and enter the following code: {code}";
+            string title = "Git Credential Manager - Device Authentication";
+            MessageBoxResult result = _gui.ShowMessageBox(message, title, MessageBoxButton.OKCancel);
+            return result == MessageBoxResult.OK;
+        }
     }
 
     public enum CredentialPromptResult
     {
         BasicAuthentication,
-        OAuthAuthentication,
+        BrowserAuthentication,
+        DeviceAuthentication,
         PersonalAccessToken,
         Cancel,
     }

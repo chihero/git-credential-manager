@@ -29,17 +29,18 @@ namespace GitHub.UI
                         string enterpriseUrl = CommandLineUtils.GetParameter(args, "--enterprise-url");
                         bool showAll    = CommandLineUtils.TryGetSwitch(args, "--all");
                         bool showBasic  = CommandLineUtils.TryGetSwitch(args, "--basic") || showAll;
-                        bool showOAuth  = CommandLineUtils.TryGetSwitch(args, "--oauth") || showAll;
+                        bool showBrowser = CommandLineUtils.TryGetSwitch(args, "--browser") || showAll;
+                        bool showDevice  = CommandLineUtils.TryGetSwitch(args, "--device") || showAll;
                         bool showPat    = CommandLineUtils.TryGetSwitch(args, "--pat")   || showAll;
                         string username = CommandLineUtils.GetParameter(args, "--username");
 
-                        if (!showBasic && !showOAuth && !showPat && !showAll)
+                        if (!showBasic && !showBrowser && !showDevice && !showPat && !showAll)
                         {
                             throw new Exception("at least one authentication mode must be specified");
                         }
 
                         var result = prompts.ShowCredentialPrompt(
-                            enterpriseUrl, showBasic, showOAuth, showPat,
+                            enterpriseUrl, showBasic, showBrowser, showDevice, showPat,
                             ref username, out string password, out string token);
 
                         switch (result)
@@ -50,8 +51,12 @@ namespace GitHub.UI
                                 resultDict["password"] = password;
                                 break;
 
-                            case CredentialPromptResult.OAuthAuthentication:
-                                resultDict["mode"] = "oauth";
+                            case CredentialPromptResult.BrowserAuthentication:
+                                resultDict["mode"] = "browser";
+                                break;
+
+                            case CredentialPromptResult.DeviceAuthentication:
+                                resultDict["mode"] = "device";
                                 break;
 
                             case CredentialPromptResult.PersonalAccessToken:
@@ -76,6 +81,26 @@ namespace GitHub.UI
                         }
 
                         resultDict["code"] = authCode;
+                    }
+                    else if (StringComparer.OrdinalIgnoreCase.Equals(args[0], "device"))
+                    {
+                        if (args.Length < 1)
+                        {
+                            throw new Exception("missing required <code> argument");
+                        }
+
+                        string code = args[1];
+
+                        if (args.Length < 2)
+                        {
+                            throw new Exception("missing required <verification-url> argument");
+                        }
+
+                        string verificationUrl = args[2];
+
+                        bool result = prompts.ShowDeviceCodePrompt(code, verificationUrl);
+
+                        resultDict["cancel"] = (!result).ToString();
                     }
                     else
                     {

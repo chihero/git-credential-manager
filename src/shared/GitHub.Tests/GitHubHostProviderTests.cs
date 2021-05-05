@@ -93,6 +93,8 @@ namespace GitHub.Tests
 
         [Theory]
         [InlineData("https://example.com", "oauth", AuthenticationModes.OAuth)]
+        [InlineData("https://example.com", "browser", AuthenticationModes.Browser)]
+        [InlineData("https://example.com", "device", AuthenticationModes.Device)]
         [InlineData("https://github.com", "NOT-A-REAL-VALUE", GitHubConstants.DotComAuthenticationModes)]
         [InlineData("https://GitHub.Com", "NOT-A-REAL-VALUE", GitHubConstants.DotComAuthenticationModes)]
         [InlineData("https://github.com", "none", GitHubConstants.DotComAuthenticationModes)]
@@ -149,8 +151,6 @@ namespace GitHub.Tests
             Assert.Equal(expectedModes, actualModes);
         }
 
-
-
         [Fact]
         public async Task GitHubHostProvider_GenerateCredentialAsync_UnencryptedHttp_ThrowsException()
         {
@@ -170,7 +170,7 @@ namespace GitHub.Tests
         }
 
         [Fact]
-        public async Task GitHubHostProvider_GenerateCredentialAsync_OAuth_ReturnsCredential()
+        public async Task GitHubHostProvider_GenerateCredentialAsync_Browser_ReturnsCredential()
         {
             var input = new InputArguments(new Dictionary<string, string>
             {
@@ -194,9 +194,9 @@ namespace GitHub.Tests
 
             var ghAuthMock = new Mock<IGitHubAuthentication>(MockBehavior.Strict);
             ghAuthMock.Setup(x => x.GetAuthenticationAsync(expectedTargetUri, null, It.IsAny<AuthenticationModes>()))
-                      .ReturnsAsync(new AuthenticationPromptResult(AuthenticationModes.OAuth));
+                      .ReturnsAsync(new AuthenticationPromptResult(AuthenticationModes.Browser));
 
-            ghAuthMock.Setup(x => x.GetOAuthTokenAsync(expectedTargetUri, It.IsAny<IEnumerable<string>>()))
+            ghAuthMock.Setup(x => x.GetOAuthTokenAsync(expectedTargetUri, It.IsAny<IEnumerable<string>>(), true))
                       .ReturnsAsync(response);
 
             var ghApiMock = new Mock<IGitHubRestApi>(MockBehavior.Strict);
@@ -213,7 +213,55 @@ namespace GitHub.Tests
 
             ghAuthMock.Verify(
                 x => x.GetOAuthTokenAsync(
-                    expectedTargetUri, expectedOAuthScopes),
+                    expectedTargetUri, expectedOAuthScopes, true),
+                Times.Once);
+        }
+
+        [Fact]
+        public async Task GitHubHostProvider_GenerateCredentialAsync_Device_ReturnsCredential()
+        {
+            var input = new InputArguments(new Dictionary<string, string>
+            {
+                ["protocol"] = "https",
+                ["host"] = "github.com",
+            });
+
+            var expectedTargetUri = new Uri("https://github.com/");
+            IEnumerable<string> expectedOAuthScopes = new[]
+            {
+                GitHubConstants.OAuthScopes.Repo,
+                GitHubConstants.OAuthScopes.Gist,
+                GitHubConstants.OAuthScopes.Workflow,
+            };
+
+            var expectedUserName = "john.doe";
+            var tokenValue = "OAUTH-TOKEN";
+            var response = new OAuth2TokenResult(tokenValue, "bearer");
+
+            var context = new TestCommandContext();
+
+            var ghAuthMock = new Mock<IGitHubAuthentication>(MockBehavior.Strict);
+            ghAuthMock.Setup(x => x.GetAuthenticationAsync(expectedTargetUri, null, It.IsAny<AuthenticationModes>()))
+                      .ReturnsAsync(new AuthenticationPromptResult(AuthenticationModes.Device));
+
+            ghAuthMock.Setup(x => x.GetOAuthTokenAsync(expectedTargetUri, It.IsAny<IEnumerable<string>>(), false))
+                      .ReturnsAsync(response);
+
+            var ghApiMock = new Mock<IGitHubRestApi>(MockBehavior.Strict);
+            ghApiMock.Setup(x => x.GetUserInfoAsync(expectedTargetUri, tokenValue))
+                     .ReturnsAsync(new GitHubUserInfo{Login = expectedUserName});
+
+            var provider = new GitHubHostProvider(context, ghApiMock.Object, ghAuthMock.Object);
+
+            ICredential credential = await provider.GenerateCredentialAsync(input);
+
+            Assert.NotNull(credential);
+            Assert.Equal(expectedUserName, credential.Account);
+            Assert.Equal(tokenValue, credential.Password);
+
+            ghAuthMock.Verify(
+                x => x.GetOAuthTokenAsync(
+                    expectedTargetUri, expectedOAuthScopes, false),
                 Times.Once);
         }
 

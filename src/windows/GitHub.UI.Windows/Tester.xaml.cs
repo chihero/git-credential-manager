@@ -21,7 +21,12 @@ namespace GitHub.UI
 
         private void ShowCredentials(object sender, RoutedEventArgs e)
         {
-            var model = new LoginCredentialsViewModel(useBasic.IsChecked ?? false, useOAuth.IsChecked ?? false, usePat.IsChecked ?? false);
+            var model = new LoginCredentialsViewModel(
+                useBasic.IsChecked ?? false,
+                useBrowser.IsChecked ?? false,
+                useDevice.IsChecked ?? false,
+                usePat.IsChecked ?? false);
+
             if (!string.IsNullOrWhiteSpace(enterpriseUrl.Text))
             {
                 model.GitHubEnterpriseUrl = enterpriseUrl.Text;

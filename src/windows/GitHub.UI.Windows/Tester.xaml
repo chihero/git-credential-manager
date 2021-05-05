@@ -32,8 +32,9 @@
             <TextBox Grid.Row="1" Grid.Column="1" x:Name="username"/>
             <Label Grid.Row="2" Grid.Column="0" Content="Auth Modes"/>
             <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal"  VerticalAlignment="Center">
-                <CheckBox Content="OAuth" x:Name="useOAuth" Margin="0 0 10 0"/>
-                <CheckBox Content="Pat" x:Name="usePat" Margin="0 0 10 0"/>
+                <CheckBox Content="Browser" x:Name="useBrowser" Margin="0 0 10 0" IsChecked="True"/>
+                <CheckBox Content="Device" x:Name="useDevice" Margin="0 0 10 0" IsChecked="True"/>
+                <CheckBox Content="Pat" x:Name="usePat" Margin="0 0 10 0" IsChecked="True"/>
                 <CheckBox Content="Basic" x:Name="useBasic"/>
             </StackPanel>
         </Grid>

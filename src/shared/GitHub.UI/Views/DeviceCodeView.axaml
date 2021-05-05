@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:GitHub.UI.Controls"
+             xmlns:vm="clr-namespace:GitHub.UI.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="420"
+             x:Class="GitHub.UI.Views.DeviceCodeView">
+    <Design.DataContext>
+        <vm:DeviceCodeViewModel/>
+    </Design.DataContext>
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,15">
+            <!-- TODO: replace with GitHub logo -->
+            <TextBlock Text="GitHub"
+                       HorizontalAlignment="Center"
+                       FontSize="20"
+                       FontWeight="Bold"/>
+            <TextBlock Text="Device authentication"
+                       HorizontalAlignment="Center"
+                       FontSize="24"
+                       FontWeight="Light"
+                       Margin="0,0,0,10" />
+            <controls:HorizontalShadowDivider/>
+        </StackPanel>
+
+        <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+            <TextBlock Margin="0,0,0,20"
+                       TextWrapping="Wrap" TextAlignment="Center">
+                To complete authentication please sign-in at the following URL and enter the code:
+            </TextBlock>
+            <Button Content="{Binding VerificationUrl}"
+                    Command="{Binding VerificationLinkCommand}"
+                    HorizontalAlignment="Center"
+                    Classes="hyperlink"
+                    Margin="0,0,0,20"/>
+            <TextBox Text="{Binding Code}"
+                     IsReadOnly="True" FontSize="32"
+                     Margin="0,0,0,20"
+                     HorizontalAlignment="Center"/>
+            <Button Content="Cancel"
+                    Command="{Binding CancelCommand}"
+                    HorizontalAlignment="Center"/>
+        </StackPanel>
+    </DockPanel>
+</UserControl>

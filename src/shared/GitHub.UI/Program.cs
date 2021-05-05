@@ -50,6 +50,7 @@ namespace GitHub.UI
             {
                 app.RegisterCommand(new CredentialsCommand(context));
                 app.RegisterCommand(new TwoFactorCommand(context));
+                app.RegisterCommand(new DeviceCodeCommand(context));
 
                 int exitCode = app.RunAsync(args)
                     .ConfigureAwait(false)

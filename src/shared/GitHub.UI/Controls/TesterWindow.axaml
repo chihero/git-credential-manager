@@ -60,5 +60,21 @@
                 <Button Classes="accent" Content="Show" Click="ShowTwoFactorCode" />
             </StackPanel>
         </TabItem>
+
+        <TabItem Header="Device">
+            <StackPanel>
+                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*">
+                    <Label Grid.Row="0" Grid.Column="0"
+                           Content="Device Code" />
+                    <TextBox Grid.Row="0" Grid.Column="1"
+                             x:Name="deviceCode" Text="ABCD-1234" />
+                    <Label Grid.Row="1" Grid.Column="0"
+                           Content="Verification URL" />
+                    <TextBox Grid.Row="1" Grid.Column="1"
+                             x:Name="verificationUrl" Text="https://github.com/login/device" />
+                </Grid>
+                <Button Classes="accent" Content="Show" Click="ShowDeviceCode" />
+            </StackPanel>
+        </TabItem>
     </TabControl>
 </Window>

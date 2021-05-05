@@ -33,7 +33,11 @@ namespace GitHub.UI.Login
 
             if (ViewModel.IsLoginUsingBrowserVisible)
             {
-                loginLink.Focus();
+                browserButton.Focus();
+            }
+            if (ViewModel.IsLoginUsingDeviceVisible)
+            {
+                deviceButton.Focus();
             }
             else if (ViewModel.IsLoginUsingTokenVisible)
             {
