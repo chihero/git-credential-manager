@@ -17,6 +17,20 @@ namespace GitHub.UI.Login
             LoginUsingTokenCommand = new RelayCommand(LoginUsingToken, CanLoginUsingToken);
             LoginUsingBrowserCommand = new RelayCommand(LoginUsingBrowser);
 
+            // Set initial tab selection
+            if (IsLoginUsingBrowserVisible)
+            {
+                SelectedTabIndex = 0;
+            }
+            else if (IsLoginUsingTokenVisible)
+            {
+                SelectedTabIndex = 1;
+            }
+            else if (IsLoginUsingUsernameAndPasswordVisible)
+            {
+                SelectedTabIndex = 2;
+            }
+
             PropertyChanged += LoginCredentialsViewModel_PropertyChanged;
         }
 
@@ -114,12 +128,14 @@ namespace GitHub.UI.Login
             set => SetAndRaisePropertyChanged(ref isLoginUsingTokenVisible, value);
         }
         private bool isLoginUsingTokenVisible;
-        
+
+        public int SelectedTabIndex { get; set; }
+
         public bool IsBrowserSeparatorVisible
         {
             get => IsLoginUsingBrowserVisible && (IsLoginUsingUsernameAndPasswordVisible || IsLoginUsingTokenVisible);
         }
-        
+
         public bool IsTokenSeparatorVisible
         {
             get => IsLoginUsingUsernameAndPasswordVisible && IsLoginUsingTokenVisible;
