@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Git.CredentialManager;
 using Microsoft.Git.CredentialManager.Authentication;
@@ -172,7 +173,14 @@ namespace Microsoft.AzureRepos.Tests
             azDevOpsMock.Setup(x => x.GetAuthorityAsync(expectedOrgUri)).ReturnsAsync(authorityUrl);
 
             var msAuthMock = new Mock<IMicrosoftAuthentication>(MockBehavior.Strict);
-            msAuthMock.Setup(x => x.GetTokenAsync(authorityUrl, expectedClientId, expectedRedirectUri, expectedScopes, urlAccount))
+            msAuthMock.Setup(x => x.GetTokenAsync(
+                It.Is<MicrosoftAuthenticationTokenRequest>(
+                    r =>
+                        r.Authority == authorityUrl &&
+                        r.ClientId == expectedClientId &&
+                        r.RedirectUri == expectedRedirectUri &&
+                        r.Scopes.SequenceEqual(expectedScopes) &&
+                        r.UserName == urlAccount)))
                       .ReturnsAsync(authResult);
 
             var authorityCacheMock = new Mock<IAzureDevOpsAuthorityCache>(MockBehavior.Strict);
@@ -221,7 +229,14 @@ namespace Microsoft.AzureRepos.Tests
             azDevOpsMock.Setup(x => x.GetAuthorityAsync(expectedOrgUri)).ReturnsAsync(authorityUrl);
 
             var msAuthMock = new Mock<IMicrosoftAuthentication>(MockBehavior.Strict);
-            msAuthMock.Setup(x => x.GetTokenAsync(authorityUrl, expectedClientId, expectedRedirectUri, expectedScopes, urlAccount))
+            msAuthMock.Setup(x => x.GetTokenAsync(
+                It.Is<MicrosoftAuthenticationTokenRequest>(
+                    r =>
+                        r.Authority == authorityUrl &&
+                        r.ClientId == expectedClientId &&
+                        r.RedirectUri == expectedRedirectUri &&
+                        r.Scopes.SequenceEqual(expectedScopes) &&
+                        r.UserName == urlAccount)))
                       .ReturnsAsync(authResult);
 
             var authorityCacheMock = new Mock<IAzureDevOpsAuthorityCache>(MockBehavior.Strict);
@@ -241,7 +256,6 @@ namespace Microsoft.AzureRepos.Tests
         [Fact]
         public async Task AzureReposProvider_GetCredentialAsync_JwtMode_CachedAuthority_DevAzureUrlOrgName_ReturnsCredential()
         {
-
             var input = new InputArguments(new Dictionary<string, string>
             {
                 ["protocol"] = "https",
@@ -270,7 +284,14 @@ namespace Microsoft.AzureRepos.Tests
             azDevOpsMock.Setup(x => x.GetAuthorityAsync(expectedOrgUri)).ReturnsAsync(authorityUrl);
 
             var msAuthMock = new Mock<IMicrosoftAuthentication>(MockBehavior.Strict);
-            msAuthMock.Setup(x => x.GetTokenAsync(authorityUrl, expectedClientId, expectedRedirectUri, expectedScopes, null))
+            msAuthMock.Setup(x => x.GetTokenAsync(
+                    It.Is<MicrosoftAuthenticationTokenRequest>(
+                        r =>
+                            r.Authority == authorityUrl &&
+                            r.ClientId == expectedClientId &&
+                            r.RedirectUri == expectedRedirectUri &&
+                            r.Scopes.SequenceEqual(expectedScopes) &&
+                            r.UserName == null)))
                       .ReturnsAsync(authResult);
 
             var authorityCacheMock = new Mock<IAzureDevOpsAuthorityCache>(MockBehavior.Strict);
@@ -317,7 +338,13 @@ namespace Microsoft.AzureRepos.Tests
             var azDevOpsMock = new Mock<IAzureDevOpsRestApi>(MockBehavior.Strict);
 
             var msAuthMock = new Mock<IMicrosoftAuthentication>(MockBehavior.Strict);
-            msAuthMock.Setup(x => x.GetTokenAsync(authorityUrl, expectedClientId, expectedRedirectUri, expectedScopes, null))
+            msAuthMock.Setup(x => x.GetTokenAsync(It.Is<MicrosoftAuthenticationTokenRequest>(
+                    r =>
+                        r.Authority == authorityUrl &&
+                        r.ClientId == expectedClientId &&
+                        r.RedirectUri == expectedRedirectUri &&
+                        r.Scopes.SequenceEqual(expectedScopes) &&
+                        r.UserName == null)))
                       .ReturnsAsync(authResult);
 
             var authorityCacheMock = new Mock<IAzureDevOpsAuthorityCache>(MockBehavior.Strict);
@@ -365,7 +392,13 @@ namespace Microsoft.AzureRepos.Tests
             var azDevOpsMock = new Mock<IAzureDevOpsRestApi>(MockBehavior.Strict);
 
             var msAuthMock = new Mock<IMicrosoftAuthentication>(MockBehavior.Strict);
-            msAuthMock.Setup(x => x.GetTokenAsync(authorityUrl, expectedClientId, expectedRedirectUri, expectedScopes, account))
+            msAuthMock.Setup(x => x.GetTokenAsync(It.Is<MicrosoftAuthenticationTokenRequest>(
+                    r =>
+                        r.Authority == authorityUrl &&
+                        r.ClientId == expectedClientId &&
+                        r.RedirectUri == expectedRedirectUri &&
+                        r.Scopes.SequenceEqual(expectedScopes) &&
+                        r.UserName == account)))
                       .ReturnsAsync(authResult);
 
             var authorityCacheMock = new Mock<IAzureDevOpsAuthorityCache>(MockBehavior.Strict);
@@ -387,7 +420,6 @@ namespace Microsoft.AzureRepos.Tests
         [Fact]
         public async Task AzureReposProvider_GetCredentialAsync_JwtMode_NoCachedAuthority_NoUser_ReturnsCredential()
         {
-
             var input = new InputArguments(new Dictionary<string, string>
             {
                 ["protocol"] = "https",
@@ -415,7 +447,13 @@ namespace Microsoft.AzureRepos.Tests
             azDevOpsMock.Setup(x => x.GetAuthorityAsync(expectedOrgUri)).ReturnsAsync(authorityUrl);
 
             var msAuthMock = new Mock<IMicrosoftAuthentication>(MockBehavior.Strict);
-            msAuthMock.Setup(x => x.GetTokenAsync(authorityUrl, expectedClientId, expectedRedirectUri, expectedScopes, null))
+            msAuthMock.Setup(x => x.GetTokenAsync(It.Is<MicrosoftAuthenticationTokenRequest>(
+                    r =>
+                        r.Authority == authorityUrl &&
+                        r.ClientId == expectedClientId &&
+                        r.RedirectUri == expectedRedirectUri &&
+                        r.Scopes.SequenceEqual(expectedScopes) &&
+                        r.UserName == null)))
                       .ReturnsAsync(authResult);
 
             var authorityCacheMock = new Mock<IAzureDevOpsAuthorityCache>(MockBehavior.Strict);
@@ -464,7 +502,13 @@ namespace Microsoft.AzureRepos.Tests
                         .ReturnsAsync(personalAccessToken);
 
             var msAuthMock = new Mock<IMicrosoftAuthentication>(MockBehavior.Strict);
-            msAuthMock.Setup(x => x.GetTokenAsync(authorityUrl, expectedClientId, expectedRedirectUri, expectedScopes, null))
+            msAuthMock.Setup(x => x.GetTokenAsync(It.Is<MicrosoftAuthenticationTokenRequest>(
+                    r =>
+                        r.Authority == authorityUrl &&
+                        r.ClientId == expectedClientId &&
+                        r.RedirectUri == expectedRedirectUri &&
+                        r.Scopes.SequenceEqual(expectedScopes) &&
+                        r.UserName == null)))
                       .ReturnsAsync(authResult);
 
             var authorityCacheMock = new Mock<IAzureDevOpsAuthorityCache>(MockBehavior.Strict);

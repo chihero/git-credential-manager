@@ -6,6 +6,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Git.CredentialManager;
 using Microsoft.Git.CredentialManager.Authentication;
@@ -79,7 +80,8 @@ namespace Microsoft.AzureRepos
         {
             Uri remoteUri = input.GetRemoteUri();
 
-            if (UsePersonalAccessTokens())
+            AzureDevOpsCredentialType credentialType = GetCredentialType();
+            if (credentialType == AzureDevOpsCredentialType.PersonalAccessToken)
             {
                 string service = GetServiceName(remoteUri);
                 string account = GetAccountNameForCredentialQuery(input);
@@ -105,9 +107,11 @@ namespace Microsoft.AzureRepos
             }
             else
             {
+                bool usePop = credentialType == AzureDevOpsCredentialType.AzurePopToken;
+
                 // Include the username request here so that we may use it as an override
                 // for user account lookups when getting Azure Access Tokens.
-                var azureResult = await GetAzureAccessTokenAsync(remoteUri, input.UserName);
+                var azureResult = await GetAzureAccessTokenAsync(input, usePop);
                 return new GitCredential(azureResult.AccountUpn, azureResult.AccessToken);
             }
         }
@@ -116,7 +120,7 @@ namespace Microsoft.AzureRepos
         {
             Uri remoteUri = input.GetRemoteUri();
 
-            if (UsePersonalAccessTokens())
+            if (GetCredentialType() == AzureDevOpsCredentialType.PersonalAccessToken)
             {
                 string service = GetServiceName(remoteUri);
 
@@ -143,7 +147,7 @@ namespace Microsoft.AzureRepos
         {
             Uri remoteUri = input.GetRemoteUri();
 
-            if (UsePersonalAccessTokens())
+            if (GetCredentialType() == AzureDevOpsCredentialType.PersonalAccessToken)
             {
                 string service = GetServiceName(remoteUri);
                 string account = GetAccountNameForCredentialQuery(input);
@@ -199,12 +203,12 @@ namespace Microsoft.AzureRepos
 
             // Get an AAD access token for the Azure DevOps SPS
             _context.Trace.WriteLine("Getting Azure AD access token...");
-            IMicrosoftAuthenticationResult result = await _msAuth.GetTokenAsync(
-                authAuthority,
+            var tokenRequest = new MicrosoftAuthenticationTokenRequest(authAuthority,
                 GetClientId(),
                 GetRedirectUri(),
                 AzureDevOpsConstants.AzureDevOpsDefaultScopes,
                 null);
+            IMicrosoftAuthenticationResult result = await _msAuth.GetTokenAsync(tokenRequest);
             _context.Trace.WriteLineSecrets(
                 $"Acquired Azure access token. Account='{result.AccountUpn}' Token='{{0}}'", new object[] {result.AccessToken});
 
@@ -224,8 +228,11 @@ namespace Microsoft.AzureRepos
             return new GitCredential(result.AccountUpn, pat);
         }
 
-        private async Task<IMicrosoftAuthenticationResult> GetAzureAccessTokenAsync(Uri remoteUri, string userName)
+        private async Task<IMicrosoftAuthenticationResult> GetAzureAccessTokenAsync(InputArguments input, bool usePop)
         {
+            Uri remoteUri = input.GetRemoteUri();
+            string userName = input.UserName;
+
             // We should not allow unencrypted communication and should inform the user
             if (StringComparer.OrdinalIgnoreCase.Equals(remoteUri.Scheme, "http"))
             {
@@ -273,12 +280,39 @@ namespace Microsoft.AzureRepos
 
             // Get an AAD access token for the Azure DevOps SPS
             _context.Trace.WriteLine("Getting Azure AD access token...");
-            IMicrosoftAuthenticationResult result = await _msAuth.GetTokenAsync(
-                authAuthority,
+            var tokenRequest = new MicrosoftAuthenticationTokenRequest(authAuthority,
                 GetClientId(),
                 GetRedirectUri(),
                 AzureDevOpsConstants.AzureDevOpsDefaultScopes,
                 userName);
+
+            // TODO: should we automatically use PoP if requested in the WWW-Authenticate header?
+            // TODO: what should we do if we don't have a PoP nonce?
+            if (usePop)
+            {
+                MicrosoftAuthenticationRequestBinding binding = CreateRequestBinding(input);
+
+                var dict = new Dictionary<string, string>();
+                if (binding.RequestUri != null) dict["request"] = binding.RequestUri.ToString();
+                if (binding.HttpMethod != null) dict["method"]  = binding.HttpMethod;
+                if (binding.Nonce      != null) dict["nonce"]   = binding.Nonce;
+
+                _context.Trace.WriteLine("Using Proof of Possession binding:");
+                _context.Trace.WriteDictionary(dict);
+
+                tokenRequest.RequestBinding = binding;
+
+                // string popWarningMessage =
+                //     "warning: Git Credential Manager has been configured to create 'POP' tokens but is missing required information from Git." +
+                //     Environment.NewLine +
+                //     "warning: This may be due to local configuration error, or using an older version of Git." +
+                //     Environment.NewLine +
+                //     $"warning: Please see {Constants.HelpUrls.GcmPopTokens} for more information.";
+                // _context.Trace.WriteLine("Missing request information from Git; unable to create Proof of Possession token!");
+                // _context.Streams.Error.WriteLine(popWarningMessage);
+            }
+
+            IMicrosoftAuthenticationResult result = await _msAuth.GetTokenAsync(tokenRequest);
             _context.Trace.WriteLineSecrets(
                 $"Acquired Azure access token. Account='{result.AccountUpn}' Token='{{0}}'", new object[] {result.AccessToken});
 
@@ -386,13 +420,13 @@ namespace Microsoft.AzureRepos
         }
 
         /// <summary>
-        /// Check if Azure DevOps Personal Access Tokens should be used or not.
+        /// Get the configured credential type to use for this request.
         /// </summary>
-        /// <returns>True if Personal Access Tokens should be used, false otherwise.</returns>
-        private bool UsePersonalAccessTokens()
+        /// <returns>Returns the type of credential that should be used.</returns>
+        private AzureDevOpsCredentialType GetCredentialType()
         {
-            // Default to using PATs whilst the Azure AT functionality is being tested
-            const bool defaultValue = true;
+            // Default to using PATs whilst the Azure AT & POP functionality is being tested
+            const AzureDevOpsCredentialType defaultValue = AzureDevOpsCredentialType.PersonalAccessToken;
 
             if (_context.Settings.TryGetSetting(
                 AzureDevOpsConstants.EnvironmentVariables.CredentialType,
@@ -405,10 +439,14 @@ namespace Microsoft.AzureRepos
                 switch (valueStr.ToLowerInvariant())
                 {
                     case AzureDevOpsConstants.PatCredentialType:
-                        return true;
+                        return AzureDevOpsCredentialType.PersonalAccessToken;
 
                     case AzureDevOpsConstants.OAuthCredentialType:
-                        return false;
+                    case AzureDevOpsConstants.BearerCredentialType:
+                        return AzureDevOpsCredentialType.AzureBearerToken;
+
+                    case AzureDevOpsConstants.PopCredentialType:
+                        return AzureDevOpsCredentialType.AzurePopToken;
 
                     default:
                         _context.Streams.Error.WriteLine(
@@ -418,6 +456,27 @@ namespace Microsoft.AzureRepos
             }
 
             return defaultValue;
+        }
+
+        private static MicrosoftAuthenticationRequestBinding CreateRequestBinding(InputArguments input)
+        {
+            var binding = new MicrosoftAuthenticationRequestBinding
+            {
+                RequestUri = input.GetRemoteUri(),
+                HttpMethod = input.HttpMethod
+            };
+
+            // Extract nonce from WWW-Authenticate header
+            if (!string.IsNullOrWhiteSpace(input.HttpWwwAuthenticate))
+            {
+                Match match = Regex.Match(input.HttpWwwAuthenticate, @"POP[^,]+nonce=(?'nonce'[^\s,]+)", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                     binding.Nonce = match.Groups["nonce"].Value;
+                }
+            }
+
+            return binding;
         }
 
         #endregion

@@ -39,6 +39,16 @@ namespace Microsoft.Git.CredentialManager
 
         #endregion
 
+        #region Extra HTTP Arguments
+
+        public string HttpCode => GetArgumentOrDefault("http.code");
+
+        public string HttpMethod => GetArgumentOrDefault("http.method");
+
+        public string HttpWwwAuthenticate => GetArgumentOrDefault("http.wwwauth");
+
+        #endregion
+
         #region Public Methods
 
         public string this[string key]

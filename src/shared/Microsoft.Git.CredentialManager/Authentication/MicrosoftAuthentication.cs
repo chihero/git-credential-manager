@@ -6,6 +6,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
+using Microsoft.Identity.Client.AppConfig;
 using Microsoft.Identity.Client.Extensions.Msal;
 
 #if NETFRAMEWORK
@@ -16,8 +17,34 @@ namespace Microsoft.Git.CredentialManager.Authentication
 {
     public interface IMicrosoftAuthentication
     {
-        Task<IMicrosoftAuthenticationResult> GetTokenAsync(string authority, string clientId, Uri redirectUri,
-            string[] scopes, string userName);
+        Task<IMicrosoftAuthenticationResult> GetTokenAsync(MicrosoftAuthenticationTokenRequest request);
+    }
+
+    public class MicrosoftAuthenticationTokenRequest
+    {
+        public MicrosoftAuthenticationTokenRequest(
+            string authority, string clientId, Uri redirectUri, string[] scopes, string userName)
+        {
+            Authority = authority;
+            ClientId = clientId;
+            RedirectUri = redirectUri;
+            Scopes = scopes;
+            UserName = userName;
+        }
+
+        public string Authority { get; set; }
+        public string ClientId { get; set; }
+        public Uri RedirectUri { get; set; }
+        public string[] Scopes { get; set; }
+        public string UserName { get; }
+        public MicrosoftAuthenticationRequestBinding RequestBinding { get; set; }
+    }
+
+    public class MicrosoftAuthenticationRequestBinding
+    {
+        public string HttpMethod { get; set; }
+        public Uri RequestUri { get; set; }
+        public string Nonce { get; set; }
     }
 
     public interface IMicrosoftAuthenticationResult
@@ -97,8 +124,7 @@ namespace Microsoft.Git.CredentialManager.Authentication
 
         #region IMicrosoftAuthentication
 
-        public async Task<IMicrosoftAuthenticationResult> GetTokenAsync(
-            string authority, string clientId, Uri redirectUri, string[] scopes, string userName)
+        public async Task<IMicrosoftAuthenticationResult> GetTokenAsync(MicrosoftAuthenticationTokenRequest request)
         {
             // Check if we can and should use OS broker authentication
             bool useBroker = false;
@@ -113,15 +139,18 @@ namespace Microsoft.Git.CredentialManager.Authentication
                     Context.Trace.WriteLine("OS broker has not been initialized and cannot not be used.");
             }
 
+            // If we have request binding information we are being asked to make a PoP token
+            bool usePop = !(request.RequestBinding is null);
+
             // Create the public client application for authentication
-            IPublicClientApplication app = await CreatePublicClientApplicationAsync(authority, clientId, redirectUri, useBroker);
+            IPublicClientApplication app = await CreatePublicClientApplicationAsync(request, useBroker, usePop);
 
             AuthenticationResult result = null;
 
             // Try silent authentication first if we know about an existing user
-            if (!string.IsNullOrWhiteSpace(userName))
+            if (!string.IsNullOrWhiteSpace(request.UserName))
             {
-                result = await GetAccessTokenSilentlyAsync(app, scopes, userName);
+                result = await GetAccessTokenSilentlyAsync(app, request.Scopes, request.UserName, request.RequestBinding);
             }
 
             //
@@ -155,10 +184,11 @@ namespace Microsoft.Git.CredentialManager.Authentication
                 if (useBroker)
                 {
                     Context.Trace.WriteLine("Performing interactive auth with broker...");
-                    result = await app.AcquireTokenInteractive(scopes)
+                    result = await app.AcquireTokenInteractive(request.Scopes)
                         .WithPrompt(Prompt.SelectAccount)
                         // We must configure the system webview as a fallback
                         .WithSystemWebViewOptions(GetSystemWebViewOptions())
+                        .WithRequestBinding(request.RequestBinding)
                         .ExecuteAsync();
                 }
                 else
@@ -171,7 +201,7 @@ namespace Microsoft.Git.CredentialManager.Authentication
                             if (CanUseEmbeddedWebView())
                                 goto case MicrosoftAuthenticationFlowType.EmbeddedWebView;
 
-                            if (CanUseSystemWebView(app, redirectUri))
+                            if (CanUseSystemWebView(app, request.RedirectUri))
                                 goto case MicrosoftAuthenticationFlowType.SystemWebView;
 
                             // Fall back to device code flow
@@ -180,19 +210,21 @@ namespace Microsoft.Git.CredentialManager.Authentication
                         case MicrosoftAuthenticationFlowType.EmbeddedWebView:
                             Context.Trace.WriteLine("Performing interactive auth with embedded web view...");
                             EnsureCanUseEmbeddedWebView();
-                            result = await app.AcquireTokenInteractive(scopes)
+                            result = await app.AcquireTokenInteractive(request.Scopes)
                                 .WithPrompt(Prompt.SelectAccount)
                                 .WithUseEmbeddedWebView(true)
                                 .WithEmbeddedWebViewOptions(GetEmbeddedWebViewOptions())
+                                .WithRequestBinding(request.RequestBinding)
                                 .ExecuteAsync();
                             break;
 
                         case MicrosoftAuthenticationFlowType.SystemWebView:
                             Context.Trace.WriteLine("Performing interactive auth with system web view...");
-                            EnsureCanUseSystemWebView(app, redirectUri);
-                            result = await app.AcquireTokenInteractive(scopes)
+                            EnsureCanUseSystemWebView(app, request.RedirectUri);
+                            result = await app.AcquireTokenInteractive(request.Scopes)
                                 .WithPrompt(Prompt.SelectAccount)
                                 .WithSystemWebViewOptions(GetSystemWebViewOptions())
+                                .WithRequestBinding(request.RequestBinding)
                                 .ExecuteAsync();
                             break;
 
@@ -201,7 +233,8 @@ namespace Microsoft.Git.CredentialManager.Authentication
                             // We don't have a way to display a device code without a terminal at the moment
                             // TODO: introduce a small GUI window to show a code if no TTY exists
                             ThrowIfTerminalPromptsDisabled();
-                            result = await app.AcquireTokenWithDeviceCode(scopes, ShowDeviceCodeInTty).ExecuteAsync();
+                            // TODO: add POP binding once support is enabled for the device code flow
+                            result = await app.AcquireTokenWithDeviceCode(request.Scopes, ShowDeviceCodeInTty).ExecuteAsync();
                             break;
 
                         default:
@@ -245,7 +278,8 @@ namespace Microsoft.Git.CredentialManager.Authentication
         /// <summary>
         /// Obtain an access token without showing UI or prompts.
         /// </summary>
-        private async Task<AuthenticationResult> GetAccessTokenSilentlyAsync(IPublicClientApplication app, string[] scopes, string userName)
+        private async Task<AuthenticationResult> GetAccessTokenSilentlyAsync(IPublicClientApplication app,
+            string[] scopes, string userName, MicrosoftAuthenticationRequestBinding requestBinding)
         {
             try
             {
@@ -253,7 +287,9 @@ namespace Microsoft.Git.CredentialManager.Authentication
 
                 // We can either call `app.GetAccountsAsync` and filter through the IAccount objects for the instance with the correct user name,
                 // or we can just pass the user name string we have as the `loginHint` and let MSAL do exactly that for us instead!
-                return await app.AcquireTokenSilent(scopes, loginHint: userName).ExecuteAsync();
+                return await app.AcquireTokenSilent(scopes, loginHint: userName)
+                    .WithRequestBinding(requestBinding)
+                    .ExecuteAsync();
             }
             catch (MsalUiRequiredException)
             {
@@ -263,13 +299,13 @@ namespace Microsoft.Git.CredentialManager.Authentication
         }
 
         private async Task<IPublicClientApplication> CreatePublicClientApplicationAsync(
-            string authority, string clientId, Uri redirectUri, bool enableBroker)
+            MicrosoftAuthenticationTokenRequest request, bool enableBroker, bool usePop)
         {
             var httpFactoryAdaptor = new MsalHttpClientFactoryAdaptor(Context.HttpClientFactory);
 
-            var appBuilder = PublicClientApplicationBuilder.Create(clientId)
-                .WithAuthority(authority)
-                .WithRedirectUri(redirectUri.ToString())
+            var appBuilder = PublicClientApplicationBuilder.Create(request.ClientId)
+                .WithAuthority(request.Authority)
+                .WithRedirectUri(request.RedirectUri.ToString())
                 .WithHttpClientFactory(httpFactoryAdaptor);
 
             // Listen to MSAL logs if GCM_TRACE_MSAUTH is set
@@ -296,6 +332,12 @@ namespace Microsoft.Git.CredentialManager.Authentication
                 appBuilder.WithExperimentalFeatures();
                 appBuilder.WithWindowsBroker();
 #endif
+            }
+
+            // If we're using POP then enable experimental features
+            if (usePop)
+            {
+                appBuilder.WithExperimentalFeatures();
             }
 
             IPublicClientApplication app = appBuilder.Build();
@@ -544,6 +586,44 @@ namespace Microsoft.Git.CredentialManager.Authentication
 
             public string AccessToken => _msalResult.AccessToken;
             public string AccountUpn => _msalResult.Account.Username;
+        }
+    }
+
+    internal static class MsalExtensions
+    {
+        public static AcquireTokenInteractiveParameterBuilder WithRequestBinding(
+            this AcquireTokenInteractiveParameterBuilder builder,
+            MicrosoftAuthenticationRequestBinding binding)
+        {
+            return binding is null
+                ? builder
+                : builder.WithProofOfPossession(CreatePopConfig(binding));
+        }
+
+        public static AcquireTokenSilentParameterBuilder WithRequestBinding(
+            this AcquireTokenSilentParameterBuilder builder,
+            MicrosoftAuthenticationRequestBinding binding)
+        {
+            return binding is null
+                ? builder
+                : builder.WithProofOfPossession(CreatePopConfig(binding));
+        }
+
+        private static PoPAuthenticationConfiguration CreatePopConfig(MicrosoftAuthenticationRequestBinding binding)
+        {
+            var config = new PoPAuthenticationConfiguration(binding.RequestUri);
+
+            if (!string.IsNullOrWhiteSpace(binding.HttpMethod))
+            {
+                config.HttpMethod = new HttpMethod(binding.HttpMethod);
+            }
+
+            if (!string.IsNullOrWhiteSpace(binding.Nonce))
+            {
+                config.Nonce = binding.Nonce;
+            }
+
+            return config;
         }
     }
 }

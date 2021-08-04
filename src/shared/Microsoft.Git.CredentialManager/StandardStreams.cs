@@ -31,6 +31,9 @@ namespace Microsoft.Git.CredentialManager
     {
         private const string LineFeed  = "\n";
 
+        // HACK: 32 kiB ought to be big enough for any single-line input from Git!
+        private const int StdInBufferSize = 32 * 1024;
+
         private static readonly Encoding Utf8NoBomEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
 
         private TextReader _stdIn;
@@ -43,7 +46,7 @@ namespace Microsoft.Git.CredentialManager
             {
                 if (_stdIn == null)
                 {
-                    _stdIn = new StreamReader(Console.OpenStandardInput(), Utf8NoBomEncoding);
+                    _stdIn = new StreamReader(Console.OpenStandardInput(), Utf8NoBomEncoding, false, StdInBufferSize);
                 }
 
                 return _stdIn;

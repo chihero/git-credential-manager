@@ -26,6 +26,8 @@ namespace Microsoft.AzureRepos
 
         public const string PatCredentialType = "pat";
         public const string OAuthCredentialType = "oauth";
+        public const string BearerCredentialType = "bearer";
+        public const string PopCredentialType = "pop";
 
         public const string UrnScheme = "azrepos";
         public const string UrnOrgPrefix = "org";

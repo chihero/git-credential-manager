@@ -37,6 +37,9 @@ namespace Microsoft.Git.CredentialManager.Commands
             output["username"] = credential.Account;
             output["password"] = credential.Password;
 
+            // TODO: allow credentials to specify their "type" (basic, bearer, pop, etc)
+            output["authtype"] = "basic";
+
             // Write the values to standard out
             Context.Streams.Out.WriteDictionary(output);
         }

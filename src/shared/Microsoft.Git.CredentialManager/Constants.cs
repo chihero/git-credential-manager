@@ -115,6 +115,7 @@ namespace Microsoft.Git.CredentialManager
             public const string GcmTlsVerification     = "https://aka.ms/gcmcore-tlsverify";
             public const string GcmLinuxCredStores     = "https://aka.ms/gcmcore-linuxcredstores";
             public const string GcmWamComSecurity      = "https://aka.ms/gcmcore-wamadmin";
+            public const string GcmPopTokens           = "https://aka.ms/gcmcore-azurepop";
         }
 
         private static Version _gcmVersion;

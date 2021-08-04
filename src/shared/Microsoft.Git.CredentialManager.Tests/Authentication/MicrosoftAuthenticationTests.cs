@@ -26,7 +26,9 @@ namespace Microsoft.Git.CredentialManager.Tests.Authentication
             var msAuth = new MicrosoftAuthentication(context);
 
             await Assert.ThrowsAsync<InvalidOperationException>(
-                () => msAuth.GetTokenAsync(authority, clientId, redirectUri, scopes, userName));
+                () => msAuth.GetTokenAsync(
+                    new MicrosoftAuthenticationTokenRequest(authority, clientId, redirectUri, scopes, userName)
+                ));
         }
     }
 }
