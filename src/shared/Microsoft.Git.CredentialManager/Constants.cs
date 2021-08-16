@@ -97,7 +97,9 @@ namespace Microsoft.Git.CredentialManager
             {
                 public const string SectionName = "http";
                 public const string Proxy = "proxy";
+                public const string SslBackend = "sslBackend";
                 public const string SslVerify = "sslVerify";
+                public const string SslAutoClientCert = "sslAutoClientCert";
             }
 
             public static class Remote

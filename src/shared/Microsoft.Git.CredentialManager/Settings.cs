@@ -98,6 +98,16 @@ namespace Microsoft.Git.CredentialManager
         bool IsCertificateVerificationEnabled { get; }
 
         /// <summary>
+        /// Automatically send client TLS certificates.
+        /// </summary>
+        bool AutomaticallyUseClientCertificates { get; }
+
+        /// <summary>
+        /// Git's chosen cryptographic backend.
+        /// </summary>
+        GitSslBackend GitSslBackend { get; }
+
+        /// <summary>
         /// Get the proxy setting if configured, or null otherwise.
         /// </summary>
         /// <returns>Proxy setting, or null if not configured.</returns>
@@ -119,6 +129,12 @@ namespace Microsoft.Git.CredentialManager
         /// Credential backing store override.
         /// </summary>
         string CredentialBackingStore { get; }
+    }
+
+    public enum GitSslBackend
+    {
+        OpenSsl,
+        Schannel,
     }
 
     public class ProxyConfiguration
@@ -389,6 +405,32 @@ namespace Microsoft.Git.CredentialManager
 
                 // Safe default
                 return true;
+            }
+        }
+
+        public bool AutomaticallyUseClientCertificates =>
+            !TryGetSetting(null, KnownGitCfg.Credential.SectionName, KnownGitCfg.Http.SslAutoClientCert, out string value) && value.ToBooleanyOrDefault(false);
+
+        public GitSslBackend GitSslBackend
+        {
+            get
+            {
+                if (TryGetSetting(null,
+                    KnownGitCfg.Credential.SectionName,
+                    KnownGitCfg.Http.SslBackend,
+                    out string value))
+                {
+                    switch (value.ToLowerInvariant())
+                    {
+                        case "openssl":
+                            return GitSslBackend.OpenSsl;
+                        case "schannel":
+                            return GitSslBackend.Schannel;
+                    }
+                }
+
+                // Use Git's default backend (OpenSSL)
+                return GitSslBackend.OpenSsl;
             }
         }
 

@@ -70,6 +70,19 @@ namespace Microsoft.Git.CredentialManager
                 handler = new HttpClientHandler();
             }
 
+            // Trace Git's chosen SSL/TLS backend
+            _trace.WriteLine($"Git's SSL/TLS backend is: {_settings.GitSslBackend}");
+
+            // Mirror Git and only send client TLS certificates automatically if we're using
+            // the schannel backend _and_ the user has opted in to sending them.
+            if (_settings.GitSslBackend == GitSslBackend.Schannel &&
+                _settings.AutomaticallyUseClientCertificates)
+            {
+                _trace.WriteLine("Configured to automatically send TLS client certificates.");
+                handler.ClientCertificateOptions = ClientCertificateOption.Automatic;
+            }
+
+            // Configure server certificate verification and warn if we're bypassing validation
             if (!_settings.IsCertificateVerificationEnabled)
             {
                 _trace.WriteLine("TLS certificate verification has been disabled.");
