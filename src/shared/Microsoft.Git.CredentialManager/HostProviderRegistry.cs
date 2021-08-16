@@ -149,10 +149,19 @@ namespace Microsoft.Git.CredentialManager
             _context.Trace.WriteLine("Performing auto-detection of host provider.");
 
             var uri = input.GetRemoteUri();
-            var queryResponse = new Lazy<Task<HttpResponseMessage>>(() =>
+            var queryResponse = new Lazy<Task<HttpResponseMessage>>(async () =>
             {
                 _context.Trace.WriteLine("Querying remote URL for host provider auto-detection.");
-                return HttpClient.HeadAsync(uri);
+                try
+                {
+                    return await HttpClient.HeadAsync(uri);
+                }
+                catch (Exception ex)
+                {
+                    _context.Trace.WriteLine("Failed to query remote for auto host detection!");
+                    _context.Trace.WriteException(ex);
+                    return null;
+                }
             });
 
             async Task<IHostProvider> MatchProviderAsync(HostProviderPriority priority)
