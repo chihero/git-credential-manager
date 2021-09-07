@@ -2,6 +2,7 @@
 // Licensed under the MIT license.
 using System;
 using System.IO;
+using System.Runtime.InteropServices.ComTypes;
 using Microsoft.Git.CredentialManager.Interop.Linux;
 using Microsoft.Git.CredentialManager.Interop.MacOS;
 using Microsoft.Git.CredentialManager.Interop.Posix;
@@ -80,12 +81,12 @@ namespace Microsoft.Git.CredentialManager
     /// </summary>
     public class CommandContext : DisposableObject, ICommandContext
     {
-        public CommandContext(string appPath)
+        public CommandContext(string appPath, IStandardStreams streams = null)
         {
             EnsureArgument.NotNullOrWhiteSpace(appPath, nameof (appPath));
 
             ApplicationPath = appPath;
-            Streams = new StandardStreams();
+            Streams = streams ?? new StandardStreams();
             Trace   = new Trace();
 
             if (PlatformUtils.IsWindows())
