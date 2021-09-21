@@ -47,7 +47,8 @@ namespace Microsoft.Git.CredentialManager.Tests
         {
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath);
+            var env = new TestEnvironment();
+            var git = new GitProcess(trace, env, gitPath);
             var config = git.GetConfiguration();
             Assert.NotNull(config);
         }
@@ -69,7 +70,8 @@ namespace Microsoft.Git.CredentialManager.Tests
 
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();
+            var git = new GitProcess(trace, env, gitPath, repoPath);
             IGitConfiguration config = git.GetConfiguration();
 
             var actualVisitedEntries = new List<(string name, string value)>();
@@ -106,7 +108,7 @@ namespace Microsoft.Git.CredentialManager.Tests
 
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();var git = new GitProcess(trace, env, gitPath, repoPath);
             IGitConfiguration config = git.GetConfiguration();
 
             var actualVisitedEntries = new List<(string name, string value)>();
@@ -135,7 +137,7 @@ namespace Microsoft.Git.CredentialManager.Tests
 
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();var git = new GitProcess(trace, env, gitPath, repoPath);
             IGitConfiguration config = git.GetConfiguration();
 
             bool result = config.TryGet("user.name", false, out string value);
@@ -151,7 +153,7 @@ namespace Microsoft.Git.CredentialManager.Tests
 
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();var git = new GitProcess(trace, env, gitPath, repoPath);
             IGitConfiguration config = git.GetConfiguration();
 
             string randomName = $"{Guid.NewGuid():N}.{Guid.NewGuid():N}";
@@ -169,7 +171,7 @@ namespace Microsoft.Git.CredentialManager.Tests
             string homeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();var git = new GitProcess(trace, env, gitPath, repoPath);
             IGitConfiguration config = git.GetConfiguration();
 
             bool result = config.TryGet("example.path", true, out string value);
@@ -186,7 +188,7 @@ namespace Microsoft.Git.CredentialManager.Tests
 
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();var git = new GitProcess(trace, env, gitPath, repoPath);
             IGitConfiguration config = git.GetConfiguration();
 
             bool result = config.TryGet("example.path", false, out string value);
@@ -203,7 +205,7 @@ namespace Microsoft.Git.CredentialManager.Tests
 
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();var git = new GitProcess(trace, env, gitPath, repoPath);
             IGitConfiguration config = git.GetConfiguration();
 
             bool result = config.TryGet(GitConfigurationLevel.Local, GitConfigurationType.Bool,
@@ -221,7 +223,7 @@ namespace Microsoft.Git.CredentialManager.Tests
 
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();var git = new GitProcess(trace, env, gitPath, repoPath);
             IGitConfiguration config = git.GetConfiguration();
 
             bool result = config.TryGet(GitConfigurationLevel.Local, GitConfigurationType.Raw,
@@ -239,7 +241,7 @@ namespace Microsoft.Git.CredentialManager.Tests
 
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();var git = new GitProcess(trace, env, gitPath, repoPath);
             IGitConfiguration config = git.GetConfiguration();
 
             string value = config.Get("user.name");
@@ -254,7 +256,7 @@ namespace Microsoft.Git.CredentialManager.Tests
 
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();var git = new GitProcess(trace, env, gitPath, repoPath);
             IGitConfiguration config = git.GetConfiguration();
 
             string randomName = $"{Guid.NewGuid():N}.{Guid.NewGuid():N}";
@@ -268,7 +270,7 @@ namespace Microsoft.Git.CredentialManager.Tests
 
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();var git = new GitProcess(trace, env, gitPath, repoPath);
             IGitConfiguration config = git.GetConfiguration();
 
             config.Set(GitConfigurationLevel.Local, "core.foobar", "foo123");
@@ -285,7 +287,7 @@ namespace Microsoft.Git.CredentialManager.Tests
 
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();var git = new GitProcess(trace, env, gitPath, repoPath);
             IGitConfiguration config = git.GetConfiguration();
 
             Assert.Throws<InvalidOperationException>(() => config.Set(GitConfigurationLevel.All, "core.foobar", "test123"));
@@ -303,7 +305,7 @@ namespace Microsoft.Git.CredentialManager.Tests
 
                 string gitPath = GetGitPath();
                 var trace = new NullTrace();
-                var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();    var git = new GitProcess(trace, env, gitPath, repoPath);
                 IGitConfiguration config = git.GetConfiguration();
 
                 config.Unset(GitConfigurationLevel.Global, "core.foobar");
@@ -333,7 +335,7 @@ namespace Microsoft.Git.CredentialManager.Tests
 
                 string gitPath = GetGitPath();
                 var trace = new NullTrace();
-                var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();    var git = new GitProcess(trace, env, gitPath, repoPath);
                 IGitConfiguration config = git.GetConfiguration();
 
                 config.Unset(GitConfigurationLevel.Local, "core.foobar");
@@ -358,7 +360,7 @@ namespace Microsoft.Git.CredentialManager.Tests
 
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();var git = new GitProcess(trace, env, gitPath, repoPath);
             IGitConfiguration config = git.GetConfiguration();
 
             Assert.Throws<InvalidOperationException>(() => config.Unset(GitConfigurationLevel.All, "core.foobar"));
@@ -374,7 +376,7 @@ namespace Microsoft.Git.CredentialManager.Tests
 
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();var git = new GitProcess(trace, env, gitPath, repoPath);
             IGitConfiguration config = git.GetConfiguration();
 
             config.UnsetAll(GitConfigurationLevel.Local, "core.foobar", "foo*");
@@ -391,7 +393,7 @@ namespace Microsoft.Git.CredentialManager.Tests
 
             string gitPath = GetGitPath();
             var trace = new NullTrace();
-            var git = new GitProcess(trace, gitPath, repoPath);
+            var env = new TestEnvironment();var git = new GitProcess(trace, env, gitPath, repoPath);
             IGitConfiguration config = git.GetConfiguration();
 
             Assert.Throws<InvalidOperationException>(() => config.UnsetAll(GitConfigurationLevel.All, "core.foobar", Constants.RegexPatterns.Any));
