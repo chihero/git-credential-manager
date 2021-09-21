@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Microsoft.Git.CredentialManager
 {
@@ -69,6 +72,48 @@ namespace Microsoft.Git.CredentialManager
             return "/";
         }
 
+        public static IEnumerable<WslDistribution> GetInstalledDistributions()
+        {
+            string wslExePath = GetWslPath();
+
+            var psi = new ProcessStartInfo(wslExePath, "--list --verbose")
+            {
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+            };
+
+            using (var wsl = new Process { StartInfo = psi })
+            {
+                wsl.Start();
+
+                string output = wsl.StandardOutput.ReadToEnd();
+                wsl.WaitForExit();
+
+                // The first line is the table header
+                string[] lines = output.Split('\r', '\n').Skip(1).Select(x => x.Trim()).ToArray();
+
+                var lineRegex = new Regex(
+                    @"^(?'default'\*)?\s+(?'name'\S+)\s+(?'state'\S+)\s+(?'wslVer'\d+)",
+                    RegexOptions.Compiled);
+
+                foreach (string line in lines)
+                {
+                    Match match = lineRegex.Match(line);
+                    if (match.Success)
+                    {
+                        string name = match.Groups["name"].Value;
+                        int wslVersion = int.Parse(match.Groups["wslVer"].Value);
+                        bool isDefault = match.Groups["default"].Success;
+                        string state = match.Groups["state"].Value;
+                        bool isRunning = StringComparer.OrdinalIgnoreCase.Equals(state, "RUNNING");
+
+                        yield return new WslDistribution(name, wslVersion, isDefault, isRunning);
+                    }
+                }
+            }
+        }
+
         internal /*for testing purposes*/ static string GetWslPath()
         {
             // WSL is only supported on 64-bit operating systems
@@ -97,5 +142,21 @@ namespace Microsoft.Git.CredentialManager
 
             return Path.Combine(sysDir, WslCommandName);
         }
+    }
+
+    public class WslDistribution
+    {
+        public WslDistribution(string name, int wslVersion, bool isDefault, bool isRunning)
+        {
+            Name = name;
+            WslVersion = wslVersion;
+            IsDefault = isDefault;
+            IsRunning = isRunning;
+        }
+
+        public string Name { get; }
+        public int WslVersion { get; }
+        public bool IsDefault { get; }
+        public bool IsRunning { get; }
     }
 }

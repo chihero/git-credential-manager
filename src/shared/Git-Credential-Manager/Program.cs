@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Atlassian.Bitbucket;
 using GitHub;
 using Microsoft.AzureRepos;
@@ -10,6 +11,15 @@ namespace Microsoft.Git.CredentialManager
     {
         public static void Main(string[] args)
         {
+            IEnumerable<WslDistribution> wslDistros = WslUtils.GetInstalledDistributions();
+
+            Console.Error.WriteLine("Name, IsDefault, IsRunning, WslVersion");
+            foreach (WslDistribution d in wslDistros)
+            {
+                Console.Error.WriteLine("{0} {1} {2} {3}",
+                    d.Name, d.IsDefault, d.IsRunning, d.WslVersion);
+            }
+
             string appPath = ApplicationBase.GetEntryApplicationPath();
             using (var context = new CommandContext(appPath))
             using (var app = new Application(context))
