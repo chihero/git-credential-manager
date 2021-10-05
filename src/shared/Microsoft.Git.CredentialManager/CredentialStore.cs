@@ -213,6 +213,15 @@ namespace Microsoft.Git.CredentialManager
                     $"See {Constants.HelpUrls.GcmCredentialStores} for more information."
                 );
             }
+
+            if (!MacOSKeychain.CanPersist())
+            {
+                throw new Exception(
+                    $"Unable to persist credentials with the '{StoreNames.MacOSKeychain}' credential store." +
+                    Environment.NewLine +
+                    $"See {Constants.HelpUrls.GcmCredentialStores} for more information."
+                );
+            }
         }
 
         private void ValidateSecretService()

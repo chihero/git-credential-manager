@@ -117,6 +117,9 @@ namespace Microsoft.Git.CredentialManager.Interop.MacOS.Native
         public static extern int SecKeychainItemCopyContent(IntPtr itemRef, IntPtr itemClass, IntPtr attrList,
             out uint length, out IntPtr outData);
 
+        [DllImport(SecurityFrameworkLib, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int SecKeychainGetStatus(IntPtr keychain, out SecKeychainStatus keychainStatus);
+
         public const int CallerSecuritySession = -1;
 
         // https://developer.apple.com/documentation/security/1542001-security_framework_result_codes
@@ -156,6 +159,25 @@ namespace Microsoft.Git.CredentialManager.Interop.MacOS.Native
                     throw new InteropException(defaultErrorMessage, error);
             }
         }
+    }
+
+    [Flags]
+    public enum SecKeychainStatus
+    {
+        /// <summary>
+        /// Indicates the keychain is unlocked.
+        /// </summary>
+        UnlockStateStatus = 1,
+
+        /// <summary>
+        /// Indicates the keychain is readable.
+        /// </summary>
+        ReadPermStatus = 2,
+
+        /// <summary>
+        /// Indicates the keychain is writable.
+        /// </summary>
+        WritePermStatus = 4,
     }
 
     [Flags]

@@ -213,6 +213,23 @@ namespace Microsoft.Git.CredentialManager.Interop.MacOS
 
         #endregion
 
+        public static bool CanPersist()
+        {
+            int result = SecKeychainGetStatus(IntPtr.Zero, out SecKeychainStatus status);
+            switch (result)
+            {
+                case OK:
+                    // Can persist if we can read and write the keychain.
+                    // If the keychain is locked we don't mind because the OS will
+                    // prompt the user to unlock just-in-time.
+                    return (status & SecKeychainStatus.ReadPermStatus) != 0 &&
+                           (status & SecKeychainStatus.WritePermStatus) != 0;
+
+                default:
+                    return false;
+            }
+        }
+
         private static IntPtr CreateCFStringUtf8(string str)
         {
             byte[] bytes = Encoding.UTF8.GetBytes(str);
