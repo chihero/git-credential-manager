@@ -1,11 +1,10 @@
-﻿using Microsoft.Git.CredentialManager;
-using Microsoft.Git.CredentialManager.Authentication.OAuth;
-using Microsoft.Git.CredentialManager.Tests.Objects;
-using Moq;
+﻿using Moq;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Threading.Tasks;
+using GitCredentialManager;
+using GitCredentialManager.Authentication.OAuth;
+using GitCredentialManager.Tests.Objects;
 using Xunit;
 
 namespace Atlassian.Bitbucket.Tests
@@ -163,7 +162,7 @@ namespace Atlassian.Bitbucket.Tests
         [InlineData("https", "bitbucket.org", "jsquire", "password", "basic", true)]
         [InlineData("https", "bitbucket.org", "jsquire", "password", "oauth", true)]
         // Basic Auth works
-        public void BitbucketHostProvider_GetCredentialAsync_ForOAuth_NoStorage_ForcedAuthMode(string protocol, string host, string username, string password, 
+        public void BitbucketHostProvider_GetCredentialAsync_ForOAuth_NoStorage_ForcedAuthMode(string protocol, string host, string username, string password,
             string preconfiguredAuthModes, bool expected)
         {
             var input = MockInput(protocol, host, username);
@@ -228,7 +227,7 @@ namespace Atlassian.Bitbucket.Tests
 
             Assert.Equal(expectedModes, actualModes);
         }
-        
+
         private static InputArguments MockInput(string protocol, string host, string username)
         {
             return new InputArguments(new Dictionary<string, string>

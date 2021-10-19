@@ -1,10 +1,10 @@
 using System;
 using Atlassian.Bitbucket;
+using GitCredentialManager.Authentication;
 using GitHub;
 using Microsoft.AzureRepos;
-using Microsoft.Git.CredentialManager.Authentication;
 
-namespace Microsoft.Git.CredentialManager
+namespace GitCredentialManager
 {
     public static class Program
     {

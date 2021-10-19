@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Threading;
 using Avalonia;
+using GitCredentialManager;
+using GitCredentialManager.UI;
 using GitHub.UI.Controls;
 using GitHub.UI.Commands;
-using Microsoft.Git.CredentialManager;
-using Microsoft.Git.CredentialManager.UI;
 
 namespace GitHub.UI
 {

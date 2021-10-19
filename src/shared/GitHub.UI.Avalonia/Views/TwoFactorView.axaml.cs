@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using GitCredentialManager.UI.Controls;
 using GitHub.UI.Controls;
-using Microsoft.Git.CredentialManager.UI.Controls;
 
 namespace GitHub.UI.Views
 {

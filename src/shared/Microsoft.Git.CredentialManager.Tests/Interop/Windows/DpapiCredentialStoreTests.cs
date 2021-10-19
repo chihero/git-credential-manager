@@ -1,12 +1,12 @@
 using System;
-using Xunit;
-using Microsoft.Git.CredentialManager.Interop.Windows;
-using Microsoft.Git.CredentialManager.Tests.Objects;
 using System.IO;
-using System.Text;
 using System.Security.Cryptography;
+using System.Text;
+using GitCredentialManager.Interop.Windows;
+using GitCredentialManager.Tests.Objects;
+using Xunit;
 
-namespace Microsoft.Git.CredentialManager.Tests.Interop.Windows
+namespace GitCredentialManager.Tests.Interop.Windows
 {
     public class DpapiCredentialStoreTests
     {

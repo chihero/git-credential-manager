@@ -1,11 +1,11 @@
 using System;
 using System.IO;
 using System.Text;
+using GitCredentialManager.Interop.Posix;
+using GitCredentialManager.Tests.Objects;
 using Xunit;
-using Microsoft.Git.CredentialManager.Interop.Posix;
-using Microsoft.Git.CredentialManager.Tests.Objects;
 
-namespace Microsoft.Git.CredentialManager.Tests.Interop.Posix
+namespace GitCredentialManager.Tests.Interop.Posix
 {
     public class GnuPassCredentialStoreTests
     {

@@ -1,10 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
-namespace Microsoft.Git.CredentialManager.Tests.Objects
+namespace GitCredentialManager.Tests.Objects
 {
     public class NullTrace : ITrace
     {

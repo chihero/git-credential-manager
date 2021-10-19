@@ -1,8 +1,8 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using GitCredentialManager.UI.Controls;
 using GitHub.UI.ViewModels;
-using Microsoft.Git.CredentialManager.UI.Controls;
 
 namespace GitHub.UI.Views
 {

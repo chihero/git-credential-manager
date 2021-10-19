@@ -3,7 +3,7 @@ using System.Linq;
 using System.Text;
 using System.Web;
 
-namespace Microsoft.Git.CredentialManager
+namespace GitCredentialManager
 {
     public static class DictionaryExtensions
     {
@@ -65,7 +65,7 @@ namespace Microsoft.Git.CredentialManager
         {
             return dict.TryGetValue(key, out var values) ? values : Enumerable.Empty<TValue>();
         }
-        
+
         public static IEnumerable<TValue> GetValues<TKey, TValue>(this IDictionary<TKey, ICollection<TValue>> dict, TKey key)
         {
             return dict.TryGetValue(key, out var values) ? values : Enumerable.Empty<TValue>();

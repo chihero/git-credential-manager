@@ -1,10 +1,9 @@
-
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
 using Microsoft.Win32.SafeHandles;
 
-namespace Microsoft.Git.CredentialManager.Interop.Windows.Native
+namespace GitCredentialManager.Interop.Windows.Native
 {
     public static class Kernel32
     {

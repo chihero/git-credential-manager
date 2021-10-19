@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.Git.CredentialManager.Authentication.OAuth
+namespace GitCredentialManager.Authentication.OAuth
 {
     public class OAuth2WebBrowserOptions
     {

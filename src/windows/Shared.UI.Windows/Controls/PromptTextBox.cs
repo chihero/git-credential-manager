@@ -2,11 +2,11 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace Microsoft.Git.CredentialManager.UI.Controls
+namespace GitCredentialManager.UI.Controls
 {
     public class PromptTextBox : TextBox
     {
-        public static readonly DependencyProperty IconContentProperty = 
+        public static readonly DependencyProperty IconContentProperty =
             DependencyProperty.RegisterAttached(nameof(IconContent), typeof(object), typeof(PromptTextBox));
         public static readonly DependencyProperty IconContentTemplateProperty =
             DependencyProperty.RegisterAttached(nameof(IconContentTemplate), typeof(DataTemplate), typeof(PromptTextBox));

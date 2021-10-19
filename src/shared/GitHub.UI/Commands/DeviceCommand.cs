@@ -1,12 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Threading;
 using System.Threading.Tasks;
+using GitCredentialManager;
+using GitCredentialManager.UI;
 using GitHub.UI.ViewModels;
-using Microsoft.Git.CredentialManager;
-using Microsoft.Git.CredentialManager.UI;
 
 namespace GitHub.UI.Commands
 {

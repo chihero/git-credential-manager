@@ -1,9 +1,8 @@
 using System;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Microsoft.Git.CredentialManager.Authentication.OAuth
+namespace GitCredentialManager.Authentication.OAuth
 {
     public interface IOAuth2WebBrowser
     {

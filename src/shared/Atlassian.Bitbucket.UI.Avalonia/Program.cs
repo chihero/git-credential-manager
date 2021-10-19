@@ -1,11 +1,10 @@
 ﻿using System;
-using System.CommandLine;
 using System.Threading;
 using Atlassian.Bitbucket.UI.Commands;
 using Atlassian.Bitbucket.UI.Controls;
 using Avalonia;
-using Microsoft.Git.CredentialManager;
-using Microsoft.Git.CredentialManager.UI;
+using GitCredentialManager;
+using GitCredentialManager.UI;
 
 namespace Atlassian.Bitbucket.UI
 {

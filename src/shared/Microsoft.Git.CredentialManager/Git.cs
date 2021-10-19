@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Microsoft.Git.CredentialManager
+namespace GitCredentialManager
 {
     public interface IGit
     {

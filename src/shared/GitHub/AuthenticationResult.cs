@@ -1,5 +1,3 @@
-using Microsoft.Git.CredentialManager;
-
 namespace GitHub
 {
     public struct AuthenticationResult

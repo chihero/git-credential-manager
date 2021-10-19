@@ -1,10 +1,9 @@
-
 using System;
 using System.IO;
 using System.Text;
 using Xunit;
 
-namespace Microsoft.Git.CredentialManager.Tests
+namespace GitCredentialManager.Tests
 {
     public class TraceTests
     {

@@ -2,10 +2,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="clr-namespace:Microsoft.Git.CredentialManager.UI.ViewModels;assembly=gcmcoreui"
-        xmlns:converters="clr-namespace:Microsoft.Git.CredentialManager.UI.Converters"
+        xmlns:converters="clr-namespace:GitCredentialManager.UI.Converters"
+        xmlns:viewModels="clr-namespace:GitCredentialManager.UI.ViewModels;assembly=gcmcoreui"
         mc:Ignorable="d" d:DesignWidth="420" d:DesignHeight="520"
-        x:Class="Microsoft.Git.CredentialManager.UI.Controls.DialogWindow"
+        x:Class="GitCredentialManager.UI.Controls.DialogWindow"
         ExtendClientAreaToDecorationsHint="{Binding ExtendClientArea}"
         ExtendClientAreaChromeHints="{Binding ShowCustomChrome, Converter={x:Static converters:WindowClientAreaConverters.BoolToChromeHints}}"
         Title="{Binding Title}"
@@ -23,7 +23,7 @@
          This is less of an issue because we're still using the WPF-based UI on Windows.
 -->
     <Design.DataContext>
-        <vm:WindowViewModel/>
+        <viewModels:WindowViewModel/>
     </Design.DataContext>
     <Border>
         <DockPanel>

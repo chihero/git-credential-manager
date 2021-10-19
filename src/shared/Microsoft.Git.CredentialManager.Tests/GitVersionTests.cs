@@ -1,7 +1,6 @@
-using System;
 using Xunit;
 
-namespace Microsoft.Git.CredentialManager.Tests
+namespace GitCredentialManager.Tests
 {
     public class GitVersionTests
     {

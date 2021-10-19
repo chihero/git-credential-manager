@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using GitCredentialManager;
+using GitCredentialManager.Authentication.OAuth;
+using GitCredentialManager.Diagnostics;
 using GitHub.Diagnostics;
-using Microsoft.Git.CredentialManager;
-using Microsoft.Git.CredentialManager.Authentication.OAuth;
-using Microsoft.Git.CredentialManager.Diagnostics;
 
 namespace GitHub
 {
