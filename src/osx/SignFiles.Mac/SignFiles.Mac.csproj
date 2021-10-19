@@ -28,7 +28,9 @@
       $(OutDir)\GitHub.UI.dll;
       $(OutDir)\GitHub.UI.Shared.dll;
       $(OutDir)\Microsoft.AzureRepos.dll;
-      $(OutDir)\Microsoft.Git.CredentialManager.dll;">
+      $(OutDir)\gcmcore.dll;
+      $(OutDir)\gcmcoreui.dll;
+      $(OutDir)\gcmcoreuiavn.dll;">
       <Authenticode>Microsoft400</Authenticode>
       <InProject>false</InProject>
     </FilesToSign>
