@@ -1,0 +1,64 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels="clr-namespace:GitCredentialManager.UI.ViewModels"
+        mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="500"
+        MinHeight="300" MinWidth="500"
+        Height="400" Width="600"
+        x:Class="GitCredentialManager.UI.Controls.MainWindow"
+        Icon="/Assets/gcmicon.ico"
+        Title="Git Credential Manager">
+
+    <Design.DataContext>
+        <viewModels:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="*">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" MinWidth="140"/>
+            <ColumnDefinition Width="Auto" MinWidth="260"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0" Orientation="Vertical">
+            <TextBlock Text="Host Providers" Background="#eee" />
+            <Button Margin="10"
+                    Content="Azure Repos" />
+            <Button Margin="10"
+                    Content="Bitbucket" />
+            <Button Margin="10"
+                    Background="LightBlue"
+                    Content="GitHub" />
+            <Button Margin="10"
+                    Content="Generic" />
+        </StackPanel>
+
+        <StackPanel Grid.Column="1" Orientation="Vertical">
+            <TextBlock Text="Credentials" Background="#eee" />
+            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*">
+                <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2"
+                           Height="64" Width="64" Fill="Goldenrod"
+                           Margin="10"/>
+                <TextBlock Grid.Row="0" Grid.Column="1"
+                           Margin="10,10,10,5"
+                           Text="https://github.com"/>
+                <TextBlock Grid.Row="1" Grid.Column="1"
+                           Margin="10,5,10,10"
+                           Text="alice" />
+            </Grid>
+            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*">
+                <Rectangle Grid.Row="0" Grid.Column="0" Grid.RowSpan="2"
+                           Height="64" Width="64" Fill="Goldenrod"
+                           Margin="10"/>
+                <TextBlock Grid.Row="0" Grid.Column="1"
+                           Margin="10,10,10,5"
+                           Text="https://github.example.com" />
+                <TextBlock Grid.Row="1" Grid.Column="1"
+                           Margin="10,5,10,10"
+                           Text="alice@example.com" />
+            </Grid>
+        </StackPanel>
+    </Grid>
+
+</Window>
