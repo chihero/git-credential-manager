@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Extensions.Msal;
@@ -14,14 +16,35 @@ namespace GitCredentialManager.Authentication
 {
     public interface IMicrosoftAuthentication
     {
+        Task<IEnumerable<IMicrosoftAccount>> GetAccountsAsync(string clientId);
+
+        Task<IMicrosoftAccount> ShowAccountPickerAsync(string clientId);
+
         Task<IMicrosoftAuthenticationResult> GetTokenAsync(string authority, string clientId, Uri redirectUri,
             string[] scopes, string userName);
+
+    }
+
+    public static class MicrosoftAuthenticationExtensions
+    {
+        public static Task<IMicrosoftAuthenticationResult> GetTokenAsync(this IMicrosoftAuthentication msAuth,
+            string authority, string clientId, Uri redirectUri, string[] scopes, IMicrosoftAccount account)
+        {
+            return msAuth.GetTokenAsync(authority, clientId, redirectUri, scopes, account.Upn);
+        }
     }
 
     public interface IMicrosoftAuthenticationResult
     {
         string AccessToken { get; }
         string AccountUpn { get; }
+    }
+
+    public interface IMicrosoftAccount
+    {
+        public string Id { get; }
+        public string Upn { get; }
+        public string Tenant { get; }
     }
 
     public enum MicrosoftAuthenticationFlowType
@@ -88,6 +111,34 @@ namespace GitCredentialManager.Authentication
             }
         }
 
+        private bool? _enableBroker;
+        private bool EnableBroker
+        {
+            get
+            {
+                if (!_enableBroker.HasValue)
+                {
+                    // Check if we can and should use OS broker authentication
+                    if (CanUseBroker(Context))
+                    {
+                        // Can only use the broker if it has been initialized
+                        _enableBroker = IsBrokerInitialized;
+
+                        if (IsBrokerInitialized)
+                            Context.Trace.WriteLine("OS broker is available and enabled.");
+                        else
+                            Context.Trace.WriteLine("OS broker has not been initialized and cannot not be used.");
+                    }
+                    else
+                    {
+                        _enableBroker = false;
+                    }
+                }
+
+                return _enableBroker.Value;
+            }
+        }
+
         #endregion
 
         public MicrosoftAuthentication(ICommandContext context)
@@ -95,24 +146,67 @@ namespace GitCredentialManager.Authentication
 
         #region IMicrosoftAuthentication
 
+        public async Task<IEnumerable<IMicrosoftAccount>> GetAccountsAsync(string clientId)
+        {
+            IPublicClientApplication app = await CreatePublicClientApplicationAsync(null, clientId, null);
+
+            IEnumerable<IAccount> accounts = await app.GetAccountsAsync();
+
+            return accounts.Select(x => new MsalAccount(x));
+        }
+
+        public async Task<IMicrosoftAccount> ShowAccountPickerAsync(string clientId)
+        {
+            IEnumerable<IMicrosoftAccount> accounts = await GetAccountsAsync(clientId);
+            IDictionary<string, IMicrosoftAccount> accountsMap = accounts.ToDictionary(x => x.Upn, x => x);
+
+            string selectedUpn;
+            if (Context.SessionManager.IsDesktopSession && TryFindHelperExecutablePath(out string helperPath))
+            {
+                var promptArgs = new StringBuilder("pick");
+
+                foreach (string upn in accountsMap.Keys)
+                {
+                    promptArgs.AppendFormat(" \"{0}\"", upn);
+                }
+
+                IDictionary<string, string> resultDict = await InvokeHelperAsync(helperPath, promptArgs.ToString(), null);
+
+                if (!resultDict.TryGetValue("account", out selectedUpn))
+                {
+                    throw new Exception("Missing 'account' in response");
+                }
+            }
+            else
+            {
+                var menu = new TerminalMenu(Context.Terminal, "Select an account");
+                TerminalMenuItem newAccountItem = menu.Add("Add new account");
+                foreach (string upn in accountsMap.Keys)
+                {
+                    menu.Add(upn);
+                }
+
+                TerminalMenuItem selected = menu.Show();
+                selectedUpn = selected == newAccountItem ? null : selected.Name;
+            }
+
+            return string.IsNullOrWhiteSpace(selectedUpn) ? null : accountsMap[selectedUpn];
+        }
+
+        private bool TryFindHelperExecutablePath(out string path)
+        {
+            return TryFindHelperExecutablePath(
+                Constants.EnvironmentVariables.MicrosoftAuthenticationHelper,
+                Constants.GitConfiguration.Credential.MicrosoftAuthenticationHelper,
+                Constants.DefaultMicrosoftAuthenticationHelper,
+                out path);
+        }
+
         public async Task<IMicrosoftAuthenticationResult> GetTokenAsync(
             string authority, string clientId, Uri redirectUri, string[] scopes, string userName)
         {
-            // Check if we can and should use OS broker authentication
-            bool useBroker = false;
-            if (CanUseBroker(Context))
-            {
-                // Can only use the broker if it has been initialized
-                useBroker = IsBrokerInitialized;
-
-                if (IsBrokerInitialized)
-                    Context.Trace.WriteLine("OS broker is available and enabled.");
-                else
-                    Context.Trace.WriteLine("OS broker has not been initialized and cannot not be used.");
-            }
-
             // Create the public client application for authentication
-            IPublicClientApplication app = await CreatePublicClientApplicationAsync(authority, clientId, redirectUri, useBroker);
+            IPublicClientApplication app = await CreatePublicClientApplicationAsync(authority, clientId, redirectUri);
 
             AuthenticationResult result = null;
 
@@ -150,7 +244,7 @@ namespace GitCredentialManager.Authentication
                 ThrowIfUserInteractionDisabled();
 
                 // If we're using the OS broker then delegate everything to that
-                if (useBroker)
+                if (EnableBroker)
                 {
                     Context.Trace.WriteLine("Performing interactive auth with broker...");
                     result = await app.AcquireTokenInteractive(scopes)
@@ -261,14 +355,22 @@ namespace GitCredentialManager.Authentication
         }
 
         private async Task<IPublicClientApplication> CreatePublicClientApplicationAsync(
-            string authority, string clientId, Uri redirectUri, bool enableBroker)
+            string authority, string clientId, Uri redirectUri)
         {
             var httpFactoryAdaptor = new MsalHttpClientFactoryAdaptor(Context.HttpClientFactory);
 
             var appBuilder = PublicClientApplicationBuilder.Create(clientId)
-                .WithAuthority(authority)
-                .WithRedirectUri(redirectUri.ToString())
                 .WithHttpClientFactory(httpFactoryAdaptor);
+
+            if (authority != null)
+            {
+                appBuilder = appBuilder.WithAuthority(authority);
+            }
+
+            if (redirectUri != null)
+            {
+                appBuilder = appBuilder.WithRedirectUri(redirectUri.ToString());
+            }
 
             // Listen to MSAL logs if GCM_TRACE_MSAUTH is set
             if (Context.Settings.IsMsalTracingEnabled)
@@ -288,11 +390,18 @@ namespace GitCredentialManager.Authentication
             }
 
             // On Windows 10+ & .NET Framework try and use the WAM broker
-            if (enableBroker && PlatformUtils.IsWindows10OrGreater())
+            if (EnableBroker && PlatformUtils.IsWindows10OrGreater())
             {
 #if NETFRAMEWORK
                 appBuilder.WithExperimentalFeatures();
                 appBuilder.WithWindowsBroker();
+                appBuilder.WithWindowsBrokerOptions(
+                    new WindowsBrokerOptions
+                    {
+                        ListWindowsWorkAndSchoolAccounts = true,
+                        MsaPassthrough = true
+                    }
+                );
 #endif
             }
 
@@ -530,6 +639,20 @@ namespace GitCredentialManager.Authentication
         }
 
         #endregion
+
+        private class MsalAccount : IMicrosoftAccount
+        {
+            private readonly IAccount _msalAccount;
+
+            public MsalAccount(IAccount msalAccount)
+            {
+                _msalAccount = msalAccount;
+            }
+
+            public string Id => _msalAccount.HomeAccountId.Identifier;
+            public string Upn => _msalAccount.Username;
+            public string Tenant => _msalAccount.HomeAccountId.TenantId;
+        }
 
         private class MsalResult : IMicrosoftAuthenticationResult
         {

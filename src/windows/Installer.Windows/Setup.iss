@@ -116,6 +116,7 @@ Source: "{#PayloadDir}\Microsoft.AzureRepos.dll";                       DestDir:
 Source: "{#PayloadDir}\gcmcore.dll";                                    DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PayloadDir}\gcmcoreui.dll";                                  DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PayloadDir}\gcmcoreuiwpf.dll";                               DestDir: "{app}"; Flags: ignoreversion
+Source: "{#PayloadDir}\Microsoft.Authentication.UI.exe";                DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PayloadDir}\Microsoft.Identity.Client.Desktop.dll";          DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PayloadDir}\Microsoft.Identity.Client.dll";                  DestDir: "{app}"; Flags: ignoreversion
 Source: "{#PayloadDir}\Microsoft.Identity.Client.Extensions.Msal.dll";  DestDir: "{app}"; Flags: ignoreversion

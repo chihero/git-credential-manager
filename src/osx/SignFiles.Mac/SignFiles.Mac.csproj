@@ -28,12 +28,14 @@
       $(OutDir)\GitHub.UI.dll;
       $(OutDir)\GitHub.UI.Shared.dll;
       $(OutDir)\Microsoft.AzureRepos.dll;
+      $(OutDir)\Microsoft.Authentication.UI.dll;
       $(OutDir)\gcmcore.dll;">
       <Authenticode>Microsoft400</Authenticode>
       <InProject>false</InProject>
     </FilesToSign>
     <MacFilesToSign Include="
       $(OutDir)\git-credential-manager-core;
+      $(OutDir)\Microsoft.Authentication.UI;
       $(OutDir)\GitHub.UI;
       $(OutDir)\Atlassian.Bitbucket.UI;">
       <InProject>false</InProject>

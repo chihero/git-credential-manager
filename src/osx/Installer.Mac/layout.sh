@@ -21,6 +21,7 @@ SRC="$ROOT/src"
 OUT="$ROOT/out"
 INSTALLER_SRC="$SRC/osx/Installer.Mac"
 GCM_SRC="$SRC/shared/Git-Credential-Manager"
+MSAUTH_UI_SRC="$SRC/shared/Microsoft.Authentication.UI.Avalonia"
 BITBUCKET_UI_SRC="$SRC/shared/Atlassian.Bitbucket.UI.Avalonia"
 GITHUB_UI_SRC="$SRC/shared/GitHub.UI.Avalonia"
 
@@ -74,6 +75,15 @@ cp "$INSTALLER_SRC/uninstall.sh" "$PAYLOAD" || exit 1
 # Publish core application executables
 echo "Publishing core application..."
 dotnet publish "$GCM_SRC" \
+	--no-restore \
+	-m:1 \
+	--configuration="$CONFIGURATION" \
+	--framework="$FRAMEWORK" \
+	--runtime="$RUNTIME" \
+	--output="$(make_absolute "$PAYLOAD")" || exit 1
+
+echo "Publishing Microsoft Authentication UI helper..."
+dotnet publish "$MSAUTH_UI_SRC" \
 	--no-restore \
 	-m:1 \
 	--configuration="$CONFIGURATION" \

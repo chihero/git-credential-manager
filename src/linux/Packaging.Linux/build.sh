@@ -44,6 +44,7 @@ ROOT="$( cd "$THISDIR"/../../.. ; pwd -P )"
 SRC="$ROOT/src"
 OUT="$ROOT/out"
 GCM_SRC="$SRC/shared/Git-Credential-Manager"
+MSAUTH_UI_SRC="$SRC/shared/Microsoft.Authentication.UI.Avalonia"
 BITBUCKET_UI_SRC="$SRC/shared/Atlassian.Bitbucket.UI.Avalonia"
 GITHUB_UI_SRC="$SRC/shared/GitHub.UI.Avalonia"
 PROJ_OUT="$OUT/linux/Packaging.Linux"
@@ -93,6 +94,15 @@ mkdir -p "$PAYLOAD" "$SYMBOLOUT" "$DEBROOT"
 # Publish core application executables
 echo "Publishing core application..."
 dotnet publish "$GCM_SRC" \
+	--configuration="$CONFIGURATION" \
+	--framework="$FRAMEWORK" \
+	--runtime="$RUNTIME" \
+	--self-contained=true \
+	-p:PublishSingleFile=true \
+	--output="$(make_absolute "$PAYLOAD")" || exit 1
+
+echo "Publishing Microsoft Authentication UI helper..."
+dotnet publish "$MSAUTH_UI_SRC" \
 	--configuration="$CONFIGURATION" \
 	--framework="$FRAMEWORK" \
 	--runtime="$RUNTIME" \

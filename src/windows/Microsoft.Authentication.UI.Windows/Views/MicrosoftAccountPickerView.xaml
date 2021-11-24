@@ -1,0 +1,51 @@
+<UserControl x:Class="Microsoft.Authentication.UI.Views.MicrosoftAccountPickerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:viewModels="clr-namespace:GitCredentialManager.UI.ViewModels;assembly=gcmcoreui"
+             xmlns:sharedControls="clr-namespace:GitCredentialManager.UI.Controls;assembly=gcmcoreuiwpf"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance viewModels:MicrosoftAccountPickerViewModel}"
+             d:DesignWidth="300">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Assets/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <DockPanel LastChildFill="True">
+        <StackPanel DockPanel.Dock="Bottom">
+            <Button IsDefault="True"
+                    HorizontalAlignment="Center"
+                    HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center"
+                    Command="{Binding SelectCommand}"
+                    Content="OK"
+                    Width="140" Height="40"
+                    Style="{StaticResource AccentButton}"/>
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,30">
+            <TextBlock HorizontalAlignment="Center"
+                       FontSize="24"
+                       Text="Git Credential Manager"/>
+            <TextBlock HorizontalAlignment="Center"
+                       FontSize="14"
+                       Text="Select an account"/>
+        </StackPanel>
+
+        <StackPanel>
+            <ListBox ItemsSource="{Binding Accounts}"
+                     SelectedItem="{Binding SelectedAccount}"
+                     Margin="0,0,0,12" />
+            <TextBlock Margin="0,0,0,20"
+                       FontSize="14" TextAlignment="Center">
+                <Hyperlink Command="{Binding AddAccountCommand}">
+                    Add an account
+                </Hyperlink>
+            </TextBlock>
+        </StackPanel>
+    </DockPanel>
+</UserControl>

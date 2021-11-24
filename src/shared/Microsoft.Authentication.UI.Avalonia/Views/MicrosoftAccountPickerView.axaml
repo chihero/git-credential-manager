@@ -1,0 +1,39 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:GitCredentialManager.UI.ViewModels;assembly=gcmcoreui"
+             mc:Ignorable="d" d:DesignWidth="420"
+             x:Class="Microsoft.Identity.GitCredentialManager.Views.MicrosoftAccountPickerView">
+    <Design.DataContext>
+        <vm:MicrosoftAccountPickerViewModel/>
+    </Design.DataContext>
+    <DockPanel LastChildFill="True">
+        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,15">
+            <!-- TODO: replace with GCM logo -->
+            <TextBlock Text="Git Credential Manager"
+                       HorizontalAlignment="Center"
+                       FontSize="26"/>
+            <TextBlock Text="Select an account"
+                       HorizontalAlignment="Center"
+                       FontSize="18"
+                       FontWeight="Light"
+                       Margin="0,10,0,10" />
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Vertical" HorizontalAlignment="Center"
+                    Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,20" HorizontalAlignment="Center">
+                <Button Content="Add new account" Classes="hyperlink"
+                        Command="{Binding AddAccountCommand}"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="OK" Classes="accent" IsDefault="True"
+                        Width="140" HorizontalContentAlignment="Center"
+                        Command="{Binding SelectCommand}"/>
+            </StackPanel>
+        </StackPanel>
+        <ListBox Items="{Binding Accounts}"
+                 SelectedItem="{Binding SelectedAccount}"
+                 Background="Transparent"/>
+    </DockPanel>
+</UserControl>

@@ -1,0 +1,6 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Microsoft.Identity.GitCredentialManager.Controls.TesterWindow"
+        CanResize="False" Width="550" SizeToContent="Height"
+        Title="Microsoft Authentication Dialog Tester">
+</Window>

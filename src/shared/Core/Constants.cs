@@ -8,6 +8,7 @@ namespace GitCredentialManager
         public const string PersonalAccessTokenUserName = "PersonalAccessToken";
         public const string DefaultCredentialNamespace = "git";
         public const int DefaultAutoDetectProviderTimeoutMs = 2000; // 2 seconds
+        public const string DefaultMicrosoftAuthenticationHelper = "Microsoft.Authentication.UI";
 
         public const string ProviderIdAuto  = "auto";
         public const string AuthorityIdAuto = "auto";
@@ -86,6 +87,7 @@ namespace GitCredentialManager
             public const string GitExecutablePath     = "GIT_EXEC_PATH";
             public const string GpgExecutablePath     = "GCM_GPG_PATH";
             public const string GcmAutoDetectTimeout  = "GCM_AUTODETECT_TIMEOUT";
+            public const string MicrosoftAuthenticationHelper = "GCM_MSAUTH_HELPER";
         }
 
         public static class Http
@@ -120,6 +122,7 @@ namespace GitCredentialManager
                 public const string DpapiStorePath = "dpapiStorePath";
                 public const string UserName = "username";
                 public const string AutoDetectTimeout = "autoDetectTimeout";
+                public const string MicrosoftAuthenticationHelper = "msauthHelper";
             }
 
             public static class Http

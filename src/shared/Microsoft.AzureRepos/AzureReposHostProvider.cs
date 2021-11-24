@@ -4,6 +4,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using GitCredentialManager;
 using GitCredentialManager.Authentication;
@@ -267,13 +268,34 @@ namespace Microsoft.AzureRepos
                 userName = _bindingManager.GetUser(orgName);
             }
 
-            _context.Trace.WriteLine(string.IsNullOrWhiteSpace(userName) ? "No user found." : $"User is '{userName}'.");
+            string clientId = GetClientId();
+
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                _context.Trace.WriteLine("No user found; checking accounts in cache...");
+
+                IMicrosoftAccount account = await _msAuth.ShowAccountPickerAsync(clientId);
+
+                if (account is null)
+                {
+                    _context.Trace.WriteLine("No existing user selected.");
+                }
+                else
+                {
+                    _context.Trace.WriteLine($"Existing user was selected: {account.Upn}");
+                    userName = account.Upn;
+                }
+            }
+            else
+            {
+                _context.Trace.WriteLine($"User is '{userName}'.");
+            }
 
             // Get an AAD access token for the Azure DevOps SPS
             _context.Trace.WriteLine("Getting Azure AD access token...");
             IMicrosoftAuthenticationResult result = await _msAuth.GetTokenAsync(
                 authAuthority,
-                GetClientId(),
+                clientId,
                 GetRedirectUri(),
                 AzureDevOpsConstants.AzureDevOpsDefaultScopes,
                 userName);

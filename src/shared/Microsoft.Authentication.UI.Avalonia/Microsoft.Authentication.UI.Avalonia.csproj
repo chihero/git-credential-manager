@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <RuntimeIdentifiers>osx-x64;linux-x64</RuntimeIdentifiers>
+    <RootNamespace>Microsoft.Identity.GitCredentialManager</RootNamespace>
+    <AssemblyName>Microsoft.Authentication.UI</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core.UI.Avalonia\Core.UI.Avalonia.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Controls\TesterWindow.axaml.cs">
+      <DependentUpon>TesterWindow.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Views\MicrosoftAccountPickerView.axaml.cs">
+      <DependentUpon>CredentialsView.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
+</Project>
