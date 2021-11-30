@@ -7,14 +7,22 @@ namespace Microsoft.AzureRepos
         // AAD environment authority base URL
         public const string AadAuthorityBaseUrl = "https://login.microsoftonline.com";
 
-        // Azure DevOps's app ID + default scopes
-        public static readonly string[] AzureDevOpsDefaultScopes = {"499b84ac-1321-427f-aa17-267ca6975798/.default"};
+        public static class OAuthTokenScopes
+        {
+            public const string ReposFull = "vso.code_full";
+            public const string ArtifactsRead = "vso.packaging";
+        }
 
-        // Visual Studio's client ID
-        // We share this to be able to consume existing access tokens from the VS caches
-        public const string AadClientId = "872cd9fa-d31f-45e0-9eab-6e460a02d1f1";
+        public static readonly string[] AzureDevOpsOAuthScopes =
+        {
+            $"{AzureDevOpsAppId}/{OAuthTokenScopes.ReposFull}",
+            $"{AzureDevOpsAppId}/{OAuthTokenScopes.ArtifactsRead}",
+        };
 
-        // Redirect URI specified by the Visual Studio application configuration
+        public const string AzureDevOpsAppId = "499b84ac-1321-427f-aa17-267ca6975798";
+        public const string GitCredentialManagerAppId = "d735b71b-9eee-4a4f-ad23-421660877ba6";
+
+        public const string AadClientId = GitCredentialManagerAppId;
         public static readonly Uri AadRedirectUri = new Uri("http://localhost");
 
         public const string VstsHostSuffix = ".visualstudio.com";
@@ -22,17 +30,8 @@ namespace Microsoft.AzureRepos
 
         public const string VssResourceTenantHeader = "X-VSS-ResourceTenant";
 
-        public const string PatCredentialType = "pat";
-        public const string OAuthCredentialType = "oauth";
-
         public const string UrnScheme = "azrepos";
         public const string UrnOrgPrefix = "org";
-
-        public static class PersonalAccessTokenScopes
-        {
-            public const string ReposWrite = "vso.code_write";
-            public const string ArtifactsRead = "vso.packaging";
-        }
 
         public static class EnvironmentVariables
         {
@@ -49,7 +48,6 @@ namespace Microsoft.AzureRepos
                 public const string DevAadClientId = "azreposDevClientId";
                 public const string DevAadRedirectUri = "azreposDevRedirectUri";
                 public const string DevAadAuthorityBaseUri = "azreposDevAuthorityBaseUri";
-                public const string CredentialType = "azreposCredentialType";
                 public const string AzureAuthority = "azureAuthority";
             }
         }
