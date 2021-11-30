@@ -65,7 +65,7 @@ GCM Windows was not designed with a cross-platform architecture.
 
 ### What level of support does GCM have?
 
-Support will be best-effort. We would really appreciate your feedback to make this a great experience across each platform we support. 
+Support will be best-effort. We would really appreciate your feedback to make this a great experience across each platform we support.
 
 ### Q: Why does GCM not support operating system/distribution 'X', or Git hosting provider 'Y'?
 
@@ -109,3 +109,10 @@ Follow the instructions in [our WSL guide](wsl.md) carefully. Especially note th
 ### Does GCM work with multiple users? If so, how?
 
 That's a fairly complicated question to answer, but in short, yes. See [our document on multiple users](multiple-users.md) for details.
+
+### What is OAuth2 and OpenID Connect?
+
+OAuth2 and OpenID Connect (OIDC) are both authentication/authorization standards
+that are widely used on the Internet to allow secure access to resources. See
+[our document on OAuth2 and OpenID Connect](oauth-explained.md) for a more in
+depth description.
