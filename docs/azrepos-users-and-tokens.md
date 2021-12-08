@@ -1,30 +1,10 @@
 # Azure Repos: Access tokens and Accounts
 
-## Different credential types
+The Azure Repos host provider uses Microsoft identity OAuth tokens to access
+your Git repositories. In the past, Azure DevOps personal access tokens (PATs)
+were used instead.
 
-The Azure Repos host provider supports creating multiple types of credential:
-
-- Azure DevOps personal access tokens
-- Microsoft identity OAuth tokens (experimental)
-
-To select which type of credential the Azure Repos host provider will create
-and use, you can set the [`credential.azreposCredentialType`](configuration.md#credentialazreposcredentialtype-experimental)
-configuration entry (or [`GCM_AZREPOS_CREDENTIALTYPE`](environment.md#GCM_AZREPOS_CREDENTIALTYPE-experimental)
-environment variable).
-
-### Azure DevOps personal access tokens
-
-Historically, the only option supported by the Azure Repos host provider was
-Azure DevOps Personal Access Tokens (PATs).
-
-These PATs are only used by Azure DevOps, and must be [managed through the Azure
-DevOps user settings page](https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=preview-page) or [REST API](https://docs.microsoft.com/en-gb/rest/api/azure/devops/tokens/pats).
-
-PATs have a limited lifetime and new tokens must be created once they expire. In
-Git Credential Manager, when a PAT expired (or was manually revoked) this
-resulted in a new authentication prompt.
-
-### Microsoft identity OAuth tokens (experimental)
+## Microsoft identity OAuth tokens
 
 "Microsoft identity OAuth token" is the generic term for OAuth-based access
 tokens issued by Azure Active Directory for either Work and School Accounts
@@ -42,25 +22,16 @@ including the Visual Studio IDE and Azure CLI. This means that as long as you're
 using Git or one of these tools with the same account, you'll never need to
 re-authenticate due to expired tokens!
 
-#### User accounts
+### User accounts
 
-In versions of Git Credential Manager that support Microsoft identity OAuth
-tokens, the user account used to authenticate for a particular Azure DevOps
-organization will now be remembered.
+The user account used to authenticate for a particular Azure DevOps organization
+is remembered by Git Credential Manager.
 
 The first time you clone, fetch or push from/to an Azure DevOps organization you
 will be prompted to sign-in and select a user account. Git Credential Manager
 will remember which account you used and continue to use that for all future
 remote Git operations (clone/fetch/push). An account is said to be "bound" to
 an Azure DevOps organization.
-
----
-
-**Note:** If GCM is set to use PAT credentials, this account will **NOT** be
-used and you will continue to be prompted to select a user account to renew the
-credential. This may change in the future.
-
----
 
 Normally you won't need to worry about managing which user accounts Git
 Credential Manager is using as this is configured automatically when you first
@@ -73,7 +44,7 @@ and manage remembered user accounts using the 'azure-repos' provider command:
 git-credential-manager-core azure-repos [ list | bind | unbind | ... ] <options>
 ```
 
-##### Listing remembered accounts
+#### Listing remembered accounts
 
 You can list all bound user accounts by Git Credential Manager for each Azure
 DevOps organization using the `list` command:
@@ -93,7 +64,7 @@ associated to the `user42@fabrikam.com` user account.
 Global "bindings" apply to all remote Git operations for the current computer
 user profile and are stored in `~/.gitconfig` or `%USERPROFILE%\.gitconfig`.
 
-##### Using different accounts within a repository
+#### Using different accounts within a repository
 
 If you generally use one account for an Azure DevOps organization, the default
 global bindings will be sufficient. However, if you wish to use a different
@@ -127,7 +98,7 @@ inside a repository:
 +   (local)  -> alice-alt@contoso.com
 ```
 
-##### Forget an account
+#### Forget an account
 
 To have Git Credential Manager forget a user account, use the `unbind` command:
 
@@ -143,9 +114,8 @@ git-credential-manager-core azure-repos unbind fabrikam
 ```
 
 In the above example, and global account binding for the `fabrikam` organization
-will be forgotten. The next time you need to renew a PAT (if using PATs) or
-perform any remote Git operation (is using Azure tokens) you will be prompted
-to authenticate again.
+will be forgotten. The next time you perform any remote Git operation you will
+be prompted to authenticate again.
 
 To forget or remove a local binding, within the repository run the `unbind`
 command with the `--local` option:
@@ -160,7 +130,7 @@ command with the `--local` option:
 -   (local)  -> alice-alt@contoso.com
 ```
 
-##### Using different accounts for specific Git remotes
+#### Using different accounts for specific Git remotes
 
 As well as global and local user account bindings, you can instruct Git
 Credential Manager to use a specific user account for an individual Git remotes
