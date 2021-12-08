@@ -162,12 +162,15 @@ namespace Microsoft.AzureRepos
 
             _context.Trace.WriteLine(string.IsNullOrWhiteSpace(userName) ? "No user found." : $"User is '{userName}'.");
 
+            string clientId = GetClientId();
+            Uri redirectUri = GetRedirectUri();
+
             // Get an AAD access token for the Azure DevOps SPS
             _context.Trace.WriteLine("Getting Azure AD access token...");
             IMicrosoftAuthenticationResult result = await _msAuth.GetTokenAsync(
+                clientId,
                 authAuthority,
-                GetClientId(),
-                GetRedirectUri(),
+                redirectUri,
                 AzureDevOpsConstants.AzureDevOpsDefaultScopes,
                 userName);
             _context.Trace.WriteLineSecrets(

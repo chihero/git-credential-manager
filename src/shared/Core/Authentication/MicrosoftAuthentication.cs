@@ -14,7 +14,7 @@ namespace GitCredentialManager.Authentication
 {
     public interface IMicrosoftAuthentication
     {
-        Task<IMicrosoftAuthenticationResult> GetTokenAsync(string authority, string clientId, Uri redirectUri,
+        Task<IMicrosoftAuthenticationResult> GetTokenAsync(string clientId, string authority, Uri redirectUri,
             string[] scopes, string userName);
     }
 
@@ -95,8 +95,8 @@ namespace GitCredentialManager.Authentication
 
         #region IMicrosoftAuthentication
 
-        public async Task<IMicrosoftAuthenticationResult> GetTokenAsync(
-            string authority, string clientId, Uri redirectUri, string[] scopes, string userName)
+        public async Task<IMicrosoftAuthenticationResult> GetTokenAsync(string clientId, string authority,
+            Uri redirectUri, string[] scopes, string userName)
         {
             // Check if we can and should use OS broker authentication
             bool useBroker = false;
