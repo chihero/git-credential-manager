@@ -12,7 +12,7 @@ using KnownGitCfg = GitCredentialManager.Constants.GitConfiguration;
 
 namespace Microsoft.AzureRepos
 {
-    public class AzureReposHostProvider : DisposableObject, IHostProvider, IConfigurableComponent, ICommandProvider
+    public class AzureReposHostProvider : DisposableObject, IHostProvider, IConfigurableComponent, ICommandProvider, IAccountProvider
     {
         private readonly ICommandContext _context;
         private readonly IAzureDevOpsRestApi _azDevOps;
@@ -416,6 +416,43 @@ namespace Microsoft.AzureRepos
             }
 
             return defaultValue;
+        }
+
+        #endregion
+
+        #region IAccountProvider
+
+        public IAccount GetAccount(InputArguments input)
+        {
+            Uri remoteUri = input.GetRemoteUri();
+            string orgName = UriHelpers.GetOrganizationName(remoteUri);
+
+            bool remoteHasUser = !string.IsNullOrWhiteSpace(input.UserName) &&
+                                 (UriHelpers.IsVisualStudioComHost(remoteUri.Host) ||
+                                  UriHelpers.IsAzureDevOpsHost(remoteUri.Host) &&
+                                  !StringComparer.OrdinalIgnoreCase.Equals(orgName, input.UserName));
+
+            if (remoteHasUser)
+            {
+                return new NamedAccount(input.UserName);
+            }
+
+            AzureReposBinding binding = _bindingManager.GetBinding(orgName);
+
+            if (binding is null)
+            {
+                return null;
+            }
+        }
+
+        public IEnumerable<IAccount> GetAccounts()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SetAccount(InputArguments input, IAccount account)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion

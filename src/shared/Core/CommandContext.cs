@@ -71,6 +71,11 @@ namespace GitCredentialManager
         /// Native UI prompts.
         /// </summary>
         ISystemPrompts SystemPrompts { get; }
+
+        /// <summary>
+        /// Account manager for mapping remotes to user accounts.
+        /// </summary>
+        IAccountProvider AccountProvider { get; }
     }
 
     /// <summary>
@@ -142,6 +147,7 @@ namespace GitCredentialManager
 
             HttpClientFactory = new HttpClientFactory(FileSystem, Trace, Settings, Streams);
             CredentialStore   = new CredentialStore(this);
+            AccountProvider    = new AccountProvider(Trace, Git);
 
             // Set the parent window handle/ID
             SystemPrompts.ParentWindowId = Settings.ParentWindowId;
@@ -204,6 +210,8 @@ namespace GitCredentialManager
         public IEnvironment Environment { get; }
 
         public ISystemPrompts SystemPrompts { get; }
+
+        public IAccountProvider AccountProvider { get; }
 
         #endregion
 
