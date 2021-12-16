@@ -154,8 +154,8 @@ namespace Microsoft.AzureRepos.Tests
             var expectedOrgUri = new Uri("https://org.visualstudio.com");
             var remoteUri = new Uri("https://org.visualstudio.com/");
             var authorityUrl = "https://login.microsoftonline.com/common";
-            var expectedClientId = AzureDevOpsConstants.AadClientId;
-            var expectedRedirectUri = AzureDevOpsConstants.AadRedirectUri;
+            var expectedClientId = AzureDevOpsConstants.GcmClientId;
+            var expectedRedirectUri = AzureDevOpsConstants.GcmRedirectUri;
             var expectedScopes = AzureDevOpsConstants.AzureDevOpsDefaultScopes;
             var accessToken = "ACCESS-TOKEN";
             var authResult = CreateAuthResult(urlAccount, accessToken);
@@ -203,8 +203,8 @@ namespace Microsoft.AzureRepos.Tests
             var expectedOrgUri = new Uri("https://dev.azure.com/org");
             var remoteUri = new Uri("https://dev.azure.com/org/project/_git/repo");
             var authorityUrl = "https://login.microsoftonline.com/common";
-            var expectedClientId = AzureDevOpsConstants.AadClientId;
-            var expectedRedirectUri = AzureDevOpsConstants.AadRedirectUri;
+            var expectedClientId = AzureDevOpsConstants.GcmClientId;
+            var expectedRedirectUri = AzureDevOpsConstants.GcmRedirectUri;
             var expectedScopes = AzureDevOpsConstants.AzureDevOpsDefaultScopes;
             var accessToken = "ACCESS-TOKEN";
             var authResult = CreateAuthResult(urlAccount, accessToken);
@@ -251,8 +251,8 @@ namespace Microsoft.AzureRepos.Tests
             var expectedOrgUri = new Uri("https://dev.azure.com/org");
             var remoteUri = new Uri("https://dev.azure.com/org/project/_git/repo");
             var authorityUrl = "https://login.microsoftonline.com/common";
-            var expectedClientId = AzureDevOpsConstants.AadClientId;
-            var expectedRedirectUri = AzureDevOpsConstants.AadRedirectUri;
+            var expectedClientId = AzureDevOpsConstants.GcmClientId;
+            var expectedRedirectUri = AzureDevOpsConstants.GcmRedirectUri;
             var expectedScopes = AzureDevOpsConstants.AzureDevOpsDefaultScopes;
             var accessToken = "ACCESS-TOKEN";
             var account = "jane.doe";
@@ -299,8 +299,8 @@ namespace Microsoft.AzureRepos.Tests
             var expectedOrgUri = new Uri("https://dev.azure.com/org");
             var remoteUri = new Uri("https://dev.azure.com/org/proj/_git/repo");
             var authorityUrl = "https://login.microsoftonline.com/common";
-            var expectedClientId = AzureDevOpsConstants.AadClientId;
-            var expectedRedirectUri = AzureDevOpsConstants.AadRedirectUri;
+            var expectedClientId = AzureDevOpsConstants.GcmClientId;
+            var expectedRedirectUri = AzureDevOpsConstants.GcmRedirectUri;
             var expectedScopes = AzureDevOpsConstants.AzureDevOpsDefaultScopes;
             var accessToken = "ACCESS-TOKEN";
             var account = "john.doe";
@@ -347,8 +347,8 @@ namespace Microsoft.AzureRepos.Tests
             var expectedOrgUri = new Uri("https://dev.azure.com/org");
             var remoteUri = new Uri("https://dev.azure.com/org/proj/_git/repo");
             var authorityUrl = "https://login.microsoftonline.com/common";
-            var expectedClientId = AzureDevOpsConstants.AadClientId;
-            var expectedRedirectUri = AzureDevOpsConstants.AadRedirectUri;
+            var expectedClientId = AzureDevOpsConstants.GcmClientId;
+            var expectedRedirectUri = AzureDevOpsConstants.GcmRedirectUri;
             var expectedScopes = AzureDevOpsConstants.AzureDevOpsDefaultScopes;
             var accessToken = "ACCESS-TOKEN";
             var account = "john.doe";
@@ -396,8 +396,8 @@ namespace Microsoft.AzureRepos.Tests
             var expectedOrgUri = new Uri("https://dev.azure.com/org");
             var remoteUri = new Uri("https://dev.azure.com/org/proj/_git/repo");
             var authorityUrl = "https://login.microsoftonline.com/common";
-            var expectedClientId = AzureDevOpsConstants.AadClientId;
-            var expectedRedirectUri = AzureDevOpsConstants.AadRedirectUri;
+            var expectedClientId = AzureDevOpsConstants.GcmClientId;
+            var expectedRedirectUri = AzureDevOpsConstants.GcmRedirectUri;
             var expectedScopes = AzureDevOpsConstants.AzureDevOpsDefaultScopes;
             var accessToken = "ACCESS-TOKEN";
             var account = "john.doe";
@@ -446,8 +446,8 @@ namespace Microsoft.AzureRepos.Tests
             var expectedOrgUri = new Uri("https://dev.azure.com/org");
             var remoteUri = new Uri("https://dev.azure.com/org/proj/_git/repo");
             var authorityUrl = "https://login.microsoftonline.com/common";
-            var expectedClientId = AzureDevOpsConstants.AadClientId;
-            var expectedRedirectUri = AzureDevOpsConstants.AadRedirectUri;
+            var expectedClientId = AzureDevOpsConstants.GcmClientId;
+            var expectedRedirectUri = AzureDevOpsConstants.GcmRedirectUri;
             var expectedScopes = AzureDevOpsConstants.AzureDevOpsDefaultScopes;
             var accessToken = "ACCESS-TOKEN";
             var personalAccessToken = "PERSONAL-ACCESS-TOKEN";

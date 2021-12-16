@@ -7,15 +7,17 @@ namespace Microsoft.AzureRepos
         // AAD environment authority base URL
         public const string AadAuthorityBaseUrl = "https://login.microsoftonline.com";
 
-        // Azure DevOps's app ID + default scopes
-        public static readonly string[] AzureDevOpsDefaultScopes = {"499b84ac-1321-427f-aa17-267ca6975798/.default"};
+        public static readonly string[] AzureDevOpsDefaultScopes =
+        {
+            OAuthScopes.ReposFull, OAuthScopes.ArtifactsRead
+        };
 
-        // Visual Studio's client ID
-        // We share this to be able to consume existing access tokens from the VS caches
-        public const string AadClientId = "872cd9fa-d31f-45e0-9eab-6e460a02d1f1";
+        public const string AzDevClientId = "499b84ac-1321-427f-aa17-267ca6975798";
+        public const string AzDevAppUrl = "https://app.vssps.visualstudio.com";
+        public const string VsClientId = "872cd9fa-d31f-45e0-9eab-6e460a02d1f1";
 
-        // Redirect URI specified by the Visual Studio application configuration
-        public static readonly Uri AadRedirectUri = new Uri("http://localhost");
+        public const string GcmClientId = "d735b71b-9eee-4a4f-ad23-421660877ba6";
+        public static readonly Uri GcmRedirectUri = new Uri("http://localhost");
 
         public const string VstsHostSuffix = ".visualstudio.com";
         public const string AzureDevOpsHost = "dev.azure.com";
@@ -32,6 +34,13 @@ namespace Microsoft.AzureRepos
         {
             public const string ReposWrite = "vso.code_write";
             public const string ArtifactsRead = "vso.packaging";
+        }
+
+        public static class OAuthScopes
+        {
+            public const string UserImpersonation = $"{AzDevAppUrl}/.default";
+            public const string ReposFull = $"{AzDevAppUrl}/vso.code_full";
+            public const string ArtifactsRead = $"{AzDevAppUrl}/vso.packaging";
         }
 
         public static class EnvironmentVariables

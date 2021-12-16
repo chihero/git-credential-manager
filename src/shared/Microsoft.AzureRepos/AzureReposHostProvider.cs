@@ -295,7 +295,7 @@ namespace Microsoft.AzureRepos
                 return clientId;
             }
 
-            return AzureDevOpsConstants.AadClientId;
+            return AzureDevOpsConstants.GcmClientId;
         }
 
         private Uri GetRedirectUri()
@@ -310,7 +310,7 @@ namespace Microsoft.AzureRepos
                 return redirectUri;
             }
 
-            return AzureDevOpsConstants.AadRedirectUri;
+            return AzureDevOpsConstants.GcmRedirectUri;
         }
 
         /// <remarks>
