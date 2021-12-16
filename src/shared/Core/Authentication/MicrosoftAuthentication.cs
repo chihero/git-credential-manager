@@ -113,7 +113,8 @@ namespace GitCredentialManager.Authentication
             }
 
             // Create the public client application for authentication
-            IPublicClientApplication app = await CreatePublicClientApplicationAsync(authority, clientId, redirectUri, useBroker);
+            IPublicClientApplication app = await CreatePublicClientApplicationAsync(
+                authority, clientId, redirectUri, useBroker, msaPassThrough);
 
             AuthenticationResult result = null;
 
@@ -268,6 +269,7 @@ namespace GitCredentialManager.Authentication
                     if (account is null)
                     {
                         // No account found in the cache
+                        Context.Trace.WriteLine("Failed to acquire token silently; no account found in cache.");
                         return null;
                     }
 
@@ -304,7 +306,7 @@ namespace GitCredentialManager.Authentication
         }
 
         private async Task<IPublicClientApplication> CreatePublicClientApplicationAsync(
-            string authority, string clientId, Uri redirectUri, bool enableBroker)
+            string authority, string clientId, Uri redirectUri, bool enableBroker, bool msaPassThrough)
         {
             var httpFactoryAdaptor = new MsalHttpClientFactoryAdaptor(Context.HttpClientFactory);
 
@@ -336,6 +338,12 @@ namespace GitCredentialManager.Authentication
 #if NETFRAMEWORK
                 appBuilder.WithExperimentalFeatures();
                 appBuilder.WithWindowsBroker();
+                appBuilder.WithWindowsBrokerOptions(
+                    new WindowsBrokerOptions
+                    {
+                        MsaPassthrough = msaPassThrough
+                    }
+                );
 #endif
             }
 
