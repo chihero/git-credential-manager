@@ -14,6 +14,15 @@ namespace GitCredentialManager
 
         public const string GcmDataDirectoryName = ".gcm";
 
+        public static class WellKnownAzureTenants
+        {
+            public const string MsaId = "9188040d-6c67-4c5b-b112-36a304b66dad";
+            public const string PublicMsaPtTransferId = "f8cdef31-a31e-4b4a-93e4-5f571e91255a";
+
+            public static readonly Guid Msa = new Guid(MsaId);
+            public static readonly Guid PublicMsaPtTransfer = new Guid(PublicMsaPtTransferId);
+        }
+
         public static class CredentialStoreNames
         {
             public const string WindowsCredentialManager = "wincredman";

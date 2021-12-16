@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
@@ -15,7 +16,7 @@ namespace GitCredentialManager.Authentication
     public interface IMicrosoftAuthentication
     {
         Task<IMicrosoftAuthenticationResult> GetTokenAsync(string authority, string clientId, Uri redirectUri,
-            string[] scopes, string userName);
+            string[] scopes, string userName, bool msaPassThrough);
     }
 
     public interface IMicrosoftAuthenticationResult
@@ -96,7 +97,7 @@ namespace GitCredentialManager.Authentication
         #region IMicrosoftAuthentication
 
         public async Task<IMicrosoftAuthenticationResult> GetTokenAsync(
-            string authority, string clientId, Uri redirectUri, string[] scopes, string userName)
+            string authority, string clientId, Uri redirectUri, string[] scopes, string userName, bool msaPassThrough)
         {
             // Check if we can and should use OS broker authentication
             bool useBroker = false;
@@ -119,7 +120,7 @@ namespace GitCredentialManager.Authentication
             // Try silent authentication first if we know about an existing user
             if (!string.IsNullOrWhiteSpace(userName))
             {
-                result = await GetAccessTokenSilentlyAsync(app, scopes, userName);
+                result = await GetAccessTokenSilentlyAsync(app, scopes, userName, msaPassThrough);
             }
 
             //
@@ -243,15 +244,57 @@ namespace GitCredentialManager.Authentication
         /// <summary>
         /// Obtain an access token without showing UI or prompts.
         /// </summary>
-        private async Task<AuthenticationResult> GetAccessTokenSilentlyAsync(IPublicClientApplication app, string[] scopes, string userName)
+        private async Task<AuthenticationResult> GetAccessTokenSilentlyAsync(
+            IPublicClientApplication app, string[] scopes, string userName, bool msaPassThrough)
         {
             try
             {
                 Context.Trace.WriteLine($"Attempting to acquire token silently for user '{userName}'...");
 
-                // We can either call `app.GetAccountsAsync` and filter through the IAccount objects for the instance with the correct user name,
-                // or we can just pass the user name string we have as the `loginHint` and let MSAL do exactly that for us instead!
-                return await app.AcquireTokenSilent(scopes, loginHint: userName).ExecuteAsync();
+                // If this is a MSA pass-through (MSA-PT) resource/scope and the existing user is an MSA,
+                // then we need to do some 'magic' to get a valid access token for the resource.
+                // MSA accounts have a pseudo 'tenant ID' that an IAccount object has as it's home tenant ID.
+                // The MSA-PT resource however requires that they have a token issued from a 'real' AAD tenant.
+                // There are special AAD tenants for each Azure cloud instance where every MSA is a guest, and
+                // we must use this tenant instead when doing a silent token request. Yes.. I know...
+                if (msaPassThrough)
+                {
+                    Context.Trace.WriteLine("Resource or scope requires MSA-PT.");
+
+                    // Manually lookup the account by UPN/username
+                    IEnumerable<IAccount> accounts = await app.GetAccountsAsync();
+                    IAccount account = accounts.FirstOrDefault(x => StringComparer.OrdinalIgnoreCase.Equals(userName, x.Username));
+
+                    if (account is null)
+                    {
+                        // No account found in the cache
+                        return null;
+                    }
+
+                    var atsBuilder = app.AcquireTokenSilent(scopes, account);
+
+                    // If the account is an MSA we must target the special 'MSA-PT transfer tenant'
+                    // because the resource/scope only accepts tokens from a 'real' AAD tenant.
+                    if (Guid.TryParse(account.HomeAccountId.TenantId, out Guid homeTenantId) &&
+                        homeTenantId == Constants.WellKnownAzureTenants.Msa)
+                    {
+                        Context.Trace.WriteLine("Account is an MSA and we are speaking to an MSA-PT resource; using transfer tenant...");
+
+                        // Note that there are different 'transfer' tenants for each cloud!
+                        // Today we only support the public Azure cloud, but if/when we need to support
+                        // sovereign clouds we need to also deal with those mappings.
+                        // TODO: support multiple clouds
+                        atsBuilder = atsBuilder.WithTenantId(Constants.WellKnownAzureTenants.PublicMsaPtTransferId);
+                    }
+
+                    return await atsBuilder.ExecuteAsync();
+                }
+                else
+                {
+                    // We can either call `app.GetAccountsAsync` and filter through the IAccount objects for the instance with the correct user name,
+                    // or we can just pass the user name string we have as the `loginHint` and let MSAL do exactly that for us instead!
+                    return await app.AcquireTokenSilent(scopes, loginHint: userName).ExecuteAsync();
+                }
             }
             catch (MsalUiRequiredException)
             {
