@@ -8,8 +8,11 @@ namespace GitCredentialManager.Interop.Linux
     {
         public override bool IsSamePath(string a, string b)
         {
-            a = Path.GetFileName(a);
-            b = Path.GetFileName(b);
+            if (string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b))
+                return false;
+
+            a = Path.GetFullPath(a);
+            b = Path.GetFullPath(b);
 
             return StringComparer.Ordinal.Equals(a, b);
         }
