@@ -83,7 +83,6 @@ namespace GitCredentialManager
         /// specified by path and that match the specified search pattern.
         /// </returns>
         IEnumerable<string> EnumerateFiles(string path, string searchPattern);
-
     }
 
     /// <summary>

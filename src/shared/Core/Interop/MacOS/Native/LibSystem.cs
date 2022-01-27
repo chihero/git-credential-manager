@@ -18,5 +18,8 @@ namespace GitCredentialManager.Interop.MacOS.Native
             IntPtr ptr = dlsym(handle, symbol);
             return Marshal.PtrToStructure<IntPtr>(ptr);
         }
+
+        [DllImport(LibSystemLib, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern unsafe int _NSGetExecutablePath(byte* path, uint* size);
     }
 }

@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using GitCredentialManager.Interop;
+using GitCredentialManager.Interop.MacOS.Native;
 using GitCredentialManager.Interop.Posix.Native;
 
 namespace GitCredentialManager
@@ -153,6 +155,57 @@ namespace GitCredentialManager
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Get the first command line argument "argv[0]" of the current process from the operating system APIs.
+        /// </summary>
+        /// <returns>First command line argument of the current process.</returns>
+        /// <exception cref="InteropException">Failure to call operating system APIs.</exception>
+        /// <exception cref="PlatformNotSupportedException">Unsupported operating system.</exception>
+        public static string GetNativeArgv0()
+        {
+            int result = -1;
+
+            if (IsWindows())
+            {
+                throw new NotImplementedException();
+            }
+            else if (IsMacOS())
+            {
+                // Start with a 1024 byte buffer; we can resize later if this isn't big enough
+                uint bufSize = 1024;
+
+                for (int attempt = 0; attempt < 2; attempt++)
+                {
+                    byte[] buffer = new byte[bufSize];
+
+                    unsafe
+                    {
+                        fixed (byte* ptr = buffer)
+                        {
+                            if ((result = LibSystem._NSGetExecutablePath(ptr, &bufSize)) != 0)
+                            {
+                                // Buffer too small; required size is now in bufSize
+                                continue;
+                            }
+
+                            return Marshal.PtrToStringAuto(new IntPtr(ptr));
+                        }
+                    }
+                }
+
+            }
+            else if (IsLinux())
+            {
+                throw new NotImplementedException();
+            }
+            else
+            {
+                throw new PlatformNotSupportedException();
+            }
+
+            throw new InteropException("Failed to resolve argv[0]", result);
         }
 
         #region Platform information helper methods

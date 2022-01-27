@@ -158,6 +158,7 @@ namespace GitCredentialManager
             public const string GcmCredentialStores    = "https://aka.ms/gcm/credstores";
             public const string GcmWamComSecurity      = "https://aka.ms/gcm/wamadmin";
             public const string GcmAutoDetect          = "https://aka.ms/gcm/autodetect";
+            public const string GcmOldExeName          = "https://aka.ms/gcm/exename";
         }
 
         private static Version _gcmVersion;
