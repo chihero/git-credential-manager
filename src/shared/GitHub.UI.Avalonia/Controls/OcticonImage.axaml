@@ -1,0 +1,21 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:controls="clr-namespace:GitHub.UI.Controls"
+             mc:Ignorable="d" d:DesignWidth="420"
+             x:Class="GitHub.UI.Controls.OcticonImage">
+    <UserControl.Template>
+        <ControlTemplate TargetType="controls:OcticonImage">
+            <Viewbox Height="16" Stretch="Uniform" Margin="0">
+                <controls:OcticonPath Fill="{TemplateBinding Foreground}"
+                                      Icon="{TemplateBinding Icon}"
+                                      Height="16"
+                                      Focusable="False"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Margin="0"/>
+            </Viewbox>
+        </ControlTemplate>
+    </UserControl.Template>
+</UserControl>
