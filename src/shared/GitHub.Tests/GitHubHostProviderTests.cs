@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using GitCredentialManager;
 using GitCredentialManager.Authentication.OAuth;
@@ -90,6 +91,66 @@ namespace GitHub.Tests
             Assert.Equal(expectedService, provider.GetServiceName(input));
         }
 
+        [Theory]
+        [InlineData(null,
+            new[]
+            {
+                GitHubConstants.OAuthScopes.Repo,
+                GitHubConstants.OAuthScopes.Gist,
+                GitHubConstants.OAuthScopes.Workflow
+            })]
+        [InlineData("read:packages",
+            new[]
+            {
+                GitHubConstants.OAuthScopes.Repo,
+                GitHubConstants.OAuthScopes.Gist,
+                GitHubConstants.OAuthScopes.Workflow,
+                "read:packages"
+            })]
+        [InlineData("read:packages,codespaces",
+            new[]
+            {
+                GitHubConstants.OAuthScopes.Repo,
+                GitHubConstants.OAuthScopes.Gist,
+                GitHubConstants.OAuthScopes.Workflow,
+                "read:packages",
+                "codespaces"
+            })]
+        [InlineData("read:PACKAGES, CODESPACES",
+            new[]
+            {
+                GitHubConstants.OAuthScopes.Repo,
+                GitHubConstants.OAuthScopes.Gist,
+                GitHubConstants.OAuthScopes.Workflow,
+                "read:PACKAGES",
+                "CODESPACES"
+            })]
+        [InlineData("read:packages,gist,repo",
+            new[]
+            {
+                GitHubConstants.OAuthScopes.Repo,
+                GitHubConstants.OAuthScopes.Gist,
+                GitHubConstants.OAuthScopes.Workflow,
+                "read:packages",
+                "gist",
+                "repo"
+            })]
+        public void GitHubHostProvider_GetOAuthScopes(string extraScopes, string[] expectedScopes)
+        {
+            var context = new TestCommandContext();
+
+            if (extraScopes != null)
+                context.Environment.Variables.Add(GitHubConstants.EnvironmentVariables.OAuthExtraScopes, extraScopes);
+
+            var ghApiMock = new Mock<IGitHubRestApi>(MockBehavior.Strict);
+            var ghAuthMock = new Mock<IGitHubAuthentication>(MockBehavior.Strict);
+
+            var provider = new GitHubHostProvider(context, ghApiMock.Object, ghAuthMock.Object);
+
+            string[] actualScopes = provider.GetOAuthScopes().ToArray();
+
+            Assert.Equal(expectedScopes, actualScopes);
+        }
 
         [Theory]
         [InlineData("https://example.com", "browser", AuthenticationModes.Browser)]
@@ -116,7 +177,6 @@ namespace GitHub.Tests
 
             Assert.Equal(expectedModes, actualModes);
         }
-
 
         [Theory]
         [InlineData("https://example.com", null, "0.1", false, AuthenticationModes.Pat)]

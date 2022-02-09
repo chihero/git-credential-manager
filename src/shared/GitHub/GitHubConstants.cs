@@ -60,6 +60,7 @@ namespace GitHub
         {
             public const string AuthenticationHelper = "GCM_GITHUB_HELPER";
             public const string AuthenticationModes = "GCM_GITHUB_AUTHMODES";
+            public const string OAuthExtraScopes = "GCM_GITHUB_OAUTH_SCOPES";
             public const string DevOAuthClientId = "GCM_DEV_GITHUB_CLIENTID";
             public const string DevOAuthClientSecret = "GCM_DEV_GITHUB_CLIENTSECRET";
             public const string DevOAuthRedirectUri = "GCM_DEV_GITHUB_REDIRECTURI";
@@ -71,6 +72,7 @@ namespace GitHub
             {
                 public const string AuthenticationHelper = "gitHubHelper";
                 public const string AuthenticationModes = "gitHubAuthModes";
+                public const string OAuthExtraScopes = "gitHubOAuthScopes";
                 public const string DevOAuthClientId = "gitHubDevClientId";
                 public const string DevOAuthClientSecret = "gitHubDevClientSecret";
                 public const string DevOAuthRedirectUri = "gitHubDevRedirectUri";

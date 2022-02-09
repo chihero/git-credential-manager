@@ -406,6 +406,37 @@ Defaults to false/disabled.
 
 ---
 
+### GCM_GITHUB_OAUTH_SCOPES
+
+Additional scopes to request when acquiring an OAuth access token, separated by
+a comma.
+
+**Note:** GCM will always request the default scopes that are required for Git.
+It is not possible to remove these scopes from the request:
+
+- `repo`
+- `gist`
+- `workflow`
+
+The current set of possible OAuth scopes can be found in GitHub's documentation:
+<https://docs.github.com/en/developers/apps/building-oauth-apps/scopes-for-oauth-apps>
+
+##### Windows
+
+```batch
+SET GCM_GITHUB_OAUTH_SCOPES="read:packages,codespace"
+```
+
+##### macOS/Linux
+
+```bash
+export GCM_GITHUB_OAUTH_SCOPES="read:packages,codespace"
+```
+
+**Also see: [credential.gitHubOAuthScopes](configuration.md#credentialgitHubOAuthScopes)**
+
+---
+
 ### GCM_GITHUB_AUTHMODES
 
 Override the available authentication modes presented during GitHub authentication.

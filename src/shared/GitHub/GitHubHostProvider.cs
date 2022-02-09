@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using GitHub.Diagnostics;
@@ -11,13 +12,19 @@ namespace GitHub
 {
     public class GitHubHostProvider : HostProvider, IDiagnosticProvider
     {
-        private static readonly string[] GitHubOAuthScopes =
+        /// <summary>
+        /// Required OAuth scopes.
+        /// </summary>
+        private static readonly string[] RequiredGitHubOAuthScopes =
         {
             GitHubConstants.OAuthScopes.Repo,
             GitHubConstants.OAuthScopes.Gist,
             GitHubConstants.OAuthScopes.Workflow,
         };
 
+        /// <summary>
+        /// Scopes to request when creating a PAT.
+        /// </summary>
         private static readonly string[] GitHubCredentialScopes =
         {
             GitHubConstants.TokenScopes.Gist,
@@ -178,9 +185,11 @@ namespace GitHub
 
         private async Task<GitCredential> GenerateOAuthCredentialAsync(Uri targetUri, bool useBrowser)
         {
+            IEnumerable<string> scopes = GetOAuthScopes();
+
             OAuth2TokenResult result = useBrowser
-                ? await _gitHubAuth.GetOAuthTokenViaBrowserAsync(targetUri, GitHubOAuthScopes)
-                : await _gitHubAuth.GetOAuthTokenViaDeviceCodeAsync(targetUri, GitHubOAuthScopes);
+                ? await _gitHubAuth.GetOAuthTokenViaBrowserAsync(targetUri, scopes)
+                : await _gitHubAuth.GetOAuthTokenViaDeviceCodeAsync(targetUri, scopes);
 
             // Resolve the GitHub user handle
             GitHubUserInfo userInfo = await _gitHubApi.GetUserInfoAsync(targetUri, result.AccessToken);
@@ -293,6 +302,28 @@ namespace GitHub
                 // Fall-back to offering all modes so the user is never blocked from authenticating by at least one mode
                 return AuthenticationModes.All;
             }
+        }
+
+        internal ICollection<string> GetOAuthScopes()
+        {
+            // Always include the default scopes that GCM requires
+            var scopes = new List<string>(RequiredGitHubOAuthScopes);
+
+            // Check for any additional scopes that the user or another application may desire
+            if (Context.Settings.TryGetSetting(
+                    GitHubConstants.EnvironmentVariables.OAuthExtraScopes,
+                    Constants.GitConfiguration.Credential.SectionName,
+                    GitHubConstants.GitConfiguration.Credential.OAuthExtraScopes,
+                    out string extraScopesStr) &&
+                !string.IsNullOrWhiteSpace(extraScopesStr))
+            {
+                IEnumerable<string> extraScopes = extraScopesStr
+                    .Split(new[] { "," }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => x.Trim());
+                scopes.AddRange(extraScopes);
+            }
+
+            return scopes;
         }
 
         protected override void ReleaseManagedResources()
