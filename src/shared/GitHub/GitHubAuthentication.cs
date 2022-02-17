@@ -104,7 +104,7 @@ namespace GitHub
                 if (!GitHubHostProvider.IsGitHubDotCom(targetUri)) promptArgs.AppendFormat(" --enterprise-url {0}", QuoteCmdArg(targetUri.ToString()));
                 if (!string.IsNullOrWhiteSpace(userName)) promptArgs.AppendFormat(" --username {0}", QuoteCmdArg(userName));
 
-                IDictionary<string, string> resultDict = await InvokeHelperAsync(helperPath, promptArgs.ToString(), null);
+                IDictionary<string, string> resultDict = await InvokeHelperAsync(helperPath, promptArgs.ToString());
 
                 if (!resultDict.TryGetValue("mode", out string responseMode))
                 {
@@ -221,7 +221,7 @@ namespace GitHub
                 var args = new StringBuilder("2fa");
                 if (isSms) args.Append(" --sms");
 
-                IDictionary<string, string> resultDict = await InvokeHelperAsync(helperPath, args.ToString(), null);
+                IDictionary<string, string> resultDict = await InvokeHelperAsync(helperPath, args.ToString());
 
                 if (!resultDict.TryGetValue("code", out string authCode))
                 {
@@ -296,7 +296,7 @@ namespace GitHub
                 var tokenCts = new CancellationTokenSource();
 
                 // Show the dialog with the device code but don't await its closure
-                Task promptTask = InvokeHelperAsync(helperPath, args.ToString(), null, promptCts.Token);
+                Task promptTask = InvokeHelperAsync(helperPath, args.ToString(), promptCts.Token);
 
                 // Start the request for an OAuth token but don't wait
                 Task<OAuth2TokenResult> tokenTask = oauthClient.GetTokenByDeviceCodeAsync(dcr, tokenCts.Token);

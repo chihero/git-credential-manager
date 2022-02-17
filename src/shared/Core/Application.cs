@@ -77,6 +77,7 @@ namespace GitCredentialManager
             rootCommand.AddCommand(new ConfigureCommand(Context, _configurationService));
             rootCommand.AddCommand(new UnconfigureCommand(Context, _configurationService));
             rootCommand.AddCommand(diagnoseCommand);
+            rootCommand.AddCommand(new MicrosoftAuthCommand(Context));
 
             // Add any custom provider commands
             foreach (ProviderCommand providerCommand in _providerCommands)

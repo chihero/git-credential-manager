@@ -261,13 +261,30 @@ namespace Microsoft.AzureRepos
                 userName = _bindingManager.GetUser(orgName);
             }
 
-            _context.Trace.WriteLine(string.IsNullOrWhiteSpace(userName) ? "No user found." : $"User is '{userName}'.");
+            string clientId = GetClientId();
+            if (string.IsNullOrWhiteSpace(userName))
+            {
+                _context.Trace.WriteLine("No user found. Prompting...");
+
+                var auth = new AzureDevOpsAuthentication(_context);
+                // TODO: filter to correct tenant? what about guests? sort by best match and include other accounts still?
+                IEnumerable<IMicrosoftAccount> allAccounts = await _msAuth.GetAccountsAsync(clientId);
+                AzureDevOpsSelectAccountResult selectResult = await auth.SelectAccountAsync(allAccounts);
+                if (!(selectResult?.Account is null))
+                {
+                    userName = selectResult.Account.UserName;
+                }
+            }
+            else
+            {
+                _context.Trace.WriteLine($"User is '{userName}'.");
+            }
 
             // Get an AAD access token for the Azure DevOps SPS
             _context.Trace.WriteLine("Getting Azure AD access token...");
             IMicrosoftAuthenticationResult result = await _msAuth.GetTokenAsync(
                 authAuthority,
-                GetClientId(),
+                clientId,
                 GetRedirectUri(),
                 AzureDevOpsConstants.AzureDevOpsDefaultScopes,
                 userName);

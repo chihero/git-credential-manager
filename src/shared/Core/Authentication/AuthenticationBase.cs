@@ -19,14 +19,44 @@ namespace GitCredentialManager.Authentication
             Context = context;
         }
 
-        protected Task<IDictionary<string, string>> InvokeHelperAsync(string path, string args,
-            IDictionary<string, string> standardInput = null)
+        protected Task<IDictionary<string, string>> InvokeHelperAsync(string path, string args)
         {
-            return InvokeHelperAsync(path, args, null, CancellationToken.None);
+            return InvokeHelperInternalAsync(path, args, null, CancellationToken.None);
         }
 
-        internal protected virtual async Task<IDictionary<string, string>> InvokeHelperAsync(string path, string args,
+        protected Task<IDictionary<string, string>> InvokeHelperAsync(string path, string args, CancellationToken ct)
+        {
+            return InvokeHelperInternalAsync(path, args, null, ct);
+        }
+
+        protected Task<IDictionary<string, string>> InvokeHelperAsync(string path, string args,
+            IDictionary<string, string> standardInput)
+        {
+            return InvokeHelperAsync(path, args, standardInput, CancellationToken.None);
+        }
+
+        protected Task<IDictionary<string, string>> InvokeHelperAsync(string path, string args,
+            IDictionary<string, IList<string>> standardInput)
+        {
+            return InvokeHelperAsync(path, args, standardInput, CancellationToken.None);
+        }
+
+        protected internal virtual Task<IDictionary<string, string>> InvokeHelperAsync(string path, string args,
             IDictionary<string, string> standardInput, CancellationToken ct)
+        {
+            return InvokeHelperInternalAsync(
+                path, args, x => x.WriteDictionaryAsync(standardInput), ct);
+        }
+
+        protected internal virtual Task<IDictionary<string, string>> InvokeHelperAsync(string path, string args,
+            IDictionary<string, IList<string>> standardInput, CancellationToken ct)
+        {
+            return InvokeHelperInternalAsync(
+                path, args, x => x.WriteMultiDictionaryAsync(standardInput), ct);
+        }
+
+        private async Task<IDictionary<string, string>> InvokeHelperInternalAsync(string path, string args,
+            Func<StreamWriter, Task> standardInputFunc, CancellationToken ct)
         {
             var procStartInfo = new ProcessStartInfo(path)
             {
@@ -52,9 +82,9 @@ namespace GitCredentialManager.Authentication
             // Kill the process upon a cancellation request
             ct.Register(() => process.Kill());
 
-            if (!(standardInput is null))
+            if (!(standardInputFunc is null))
             {
-                await process.StandardInput.WriteDictionaryAsync(standardInput);
+                await standardInputFunc(process.StandardInput);
             }
 
             IDictionary<string, string> resultDict = await process.StandardOutput.ReadDictionaryAsync(StringComparer.OrdinalIgnoreCase);

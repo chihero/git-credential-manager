@@ -4,6 +4,8 @@ namespace Microsoft.AzureRepos
 {
     internal static class AzureDevOpsConstants
     {
+        public const string DefaultAuthenticationHelper = "Microsoft.AzureRepos.UI";
+
         // AAD environment authority base URL
         public const string AadAuthorityBaseUrl = "https://login.microsoftonline.com";
 
@@ -36,6 +38,7 @@ namespace Microsoft.AzureRepos
 
         public static class EnvironmentVariables
         {
+            public const string AuthenticationHelper = "GCM_AZREPOS_HELPER";
             public const string DevAadClientId = "GCM_DEV_AZREPOS_CLIENTID";
             public const string DevAadRedirectUri = "GCM_DEV_AZREPOS_REDIRECTURI";
             public const string DevAadAuthorityBaseUri = "GCM_DEV_AZREPOS_AUTHORITYBASEURI";
@@ -46,6 +49,7 @@ namespace Microsoft.AzureRepos
         {
             public static class Credential
             {
+                public const string AuthenticationHelper = "azreposHelper";
                 public const string DevAadClientId = "azreposDevClientId";
                 public const string DevAadRedirectUri = "azreposDevRedirectUri";
                 public const string DevAadAuthorityBaseUri = "azreposDevAuthorityBaseUri";

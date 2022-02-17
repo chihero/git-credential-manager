@@ -14,6 +14,12 @@ namespace GitCredentialManager
 
         public const string GcmDataDirectoryName = ".gcm";
 
+        /// <summary>
+        /// Shared first-party public client application ID (name: "Git Credential Manager")
+        /// for the Microsoft Identity Platform.
+        /// </summary>
+        public const string GcmAadClientId = "d735b71b-9eee-4a4f-ad23-421660877ba6";
+
         public static class CredentialStoreNames
         {
             public const string WindowsCredentialManager = "wincredman";
@@ -201,6 +207,12 @@ namespace GitCredentialManager
             string clrVersion = info.ClrVersion;
 
             return string.Format($"Git-Credential-Manager/{GcmVersion} ({osType}; {cpuArch}) CLR/{clrVersion}");
+        }
+
+        public static class WellKnownAzureTenants
+        {
+            public const string PersonalAccountsTenantId = "9188040d-6c67-4c5b-b112-36a304b66dad";
+            public static readonly Guid PersonalAccountsTenantGuid = new Guid(PersonalAccountsTenantId);
         }
     }
 }

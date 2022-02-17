@@ -1,0 +1,31 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Microsoft.AzureRepos.UI.Controls.TesterWindow"
+        CanResize="False" Width="550" SizeToContent="Height"
+        Title="Azure Repos Dialog Tester">
+    <TabControl Margin="5,10">
+        <TabControl.Styles>
+            <Style Selector="TabItem">
+                <Setter Property="MinHeight" Value="30" />
+                <Setter Property="FontSize" Value="12"/>
+            </Style>
+            <Style Selector="TabItem > StackPanel">
+                <Setter Property="Margin" Value="0,10,0,0"/>
+            </Style>
+            <Style Selector="TabItem > StackPanel > Grid > Label">
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Margin" Value="0,0,10,0"/>
+            </Style>
+            <Style Selector="TabItem > StackPanel > Button">
+                <Setter Property="Margin" Value="0,10,0,0" />
+                <Setter Property="Padding" Value="14,10" />
+                <Setter Property="HorizontalAlignment" Value="Right" />
+            </Style>
+        </TabControl.Styles>
+        <TabItem Header="Account Picker">
+            <StackPanel>
+                <Button Classes="accent" Content="Show" Click="ShowAccountPicker" />
+            </StackPanel>
+        </TabItem>
+    </TabControl>
+</Window>

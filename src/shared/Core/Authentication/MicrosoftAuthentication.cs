@@ -16,6 +16,13 @@ namespace GitCredentialManager.Authentication
     public interface IMicrosoftAuthentication
     {
         /// <summary>
+        /// Get a list of all available accounts.
+        /// </summary>
+        /// <param name="clientId">Client/application ID.</param>
+        /// <returns>Available accounts.</returns>
+        Task<IEnumerable<IMicrosoftAccount>> GetAccountsAsync(string clientId);
+
+        /// <summary>
         /// Acquire an access token for a public client application with the specified scopes.
         /// </summary>
         /// <param name="authority">Authentication authority URL.</param>
@@ -26,6 +33,39 @@ namespace GitCredentialManager.Authentication
         /// <returns>Authentication result containing an access token.</returns>
         Task<IMicrosoftAuthenticationResult> GetTokenAsync(string authority, string clientId, Uri redirectUri,
             string[] scopes, string userName);
+    }
+
+    public interface IMicrosoftAccount
+    {
+        /// <summary>
+        /// Unique account ID across all environments and tenants.
+        /// </summary>
+        string Id { get; }
+
+        /// <summary>
+        /// User name in UPN format.
+        /// </summary>
+        string UserName { get; }
+
+        /// <summary>
+        /// Home tenant ID.
+        /// </summary>
+        string HomeTenantId { get; }
+
+        /// <summary>
+        /// Cloud environment host (e.g. "login.microsoftonline.com").
+        /// </summary>
+        string Environment { get; }
+
+        /// <summary>
+        /// Display name of the account.
+        /// </summary>
+        string DisplayName { get; }
+
+        /// <summary>
+        /// True if this account is a personal Microsoft Account, false otherwise for Work or School accounts.
+        /// </summary>
+        bool IsPersonalAccount { get; }
     }
 
     public interface IMicrosoftAuthenticationResult
@@ -104,6 +144,19 @@ namespace GitCredentialManager.Authentication
             : base(context) { }
 
         #region IMicrosoftAuthentication
+
+        public async Task<IEnumerable<IMicrosoftAccount>> GetAccountsAsync(string clientId)
+        {
+            // Create the public client application for authentication
+            bool useBroker = CanUseBroker();
+            IPublicClientApplication app = GetPublicAppBuilder(clientId, useBroker).Build();
+
+            await RegisterTokenCacheAsync(app);
+
+            IEnumerable<IAccount> accounts = await app.GetAccountsAsync();
+
+            return accounts.Select(x => new MsalAccount(x));
+        }
 
         public async Task<IMicrosoftAuthenticationResult> GetTokenAsync(
             string authority, string clientId, Uri redirectUri, string[] scopes, string userName)
@@ -535,6 +588,31 @@ namespace GitCredentialManager.Authentication
         }
 
         #endregion
+
+        private class MsalAccount : IMicrosoftAccount
+        {
+            public string Id { get; }
+
+            public string UserName { get; }
+
+            public string HomeTenantId { get; }
+
+            public string Environment { get; }
+
+            public string DisplayName => null; // TODO: get ID token?
+
+            public bool IsPersonalAccount { get; }
+
+            public MsalAccount(IAccount account)
+            {
+                Id = account.HomeAccountId.Identifier;
+                UserName = account.Username;
+                HomeTenantId = account.HomeAccountId.TenantId;
+                Environment = account.Environment;
+                IsPersonalAccount = Guid.TryParse(HomeTenantId, out Guid homeTenantGuid) &&
+                                    homeTenantGuid == Constants.WellKnownAzureTenants.PersonalAccountsTenantGuid;
+            }
+        }
 
         private class MsalResult : IMicrosoftAuthenticationResult
         {
