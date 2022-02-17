@@ -15,6 +15,15 @@ namespace GitCredentialManager.Authentication
 {
     public interface IMicrosoftAuthentication
     {
+        /// <summary>
+        /// Acquire an access token for a public client application with the specified scopes.
+        /// </summary>
+        /// <param name="authority">Authentication authority URL.</param>
+        /// <param name="clientId">Public client application ID.</param>
+        /// <param name="redirectUri">Redirect URI for authentication.</param>
+        /// <param name="scopes">Scopes to request a token for.</param>
+        /// <param name="userName">Optional user name (UPN) to acquire a token for.</param>
+        /// <returns>Authentication result containing an access token.</returns>
         Task<IMicrosoftAuthenticationResult> GetTokenAsync(string authority, string clientId, Uri redirectUri,
             string[] scopes, string userName);
     }
