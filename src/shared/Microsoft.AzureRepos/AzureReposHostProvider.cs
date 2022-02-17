@@ -1,13 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.CommandLine;
-using System.CommandLine.Invocation;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using GitCredentialManager;
 using GitCredentialManager.Authentication;
-using GitCredentialManager.Commands;
 using KnownGitCfg = GitCredentialManager.Constants.GitConfiguration;
 
 namespace Microsoft.AzureRepos
