@@ -16,19 +16,16 @@ namespace GitCredentialManager
             using (var app = new Application(context))
             {
                 // Workaround for https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/issues/2560
-                if (MicrosoftAuthentication.CanUseBroker(context))
+                try
                 {
-                    try
-                    {
-                        MicrosoftAuthentication.InitializeBroker();
-                    }
-                    catch (Exception ex)
-                    {
-                        context.Streams.Error.WriteLine(
-                            "warning: broker initialization failed{0}{1}",
-                            Environment.NewLine, ex.Message
-                        );
-                    }
+                    MicrosoftAuthentication.InitializeBroker();
+                }
+                catch (Exception ex)
+                {
+                    context.Streams.Error.WriteLine(
+                        "warning: broker initialization failed{0}{1}",
+                        Environment.NewLine, ex.Message
+                    );
                 }
 
                 // Register all supported host providers at the normal priority.

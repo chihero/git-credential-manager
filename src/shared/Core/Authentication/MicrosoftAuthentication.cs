@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
@@ -98,21 +99,14 @@ namespace GitCredentialManager.Authentication
         public async Task<IMicrosoftAuthenticationResult> GetTokenAsync(
             string authority, string clientId, Uri redirectUri, string[] scopes, string userName)
         {
-            // Check if we can and should use OS broker authentication
-            bool useBroker = false;
-            if (CanUseBroker(Context))
-            {
-                // Can only use the broker if it has been initialized
-                useBroker = IsBrokerInitialized;
-
-                if (IsBrokerInitialized)
-                    Context.Trace.WriteLine("OS broker is available and enabled.");
-                else
-                    Context.Trace.WriteLine("OS broker has not been initialized and cannot not be used.");
-            }
-
             // Create the public client application for authentication
-            IPublicClientApplication app = await CreatePublicClientApplicationAsync(authority, clientId, redirectUri, useBroker);
+            bool useBroker = CanUseBroker();
+            IPublicClientApplication app = GetPublicAppBuilder(clientId, useBroker)
+                .WithAuthority(authority)
+                .WithRedirectUri(redirectUri.ToString())
+                .Build();
+
+            await RegisterTokenCacheAsync(app);
 
             AuthenticationResult result = null;
 
@@ -260,14 +254,15 @@ namespace GitCredentialManager.Authentication
             }
         }
 
-        private async Task<IPublicClientApplication> CreatePublicClientApplicationAsync(
-            string authority, string clientId, Uri redirectUri, bool enableBroker)
+        private PublicClientApplicationBuilder GetPublicAppBuilder(string clientId, bool enableBroker)
         {
+            Context.Trace.WriteLine(enableBroker
+                ? $"Creating public client application for '{clientId}' with broker support."
+                : $"Creating public client application for '{clientId}'.");
+
             var httpFactoryAdaptor = new MsalHttpClientFactoryAdaptor(Context.HttpClientFactory);
 
             var appBuilder = PublicClientApplicationBuilder.Create(clientId)
-                .WithAuthority(authority)
-                .WithRedirectUri(redirectUri.ToString())
                 .WithHttpClientFactory(httpFactoryAdaptor);
 
             // Listen to MSAL logs if GCM_TRACE_MSAUTH is set
@@ -287,8 +282,8 @@ namespace GitCredentialManager.Authentication
                 appBuilder.WithParentActivityOrWindow(() => new IntPtr(hWndInt));
             }
 
-            // On Windows 10+ & .NET Framework try and use the WAM broker
-            if (enableBroker && PlatformUtils.IsWindows10OrGreater())
+            // Enable the broker if we are requested to
+            if (enableBroker)
             {
 #if NETFRAMEWORK
                 appBuilder.WithExperimentalFeatures();
@@ -296,12 +291,7 @@ namespace GitCredentialManager.Authentication
 #endif
             }
 
-            IPublicClientApplication app = appBuilder.Build();
-
-            // Register the application token cache
-            await RegisterTokenCacheAsync(app);
-
-            return app;
+            return appBuilder;
         }
 
         #endregion
@@ -456,11 +446,17 @@ namespace GitCredentialManager.Authentication
 
         #region Auth flow capability detection
 
-        public static bool CanUseBroker(ICommandContext context)
+        public bool CanUseBroker()
         {
 #if NETFRAMEWORK
             // We only support the broker on Windows 10 and require an interactive session
-            if (!context.SessionManager.IsDesktopSession || !PlatformUtils.IsWindows10OrGreater())
+            if (!Context.SessionManager.IsDesktopSession || !PlatformUtils.IsWindows10OrGreater())
+            {
+                return false;
+            }
+
+            // Broker requires initialization
+            if (!IsBrokerInitialized)
             {
                 return false;
             }
@@ -468,7 +464,7 @@ namespace GitCredentialManager.Authentication
             // Default to not using the OS broker
             const bool defaultValue = false;
 
-            if (context.Settings.TryGetSetting(Constants.EnvironmentVariables.MsAuthUseBroker,
+            if (Context.Settings.TryGetSetting(Constants.EnvironmentVariables.MsAuthUseBroker,
                     Constants.GitConfiguration.Credential.SectionName,
                     Constants.GitConfiguration.Credential.MsAuthUseBroker,
                     out string valueStr))

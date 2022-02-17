@@ -21,7 +21,8 @@ namespace GitCredentialManager.Diagnostics
 
         protected override async Task<bool> RunInternalAsync(StringBuilder log, IList<string> additionalFiles)
         {
-            if (MicrosoftAuthentication.CanUseBroker(_context))
+            // Broker only available on Windows 10+ with a desktop session
+            if (PlatformUtils.IsWindows10OrGreater() && _context.SessionManager.IsDesktopSession)
             {
                 log.Append("Checking broker initialization state...");
                 if (MicrosoftAuthentication.IsBrokerInitialized)
