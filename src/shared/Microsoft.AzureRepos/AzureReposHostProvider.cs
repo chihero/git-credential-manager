@@ -191,7 +191,8 @@ namespace Microsoft.AzureRepos
                 GetClientId(),
                 GetRedirectUri(),
                 AzureDevOpsConstants.AzureDevOpsDefaultScopes,
-                null);
+                null,
+                false);
             _context.Trace.WriteLineSecrets(
                 $"Acquired Azure access token. Account='{result.AccountUpn}' Token='{{0}}'", new object[] {result.AccessToken});
 
@@ -235,7 +236,8 @@ namespace Microsoft.AzureRepos
             string clientId = GetClientId();
 
             _context.Trace.WriteLine("Resolving user for input...");
-            string userName = await GetUserNameAsync(input, orgName, clientId);
+            var foo = await GetUserNameAsync(input, orgName, clientId);
+            string userName = foo.AccountUpn;
 
             _context.Trace.WriteLine(string.IsNullOrWhiteSpace(userName)
                 ? "No user hint available."
@@ -248,14 +250,30 @@ namespace Microsoft.AzureRepos
                 clientId,
                 GetRedirectUri(),
                 AzureDevOpsConstants.AzureDevOpsDefaultScopes,
-                userName);
+                userName,
+                foo.UseNewAccount);
             _context.Trace.WriteLineSecrets(
                 $"Acquired Azure access token. Account='{result.AccountUpn}' Token='{{0}}'", new object[] {result.AccessToken});
 
             return result;
         }
 
-        private async Task<string> GetUserNameAsync(InputArguments input, string orgName, string clientId)
+        private class Foo
+        {
+            public bool UseNewAccount { get; set; }
+            public string AccountUpn { get; set; }
+
+            public static Foo NewAccount() => new Foo { UseNewAccount = true };
+
+            private Foo() { }
+
+            public Foo(string accountUpn)
+            {
+                AccountUpn = accountUpn;
+            }
+        }
+
+        private async Task<Foo> GetUserNameAsync(InputArguments input, string orgName, string clientId)
         {
             //
             // If the remote URI is a classic "*.visualstudio.com" host name and we have a user specified from the
@@ -270,7 +288,7 @@ namespace Microsoft.AzureRepos
                  (UriHelpers.IsAzureDevOpsHost(input) && !StringComparer.OrdinalIgnoreCase.Equals(orgName, input.UserName))))
             {
                 _context.Trace.WriteLine($"Username '{input.UserName}' found in remote URL.");
-                return input.UserName;
+                return new Foo(input.UserName);
             }
 
             //
@@ -282,7 +300,7 @@ namespace Microsoft.AzureRepos
             if (!string.IsNullOrWhiteSpace(orgUserName))
             {
                 _context.Trace.WriteLine($"Username '{orgUserName}' is bound to org '{orgName}'.");
-                return orgUserName;
+                return new Foo(orgUserName);
             }
 
             //
@@ -294,7 +312,7 @@ namespace Microsoft.AzureRepos
             if (accounts.Count == 0)
             {
                 _context.Trace.WriteLine("No accounts found.");
-                return null;
+                return new Foo(null);
             }
 
             // TODO: if there is only one account (for the correct authority) should we just use that?
@@ -307,13 +325,13 @@ namespace Microsoft.AzureRepos
             if (accountResult?.Account is null)
             {
                 _context.Trace.WriteLine("User selected to add a new account.");
-                return null;
+                return Foo.NewAccount();
             }
 
             // TODO: persist binding? leave to the store step? what about "use for all orgs"?
 
             _context.Trace.WriteLine($"User selected account '{accountResult.Account.UserName}'.");
-            return accountResult.Account.UserName;
+            return new Foo(accountResult.Account.UserName);
         }
 
         private string GetClientId()

@@ -30,9 +30,10 @@ namespace GitCredentialManager.Authentication
         /// <param name="redirectUri">Redirect URI for authentication.</param>
         /// <param name="scopes">Scopes to request a token for.</param>
         /// <param name="userName">Optional user name (UPN) to acquire a token for.</param>
+        /// <param name="forceLogin">Force user to authenticate by entering credentials.</param>
         /// <returns>Authentication result containing an access token.</returns>
         Task<IMicrosoftAuthenticationResult> GetTokenAsync(string authority, string clientId, Uri redirectUri,
-            string[] scopes, string userName);
+            string[] scopes, string userName, bool forceLogin);
     }
 
     public interface IMicrosoftAccount
@@ -159,7 +160,7 @@ namespace GitCredentialManager.Authentication
         }
 
         public async Task<IMicrosoftAuthenticationResult> GetTokenAsync(
-            string authority, string clientId, Uri redirectUri, string[] scopes, string userName)
+            string authority, string clientId, Uri redirectUri, string[] scopes, string userName, bool forceLogin)
         {
             // Create the public client application for authentication
             bool useBroker = CanUseBroker();
@@ -174,12 +175,21 @@ namespace GitCredentialManager.Authentication
             IAccount account = null;
 
             // Attempt to find an IAccount object in the cache if we've been given a username hint
-            if (!string.IsNullOrWhiteSpace(userName))
+            if (!forceLogin && !string.IsNullOrWhiteSpace(userName))
             {
                 IEnumerable<IAccount> accounts = await app.GetAccountsAsync();
                 account = accounts.FirstOrDefault(
                     x => StringComparer.OrdinalIgnoreCase.Equals(userName, x.Username));
             }
+
+            // If we have an account object, attempt to avoid prompting the user to re-select that account
+            // in any interactive prompts that may be required. If we're being asked to force the user to
+            // explicitly enter their credentials, then force the login prompt.
+            Prompt prompt = forceLogin
+                ? Prompt.ForceLogin
+                : account is null
+                    ? Prompt.NoPrompt
+                    : Prompt.SelectAccount;
 
             // Try silent authentication first if we know about an existing user
             if (account != null)
@@ -229,7 +239,7 @@ namespace GitCredentialManager.Authentication
                 {
                     Context.Trace.WriteLine("Performing interactive auth with broker...");
                     result = await app.AcquireTokenInteractive(scopes)
-                        .WithPrompt(Prompt.SelectAccount)
+                        .WithPrompt(prompt)
                         .WithAccount(account)
                         // We must configure the system webview as a fallback
                         .WithSystemWebViewOptions(GetSystemWebViewOptions())
@@ -255,7 +265,7 @@ namespace GitCredentialManager.Authentication
                             Context.Trace.WriteLine("Performing interactive auth with embedded web view...");
                             EnsureCanUseEmbeddedWebView();
                             result = await app.AcquireTokenInteractive(scopes)
-                                .WithPrompt(Prompt.SelectAccount)
+                                .WithPrompt(prompt)
                                 .WithAccount(account)
                                 .WithUseEmbeddedWebView(true)
                                 .WithEmbeddedWebViewOptions(GetEmbeddedWebViewOptions())
@@ -266,7 +276,7 @@ namespace GitCredentialManager.Authentication
                             Context.Trace.WriteLine("Performing interactive auth with system web view...");
                             EnsureCanUseSystemWebView(app, redirectUri);
                             result = await app.AcquireTokenInteractive(scopes)
-                                .WithPrompt(Prompt.SelectAccount)
+                                .WithPrompt(prompt)
                                 .WithAccount(account)
                                 .WithSystemWebViewOptions(GetSystemWebViewOptions())
                                 .ExecuteAsync();

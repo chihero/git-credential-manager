@@ -23,6 +23,39 @@ namespace GitCredentialManager
             return item;
         }
 
+        public static bool YesNo(ITerminal terminal, string question, bool? defaultOption = null)
+        {
+            EnsureArgument.NotNullOrWhiteSpace(question, nameof(question));
+
+            string yn = !defaultOption.HasValue
+                ? "y/n"
+                : defaultOption.Value
+                    ? "Y/n"
+                    : "y/N";
+
+            while (true)
+            {
+                string answer = terminal.Prompt($"{question}? [{yn}]").Trim().ToLowerInvariant();
+
+                if (answer == "y" || answer == "yes")
+                {
+                    return true;
+                }
+
+                if (answer == "n" || answer == "no")
+                {
+                    return false;
+                }
+
+                if (string.IsNullOrEmpty(answer) && defaultOption.HasValue)
+                {
+                    return defaultOption.Value;
+                }
+
+                terminal.WriteLine($"Invalid response '{answer}'.\n");
+            }
+        }
+
         public TerminalMenuItem Show(int? defaultOption = null)
         {
             bool hasDefault = defaultOption.HasValue && defaultOption.Value > -1;

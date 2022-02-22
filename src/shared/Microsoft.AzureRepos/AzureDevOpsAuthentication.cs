@@ -109,12 +109,8 @@ namespace Microsoft.AzureRepos
                 TerminalMenuItem actChoice = actMenu.Show();
                 IMicrosoftAccount act = actItemMap[actChoice];
 
-                var allMenu = new TerminalMenu(Context.Terminal, "Use this account for all organizations?");
-                var yesItem = allMenu.Add("Yes");
-                var noItem = allMenu.Add("No");
-                var allChoice = allMenu.Show(0);
-
-                bool useForAllOrgs = allChoice == yesItem;
+                bool useForAllOrgs = TerminalMenu.YesNo(
+                    Context.Terminal, "Use this account for all organizations", true);
 
                 return new AzureDevOpsSelectAccountResult{Account = act, UseForAllOrgs = useForAllOrgs};
             }
