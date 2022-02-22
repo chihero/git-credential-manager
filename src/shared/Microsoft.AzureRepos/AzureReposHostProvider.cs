@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using GitCredentialManager;
@@ -69,11 +70,10 @@ namespace Microsoft.AzureRepos
 
         public async Task<ICredential> GetCredentialAsync(InputArguments input)
         {
-            Uri remoteUri = input.GetRemoteUri();
-
             if (UsePersonalAccessTokens())
             {
-                string service = GetServiceName(remoteUri);
+                Uri remoteUri = input.GetRemoteUri();
+                string service = GetServiceName(input);
                 string account = GetAccountNameForCredentialQuery(input);
 
                 _context.Trace.WriteLine($"Looking for existing credential in store with service={service} account={account}...");
@@ -99,18 +99,16 @@ namespace Microsoft.AzureRepos
             {
                 // Include the username request here so that we may use it as an override
                 // for user account lookups when getting Azure Access Tokens.
-                var azureResult = await GetAzureAccessTokenAsync(remoteUri, input.UserName);
+                var azureResult = await GetAzureAccessTokenAsync(input);
                 return new GitCredential(azureResult.AccountUpn, azureResult.AccessToken);
             }
         }
 
         public Task StoreCredentialAsync(InputArguments input)
         {
-            Uri remoteUri = input.GetRemoteUri();
-
             if (UsePersonalAccessTokens())
             {
-                string service = GetServiceName(remoteUri);
+                string service = GetServiceName(input);
 
                 // We always store credentials against the given username argument for
                 // both vs.com and dev.azure.com-style URLs.
@@ -123,7 +121,7 @@ namespace Microsoft.AzureRepos
             }
             else
             {
-                string orgName = UriHelpers.GetOrganizationName(remoteUri);
+                string orgName = UriHelpers.GetOrganizationName(input);
                 _context.Trace.WriteLine($"Signing user {input.UserName} in to organization '{orgName}'...");
                 _bindingManager.SignIn(orgName, input.UserName);
             }
@@ -133,11 +131,9 @@ namespace Microsoft.AzureRepos
 
         public Task EraseCredentialAsync(InputArguments input)
         {
-            Uri remoteUri = input.GetRemoteUri();
-
             if (UsePersonalAccessTokens())
             {
-                string service = GetServiceName(remoteUri);
+                string service = GetServiceName(input);
                 string account = GetAccountNameForCredentialQuery(input);
 
                 // Try to locate an existing credential
@@ -153,7 +149,7 @@ namespace Microsoft.AzureRepos
             }
             else
             {
-                string orgName = UriHelpers.GetOrganizationName(remoteUri);
+                string orgName = UriHelpers.GetOrganizationName(input);
 
                 _context.Trace.WriteLine($"Signing out of organization '{orgName}'...");
                 _bindingManager.SignOut(orgName);
@@ -181,8 +177,7 @@ namespace Microsoft.AzureRepos
                 throw new Exception("Unencrypted HTTP is not supported for Azure Repos. Ensure the repository remote URL is using HTTPS.");
             }
 
-            Uri remoteUri = input.GetRemoteUri();
-            Uri orgUri = UriHelpers.CreateOrganizationUri(remoteUri, out _);
+            Uri orgUri = UriHelpers.CreateOrganizationUri(input, out _);
 
             // Determine the MS authentication authority for this organization
             _context.Trace.WriteLine("Determining Microsoft Authentication Authority...");
@@ -216,15 +211,15 @@ namespace Microsoft.AzureRepos
             return new GitCredential(result.AccountUpn, pat);
         }
 
-        private async Task<IMicrosoftAuthenticationResult> GetAzureAccessTokenAsync(Uri remoteUri, string userName)
+        private async Task<IMicrosoftAuthenticationResult> GetAzureAccessTokenAsync(InputArguments input)
         {
             // We should not allow unencrypted communication and should inform the user
-            if (StringComparer.OrdinalIgnoreCase.Equals(remoteUri.Scheme, "http"))
+            if (StringComparer.OrdinalIgnoreCase.Equals(input.Protocol, "http"))
             {
                 throw new Exception("Unencrypted HTTP is not supported for Azure Repos. Ensure the repository remote URL is using HTTPS.");
             }
 
-            Uri orgUri = UriHelpers.CreateOrganizationUri(remoteUri, out string orgName);
+            Uri orgUri = UriHelpers.CreateOrganizationUri(input, out string orgName);
 
             _context.Trace.WriteLine($"Determining Microsoft Authentication authority for Azure DevOps organization '{orgName}'...");
             string authAuthority = _authorityCache.GetAuthority(orgName);
@@ -237,48 +232,14 @@ namespace Microsoft.AzureRepos
             }
             _context.Trace.WriteLine($"Authority is '{authAuthority}'.");
 
-            //
-            // If the remote URI is a classic "*.visualstudio.com" host name and we have a user specified from the
-            // remote then take that as the current AAD/MSA user in the first instance.
-            //
-            // For "dev.azure.com" host names we only use the user info part of the remote when this doesn't
-            // match the Azure DevOps organization name. Our friends in Azure DevOps decided "borrow" the username
-            // part of the remote URL to include the organization name (not an actual username).
-            //
-            // If we have no specified user from the remote (or this is org@dev.azure.com/org/..) then query the
-            // user manager for a bound user for this organization, if one exists...
-            //
-            var icmp = StringComparer.OrdinalIgnoreCase;
-            if (!string.IsNullOrWhiteSpace(userName) &&
-                (UriHelpers.IsVisualStudioComHost(remoteUri.Host) ||
-                 (UriHelpers.IsAzureDevOpsHost(remoteUri.Host) && !icmp.Equals(orgName, userName))))
-            {
-                _context.Trace.WriteLine("Using username as specified in remote.");
-            }
-            else
-            {
-                _context.Trace.WriteLine($"Looking up user for organization '{orgName}'...");
-                userName = _bindingManager.GetUser(orgName);
-            }
-
             string clientId = GetClientId();
-            if (string.IsNullOrWhiteSpace(userName))
-            {
-                _context.Trace.WriteLine("No user found. Prompting...");
 
-                var auth = new AzureDevOpsAuthentication(_context);
-                // TODO: filter to correct tenant? what about guests? sort by best match and include other accounts still?
-                IEnumerable<IMicrosoftAccount> allAccounts = await _msAuth.GetAccountsAsync(clientId);
-                AzureDevOpsSelectAccountResult selectResult = await auth.SelectAccountAsync(allAccounts);
-                if (!(selectResult?.Account is null))
-                {
-                    userName = selectResult.Account.UserName;
-                }
-            }
-            else
-            {
-                _context.Trace.WriteLine($"User is '{userName}'.");
-            }
+            _context.Trace.WriteLine("Resolving user for input...");
+            string userName = await GetUserNameAsync(input, orgName, clientId);
+
+            _context.Trace.WriteLine(string.IsNullOrWhiteSpace(userName)
+                ? "No user hint available."
+                : $"User is '{userName}'.");
 
             // Get an AAD access token for the Azure DevOps SPS
             _context.Trace.WriteLine("Getting Azure AD access token...");
@@ -292,6 +253,67 @@ namespace Microsoft.AzureRepos
                 $"Acquired Azure access token. Account='{result.AccountUpn}' Token='{{0}}'", new object[] {result.AccessToken});
 
             return result;
+        }
+
+        private async Task<string> GetUserNameAsync(InputArguments input, string orgName, string clientId)
+        {
+            //
+            // If the remote URI is a classic "*.visualstudio.com" host name and we have a user specified from the
+            // remote then take that as the current AAD/MSA user in the first instance.
+            //
+            // For "dev.azure.com" host names we only use the user info part of the remote when this doesn't
+            // match the Azure DevOps organization name. Our friends in Azure DevOps decided "borrow" the username
+            // part of the remote URL to include the organization name (not an actual username).
+            //
+            if (!string.IsNullOrWhiteSpace(input.UserName) &&
+                (UriHelpers.IsVisualStudioComHost(input) ||
+                 (UriHelpers.IsAzureDevOpsHost(input) && !StringComparer.OrdinalIgnoreCase.Equals(orgName, input.UserName))))
+            {
+                _context.Trace.WriteLine($"Username '{input.UserName}' found in remote URL.");
+                return input.UserName;
+            }
+
+            //
+            // If we have no specified user from the remote (or this is org@dev.azure.com/org/..) then query the
+            // user manager for a bound user for this authority or organization, if one exists...
+            //
+            _context.Trace.WriteLine($"Querying user for organization '{orgName}'...");
+            string orgUserName = _bindingManager.GetUser(orgName);
+            if (!string.IsNullOrWhiteSpace(orgUserName))
+            {
+                _context.Trace.WriteLine($"Username '{orgUserName}' is bound to org '{orgName}'.");
+                return orgUserName;
+            }
+
+            //
+            // If no bound user exists then query all available accounts. If any accounts exist then prompt the user
+            // to select and 'bind' a user to this organization (or all for this authority).
+            //
+            _context.Trace.WriteLine($"Querying all known accounts for client ID '{clientId}'...");
+            IList<IMicrosoftAccount> accounts = (await _msAuth.GetAccountsAsync(clientId)).ToList();
+            if (accounts.Count == 0)
+            {
+                _context.Trace.WriteLine("No accounts found.");
+                return null;
+            }
+
+            // TODO: if there is only one account (for the correct authority) should we just use that?
+            // How does the user opt-out and select a different account in the case of failure?
+
+            var ui = new AzureDevOpsAuthentication(_context);
+
+            _context.Trace.WriteLine("Prompting user to select account...");
+            AzureDevOpsSelectAccountResult accountResult = await ui.SelectAccountAsync(accounts);
+            if (accountResult?.Account is null)
+            {
+                _context.Trace.WriteLine("User selected to add a new account.");
+                return null;
+            }
+
+            // TODO: persist binding? leave to the store step? what about "use for all orgs"?
+
+            _context.Trace.WriteLine($"User selected account '{accountResult.Account.UserName}'.");
+            return accountResult.Account.UserName;
         }
 
         private string GetClientId()
@@ -342,23 +364,23 @@ namespace Microsoft.AzureRepos
         /// Users that need to clone a repository from Azure Repos against the full path therefore must
         /// use the vs.com-style remote URL and not the dev.azure.com one.
         /// </remarks>
-        private static string GetServiceName(Uri remoteUri)
+        private static string GetServiceName(InputArguments input)
         {
             // dev.azure.com
-            if (UriHelpers.IsDevAzureComHost(remoteUri.Host))
+            if (UriHelpers.IsDevAzureComHost(input))
             {
                 // We can never store the new dev.azure.com-style URLs against the full path because
                 // we have forced the useHttpPath option to true to in order to retrieve the AzDevOps
                 // organization name from Git.
-                return UriHelpers.CreateOrganizationUri(remoteUri, out _).AbsoluteUri.TrimEnd('/');
+                return UriHelpers.CreateOrganizationUri(input, out _).AbsoluteUri.TrimEnd('/');
             }
 
             // *.visualstudio.com
-            if (UriHelpers.IsVisualStudioComHost(remoteUri.Host))
+            if (UriHelpers.IsVisualStudioComHost(input))
             {
                 // If we're given the full path for an older *.visualstudio.com-style URL then we should
                 // respect that in the service name.
-                return remoteUri.AbsoluteUri.TrimEnd('/');
+                return input.GetRemoteUri().AbsoluteUri.TrimEnd('/');
             }
 
             throw new InvalidOperationException("Host is not Azure DevOps.");

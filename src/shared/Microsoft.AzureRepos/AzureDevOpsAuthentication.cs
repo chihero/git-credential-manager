@@ -92,19 +92,22 @@ namespace Microsoft.AzureRepos
                 ThrowIfTerminalPromptsDisabled();
 
                 var actMenu = new TerminalMenu(Context.Terminal, "Select an account");
-                actMenu.Add("Add new account");
-                TerminalMenuItem[] menuItems = accountsArray.Select(
-                    x => actMenu.Add($"{x.UserName} ({(x.IsPersonalAccount ? "Personal Account" : "Work or School Account")})")
-                ).ToArray();
+                TerminalMenuItem newActItem = actMenu.Add("Add new account");
+                var actItemMap = new Dictionary<TerminalMenuItem, IMicrosoftAccount>
+                {
+                    [newActItem] = null // null => new account
+                };
+
+                foreach (IMicrosoftAccount account in accountsArray)
+                {
+                    string type = account.IsPersonalAccount ? "Personal Account" : "Work or School Account";
+                    string displayName = $"{account.UserName} ({type})";
+                    var actItem = actMenu.Add(displayName);
+                    actItemMap[actItem] = account;
+                }
 
                 TerminalMenuItem actChoice = actMenu.Show();
-                int choiceIndex = Array.IndexOf(menuItems, actChoice);
-
-                IMicrosoftAccount act = null;
-                if (choiceIndex > 0 && choiceIndex < accountsArray.Length + 1)
-                {
-                    act = accountsArray[choiceIndex];
-                }
+                IMicrosoftAccount act = actItemMap[actChoice];
 
                 var allMenu = new TerminalMenu(Context.Terminal, "Use this account for all organizations?");
                 var yesItem = allMenu.Add("Yes");

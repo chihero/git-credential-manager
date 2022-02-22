@@ -91,23 +91,38 @@ namespace Microsoft.AzureRepos
         /// <summary>
         /// Check if the hostname is a valid Azure DevOps hostname (dev.azure.com or *.visualstudio.com).
         /// </summary>
-        /// <param name="host">Hostname to check</param>
+        /// <param name="input">Git input arguments.</param>
+        /// <returns>True if the hostname is Azure DevOps, false otherwise.</returns>
+        public static bool IsAzureDevOpsHost(InputArguments input)
+        {
+            return IsVisualStudioComHost(input) || IsDevAzureComHost(input);
+        }
+
+        /// <summary>
+        /// Check if the hostname is a valid Azure DevOps hostname (dev.azure.com or *.visualstudio.com).
+        /// </summary>
+        /// <param name="host">Hostname to check.</param>
         /// <returns>True if the hostname is Azure DevOps, false otherwise.</returns>
         public static bool IsAzureDevOpsHost(string host)
         {
             return IsVisualStudioComHost(host) || IsDevAzureComHost(host);
         }
 
-        public static string GetOrganizationName(Uri remoteUri)
+        /// <summary>
+        /// Get the Azure DevOps organization name from the Git input arguments.
+        /// </summary>
+        /// <param name="input">Git input.</param>
+        /// <returns>Azure DevOps organization name.</returns>
+        public static string GetOrganizationName(InputArguments input)
         {
-            CreateOrganizationUri(remoteUri, out string orgName);
+            CreateOrganizationUri(input, out string orgName);
             return orgName;
         }
 
         /// <summary>
         /// Create a URI for the Azure DevOps organization from the Git remote URI.
         /// </summary>
-        /// <param name="remoteUri">Git remote URI arguments.</param>
+        /// <param name="input">Git input arguments.</param>
         /// <param name="orgName">Azure DevOps organization name.</param>
         /// <returns>Azure DevOps organization URI</returns>
         /// <exception cref="InvalidOperationException">
@@ -121,34 +136,39 @@ namespace Microsoft.AzureRepos
         /// are null or white space when <see cref="InputArguments.Host"/> is an Azure-style URL
         /// ('dev.azure.com' rather than '*.visualstudio.com').
         /// </exception>
-        public static Uri CreateOrganizationUri(Uri remoteUri, out string orgName)
+        public static Uri CreateOrganizationUri(InputArguments input, out string orgName)
         {
-            EnsureArgument.AbsoluteUri(remoteUri, nameof(remoteUri));
+            EnsureArgument.NotNull(input, nameof(input));
 
             orgName = null;
 
-            if (!IsAzureDevOpsHost(remoteUri.Host))
+            if (!input.TryGetHostAndPort(out string host, out int? port))
+            {
+                throw new ArgumentException("Input host/port not in valid format", nameof(input));
+            }
+
+            if (!IsAzureDevOpsHost(host))
             {
                 throw new InvalidOperationException("Host is not Azure DevOps.");
             }
 
             var ub = new UriBuilder
             {
-                Scheme = remoteUri.Scheme,
-                Host = remoteUri.Host,
+                Scheme = input.Protocol,
+                Host = host,
             };
 
-            if (!remoteUri.IsDefaultPort)
+            if (port.HasValue)
             {
-                ub.Port = remoteUri.Port;
+                ub.Port = port.Value;
             }
 
             // Extract the organization name for Azure ('dev.azure.com') style URLs.
             // The older *.visualstudio.com URLs contained the organization name in the host already.
-            if (IsDevAzureComHost(remoteUri.Host))
+            if (IsDevAzureComHost(host))
             {
-                string firstPathComponent = GetFirstPathComponent(remoteUri.AbsolutePath);
-                string remoteUriUserName = remoteUri.GetUserName();
+                string firstPathComponent = GetFirstPathComponent(input.Path);
+                string remoteUriUserName = input.UserName;
 
                 // Prefer getting the org name from the path: dev.azure.com/{org}
                 if (!string.IsNullOrWhiteSpace(firstPathComponent))
@@ -171,11 +191,11 @@ namespace Microsoft.AzureRepos
 
                 ub.Path = orgName;
             }
-            else if (IsVisualStudioComHost(remoteUri.Host))
+            else if (IsVisualStudioComHost(host))
             {
                 // {org}.visualstudio.com
-                int orgNameLength = remoteUri.Host.Length - AzureDevOpsConstants.VstsHostSuffix.Length;
-                orgName = remoteUri.Host.Substring(0, orgNameLength);
+                int orgNameLength = host.Length - AzureDevOpsConstants.VstsHostSuffix.Length;
+                orgName = host.Substring(0, orgNameLength);
             }
 
             return ub.Uri;

@@ -171,16 +171,35 @@ namespace GitCredentialManager.Authentication
             await RegisterTokenCacheAsync(app);
 
             AuthenticationResult result = null;
+            IAccount account = null;
 
-            // Try silent authentication first if we know about an existing user
+            // Attempt to find an IAccount object in the cache if we've been given a username hint
             if (!string.IsNullOrWhiteSpace(userName))
             {
-                result = await GetAccessTokenSilentlyAsync(app, scopes, userName);
+                IEnumerable<IAccount> accounts = await app.GetAccountsAsync();
+                account = accounts.FirstOrDefault(
+                    x => StringComparer.OrdinalIgnoreCase.Equals(userName, x.Username));
+            }
+
+            // Try silent authentication first if we know about an existing user
+            if (account != null)
+            {
+                Context.Trace.WriteLine($"Attempting to acquire token silently for user '{userName}'...");
+                try
+                {
+                    result = await app.AcquireTokenSilent(scopes, account).ExecuteAsync();
+                }
+                catch (MsalUiRequiredException ex)
+                {
+                    Context.Trace.WriteLine("Failed to acquire token silently; user interaction is required.");
+                    Context.Trace.WriteException(ex);
+                }
             }
 
             //
             // If we failed to acquire an AT silently (either because we don't have an existing user, or the user's RT has expired)
-            // we need to prompt the user for credentials.
+            // we need to prompt the user for credentials. Continue to pass any found user account object to the interactive
+            // authentication calls so that MSAL can use this as a 'hint' to pre-select the correct account in the UI.
             //
             // If the user has expressed a preference in how the want to perform the interactive authentication flows then we respect that.
             // Otherwise, depending on the current platform and session type we try to show the most appropriate authentication interface:
@@ -211,6 +230,7 @@ namespace GitCredentialManager.Authentication
                     Context.Trace.WriteLine("Performing interactive auth with broker...");
                     result = await app.AcquireTokenInteractive(scopes)
                         .WithPrompt(Prompt.SelectAccount)
+                        .WithAccount(account)
                         // We must configure the system webview as a fallback
                         .WithSystemWebViewOptions(GetSystemWebViewOptions())
                         .ExecuteAsync();
@@ -236,6 +256,7 @@ namespace GitCredentialManager.Authentication
                             EnsureCanUseEmbeddedWebView();
                             result = await app.AcquireTokenInteractive(scopes)
                                 .WithPrompt(Prompt.SelectAccount)
+                                .WithAccount(account)
                                 .WithUseEmbeddedWebView(true)
                                 .WithEmbeddedWebViewOptions(GetEmbeddedWebViewOptions())
                                 .ExecuteAsync();
@@ -246,6 +267,7 @@ namespace GitCredentialManager.Authentication
                             EnsureCanUseSystemWebView(app, redirectUri);
                             result = await app.AcquireTokenInteractive(scopes)
                                 .WithPrompt(Prompt.SelectAccount)
+                                .WithAccount(account)
                                 .WithSystemWebViewOptions(GetSystemWebViewOptions())
                                 .ExecuteAsync();
                             break;
@@ -294,26 +316,6 @@ namespace GitCredentialManager.Authentication
             }
 
             return MicrosoftAuthenticationFlowType.Auto;
-        }
-
-        /// <summary>
-        /// Obtain an access token without showing UI or prompts.
-        /// </summary>
-        private async Task<AuthenticationResult> GetAccessTokenSilentlyAsync(IPublicClientApplication app, string[] scopes, string userName)
-        {
-            try
-            {
-                Context.Trace.WriteLine($"Attempting to acquire token silently for user '{userName}'...");
-
-                // We can either call `app.GetAccountsAsync` and filter through the IAccount objects for the instance with the correct user name,
-                // or we can just pass the user name string we have as the `loginHint` and let MSAL do exactly that for us instead!
-                return await app.AcquireTokenSilent(scopes, loginHint: userName).ExecuteAsync();
-            }
-            catch (MsalUiRequiredException)
-            {
-                Context.Trace.WriteLine("Failed to acquire token silently; user interaction is required.");
-                return null;
-            }
         }
 
         private PublicClientApplicationBuilder GetPublicAppBuilder(string clientId, bool enableBroker)
