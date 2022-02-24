@@ -24,11 +24,4 @@
     </Compile>
   </ItemGroup>
 
-  <ItemGroup>
-    <None Remove="Assets\personal.png" />
-    <AvaloniaResource Include="Assets\personal.png" />
-    <None Remove="Assets\work_account.png" />
-    <AvaloniaResource Include="Assets\work_account.png" />
-  </ItemGroup>
-
 </Project>

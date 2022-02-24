@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using GitCredentialManager.UI;
 using GitCredentialManager.UI.ViewModels;
-using Newtonsoft.Json;
 
 namespace Microsoft.AzureRepos.UI.ViewModels
 {
@@ -21,14 +20,6 @@ namespace Microsoft.AzureRepos.UI.ViewModels
             ContinueCommand = new RelayCommand(SelectAccount, CanSelect);
 
             PropertyChanged += OnPropertyChanged;
-
-            Accounts = new ObservableCollection<AccountViewModel>(new[]
-            {
-                new AccountViewModel
-                {
-                    UserName = "mattche@microsoft.com"
-                }
-            });
         }
 
         private void AddAccount()
