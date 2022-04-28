@@ -1,4 +1,7 @@
 
+using System;
+using System.Collections.Generic;
+
 namespace GitCredentialManager
 {
     /// <summary>
@@ -31,5 +34,21 @@ namespace GitCredentialManager
         public string Account { get; }
 
         public string Password { get; }
+
+        public IDictionary<string, string> AdditionalProperties { get; } =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    }
+
+    public static class CredentialExtensions
+    {
+        public static GitCredential AsGitCredential(this ICredential credential)
+        {
+            if (credential is GitCredential gitCredential)
+            {
+                return gitCredential;
+            }
+
+            return new GitCredential(credential.Account, credential.Password);
+        }
     }
 }

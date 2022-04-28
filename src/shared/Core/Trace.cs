@@ -227,6 +227,33 @@ namespace GitCredentialManager
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed")]
+        public void WriteDictionarySecrets<TKey, TValue>(
+            IDictionary<TKey, IList<TValue>> dictionary,
+            TKey[] secretKeys,
+            IEqualityComparer<TKey> keyComparer = null,
+            [System.Runtime.CompilerServices.CallerFilePath] string filePath = "",
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
+            [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        {
+            foreach (KeyValuePair<TKey, IList<TValue>> entry in dictionary)
+            {
+                bool isSecretEntry = !(secretKeys is null) &&
+                                     secretKeys.Contains(entry.Key, keyComparer ?? EqualityComparer<TKey>.Default);
+                foreach (TValue value in entry.Value)
+                {
+                    if (isSecretEntry && !this.IsSecretTracingEnabled)
+                    {
+                        WriteLine($"\t{entry.Key}={SecretMask}", filePath, lineNumber, memberName);
+                    }
+                    else
+                    {
+                        WriteLine($"\t{entry.Key}={value}", filePath, lineNumber, memberName);
+                    }
+                }
+            }
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed")]
         public void WriteLine(
             string message,
             [System.Runtime.CompilerServices.CallerFilePath] string filePath = "",

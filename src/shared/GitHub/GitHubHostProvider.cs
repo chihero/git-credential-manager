@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using GitHub.Diagnostics;
 using GitCredentialManager;
+using GitCredentialManager.Authentication;
 using GitCredentialManager.Authentication.OAuth;
 using GitCredentialManager.Diagnostics;
 

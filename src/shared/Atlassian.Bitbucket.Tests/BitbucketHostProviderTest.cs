@@ -398,7 +398,7 @@ namespace Atlassian.Bitbucket.Tests
             });
         }
 
-        private void VerifyBasicAuthFlowRan(string password, bool expected, InputArguments input, Task<ICredential> credential,
+        private void VerifyBasicAuthFlowRan(string password, bool expected, InputArguments input, Task<GitCredential> credential,
             string preconfiguredAuthModes)
         {
             Assert.Equal(expected, credential != null);
@@ -415,7 +415,7 @@ namespace Atlassian.Bitbucket.Tests
             }
         }
 
-        private void VerifyInteractiveBasicAuthFlowRan(string password, InputArguments input, Task<ICredential> credential)
+        private void VerifyInteractiveBasicAuthFlowRan(string password, InputArguments input, Task<GitCredential> credential)
         {
             var remoteUri = input.GetRemoteUri();
 
@@ -447,14 +447,14 @@ namespace Atlassian.Bitbucket.Tests
             }
         }
 
-        private void VerifyInteractiveBasicAuthFlowNeverRan(string password, InputArguments input, Task<ICredential> credential)
+        private void VerifyInteractiveBasicAuthFlowNeverRan(string password, InputArguments input, Task<GitCredential> credential)
         {
             var remoteUri = input.GetRemoteUri();
 
             bitbucketAuthentication.Verify(m => m.GetCredentialsAsync(remoteUri, input.UserName, It.IsAny<AuthenticationModes>()), Times.Never);
         }
 
-        private void VerifyOAuthFlowRan(string password, bool storedAccount, bool expected, InputArguments input, Task<ICredential> credential,
+        private void VerifyOAuthFlowRan(string password, bool storedAccount, bool expected, InputArguments input, Task<GitCredential> credential,
             string preconfiguredAuthModes)
         {
             Assert.Equal(expected, credential != null);
@@ -485,7 +485,7 @@ namespace Atlassian.Bitbucket.Tests
             }
         }
 
-        private void VerifyInteractiveOAuthFlowRan(string password, InputArguments input, System.Threading.Tasks.Task<ICredential> credential)
+        private void VerifyInteractiveOAuthFlowRan(string password, InputArguments input, Task<GitCredential> credential)
         {
             var remoteUri = input.GetRemoteUri();
 
@@ -494,7 +494,7 @@ namespace Atlassian.Bitbucket.Tests
 
         }
 
-        private void VerifyOAuthFlowDidNotRun(string password, bool expected, InputArguments input, System.Threading.Tasks.Task<ICredential> credential)
+        private void VerifyOAuthFlowDidNotRun(string password, bool expected, InputArguments input, Task<GitCredential> credential)
         {
             Assert.Equal(expected, credential != null);
 
@@ -510,7 +510,7 @@ namespace Atlassian.Bitbucket.Tests
             bitbucketApi.Verify(m => m.GetUserInformationAsync(null, MOCK_ACCESS_TOKEN, true), Times.Never);
         }
 
-        private void VerifyInteractiveOAuthFlowNeverRan(InputArguments input, System.Threading.Tasks.Task<ICredential> credential)
+        private void VerifyInteractiveOAuthFlowNeverRan(InputArguments input, Task<GitCredential> credential)
         {
             var remoteUri = input.GetRemoteUri();
 

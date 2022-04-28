@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace GitCredentialManager
@@ -81,7 +80,7 @@ namespace GitCredentialManager
         /// where \n is the configured new-line (see <see cref="TextWriter.NewLine"/>).
         /// </summary>
         /// <remarks>The output dictionary new-lines are determined by the <see cref="TextWriter.NewLine"/> property.</remarks>
-        /// <param name="reader">Text writer to write a dictionary to.</param>
+        /// <param name="writer">Text writer to write a dictionary to.</param>
         /// <param name="dict">Dictionary to write to the text writer.</param>
         public static void WriteDictionary(this TextWriter writer, IDictionary<string, string> dict)
         {
@@ -99,7 +98,7 @@ namespace GitCredentialManager
         /// where \n is the configured new-line (see <see cref="TextWriter.NewLine"/>).
         /// </summary>
         /// <remarks>The output dictionary new-lines are determined by the <see cref="TextWriter.NewLine"/> property.</remarks>
-        /// <param name="reader">Text writer to write a dictionary to.</param>
+        /// <param name="writer">Text writer to write a dictionary to.</param>
         /// <param name="dict">Dictionary to write to the text writer.</param>
         public static async Task WriteDictionaryAsync(this TextWriter writer, IDictionary<string, string> dict)
         {
@@ -138,6 +137,32 @@ namespace GitCredentialManager
 
                 dict[key] = value;
             }
+        }
+
+        public static IList<string> ReadList(this TextReader reader)
+        {
+            var list = new List<string>();
+
+            string line;
+            while ((line = reader.ReadLine()) != null && !string.IsNullOrWhiteSpace(line))
+            {
+                list.Add(line);
+            }
+
+            return list;
+        }
+
+        public static async Task<IList<string>> ReadListAsync(this TextReader reader)
+        {
+            var list = new List<string>();
+
+            string line;
+            while ((line = await reader.ReadLineAsync()) != null && !string.IsNullOrWhiteSpace(line))
+            {
+                list.Add(line);
+            }
+
+            return list;
         }
     }
 }

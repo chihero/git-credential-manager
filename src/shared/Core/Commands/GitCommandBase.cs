@@ -35,7 +35,13 @@ namespace GitCredentialManager.Commands
             // Parse standard input arguments
             // git-credential treats the keys as case-sensitive; so should we.
             IDictionary<string, string> inputDict = await Context.Streams.In.ReadDictionaryAsync(StringComparer.Ordinal);
-            var input = new InputArguments(inputDict);
+
+            // Newer Git clients will include additional response headers after the input
+            // arguments block (hidden behind the terminating newline).
+            // Attempt to read the standard input stream until the next terminating newline!
+            IList<string> headers = await Context.Streams.In.ReadListAsync();
+
+            var input = new InputArguments(inputDict, headers);
 
             // Validate minimum arguments are present
             EnsureMinimumInputArguments(input);
@@ -46,9 +52,19 @@ namespace GitCredentialManager.Commands
             // Determine the host provider
             Context.Trace.WriteLine("Detecting host provider for input:");
             Context.Trace.WriteDictionarySecrets(inputDict, new []{ "password" }, StringComparer.OrdinalIgnoreCase);
+            if (headers.Count > 0)
+            {
+                Context.Trace.WriteLine("Headers:");
+                foreach (string header in headers)
+                {
+                    Context.Trace.WriteLine($"\t{header}");
+                }
+            }
+
             IHostProvider provider = await _hostProviderRegistry.GetProviderAsync(input);
             Context.Trace.WriteLine($"Host provider '{provider.Name}' was selected.");
 
+            // Run the requested command!
             await ExecuteInternalAsync(input, provider);
 
             Context.Trace.WriteLine($"End '{Name}' command...");

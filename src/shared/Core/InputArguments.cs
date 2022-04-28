@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace GitCredentialManager
 {
@@ -15,8 +17,9 @@ namespace GitCredentialManager
     public class InputArguments
     {
         private readonly IReadOnlyDictionary<string, string> _dict;
+        private readonly IList<string> _headers;
 
-        public InputArguments(IDictionary<string, string> dict)
+        public InputArguments(IDictionary<string, string> dict, IEnumerable<string> headers = null)
         {
             if (dict == null)
             {
@@ -25,19 +28,16 @@ namespace GitCredentialManager
 
             // Wrap the dictionary internally as readonly
             _dict = new ReadOnlyDictionary<string, string>(dict);
-        }
 
-        #region Common Arguments
+            _headers = headers?.ToArray() ?? Array.Empty<string>();
+        }
 
         public string Protocol => GetArgumentOrDefault("protocol");
         public string Host     => GetArgumentOrDefault("host");
         public string Path     => GetArgumentOrDefault("path");
         public string UserName => GetArgumentOrDefault("username");
         public string Password => GetArgumentOrDefault("password");
-
-        #endregion
-
-        #region Public Methods
+        public IList<string> Headers => _headers;
 
         public string this[string key]
         {
@@ -114,7 +114,5 @@ namespace GitCredentialManager
 
             return null;
         }
-
-        #endregion
     }
 }

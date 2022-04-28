@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -13,7 +14,7 @@ namespace GitCredentialManager.Commands
 
         protected override async Task ExecuteInternalAsync(InputArguments input, IHostProvider provider)
         {
-            ICredential credential = await provider.GetCredentialAsync(input);
+            GitCredential credential = await provider.GetCredentialAsync(input);
 
             var output = new Dictionary<string, string>();
 
@@ -34,6 +35,13 @@ namespace GitCredentialManager.Commands
             // Return the credential to Git
             output["username"] = credential.Account;
             output["password"] = credential.Password;
+
+            output["gcm.request-id"] = System.Guid.NewGuid().ToString("D");
+
+            foreach (KeyValuePair<string, string> kvp in credential.AdditionalProperties)
+            {
+                output[kvp.Key] = kvp.Value;
+            }
 
             // Write the values to standard out
             Context.Streams.Out.WriteDictionary(output);

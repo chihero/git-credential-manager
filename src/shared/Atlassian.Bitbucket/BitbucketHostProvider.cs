@@ -72,7 +72,7 @@ namespace Atlassian.Bitbucket
             return supported;
         }
 
-        public async Task<ICredential> GetCredentialAsync(InputArguments input)
+        public async Task<GitCredential> GetCredentialAsync(InputArguments input)
         {
             // We should not allow unencrypted communication and should inform the user
             if (StringComparer.OrdinalIgnoreCase.Equals(input.Protocol, "http")
@@ -89,7 +89,7 @@ namespace Atlassian.Bitbucket
                    await GetRefreshedCredentials(remoteUri, input.UserName, authModes);
         }
 
-        private async Task<ICredential> GetStoredCredentials(Uri remoteUri, string userName, AuthenticationModes authModes)
+        private async Task<GitCredential> GetStoredCredentials(Uri remoteUri, string userName, AuthenticationModes authModes)
         {
             if (_context.Settings.TryGetSetting(BitbucketConstants.EnvironmentVariables.AlwaysRefreshCredentials,
                 Constants.GitConfiguration.Credential.SectionName, BitbucketConstants.GitConfiguration.Credential.AlwaysRefreshCredentials,
@@ -118,10 +118,10 @@ namespace Atlassian.Bitbucket
                 return null;
             }
 
-            return credentials;
+            return credentials.AsGitCredential();
         }
 
-        private async Task<ICredential> GetRefreshedCredentials(Uri remoteUri, string userName, AuthenticationModes authModes)
+        private async Task<GitCredential> GetRefreshedCredentials(Uri remoteUri, string userName, AuthenticationModes authModes)
         {
             _context.Trace.WriteLine("Refresh credentials...");
 
@@ -172,7 +172,7 @@ namespace Atlassian.Bitbucket
                                 _context.Trace.WriteLine("Two-factor authentication not required");
 
                                 // Return the valid credential
-                                return result.Credential;
+                                return result.Credential.AsGitCredential();
                             }
 
                             // 2FA is required; fall through to interactive OAuth flow
@@ -208,7 +208,7 @@ namespace Atlassian.Bitbucket
 
                 try
                 {
-                    return await GetOAuthCredentialsViaRefreshFlow(remoteUri, refreshToken);
+                    return (await GetOAuthCredentialsViaRefreshFlow(remoteUri, refreshToken)).AsGitCredential();
                 }
                 catch (OAuth2Exception ex)
                 {
@@ -220,7 +220,7 @@ namespace Atlassian.Bitbucket
                 }
             }
 
-            return await GetOAuthCredentialsViaInteractiveBrowserFlow(remoteUri);
+            return (await GetOAuthCredentialsViaInteractiveBrowserFlow(remoteUri)).AsGitCredential();
         }
 
         private async Task<ICredential> GetOAuthCredentialsViaRefreshFlow(Uri remoteUri, ICredential refreshToken)

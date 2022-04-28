@@ -4,6 +4,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using GitCredentialManager;
 using GitCredentialManager.Authentication;
@@ -73,12 +74,11 @@ namespace Microsoft.AzureRepos
             return false;
         }
 
-        public async Task<ICredential> GetCredentialAsync(InputArguments input)
+        public async Task<GitCredential> GetCredentialAsync(InputArguments input)
         {
-            Uri remoteUri = input.GetRemoteUri();
-
             if (UsePersonalAccessTokens())
             {
+                Uri remoteUri = input.GetRemoteUri();
                 string service = GetServiceName(remoteUri);
                 string account = GetAccountNameForCredentialQuery(input);
 
@@ -99,14 +99,21 @@ namespace Microsoft.AzureRepos
                     _context.Trace.WriteLine("Existing credential found.");
                 }
 
-                return credential;
+                return credential.AsGitCredential();
             }
             else
             {
                 // Include the username request here so that we may use it as an override
                 // for user account lookups when getting Azure Access Tokens.
-                var azureResult = await GetAzureAccessTokenAsync(remoteUri, input.UserName);
-                return new GitCredential(azureResult.AccountUpn, azureResult.AccessToken);
+                var azureResult = await GetAzureAccessTokenAsync(input);
+                TryGetAuthorityFromHeaders(input.Headers, out string authAuthority);
+                return new GitCredential(azureResult.AccountUpn, azureResult.AccessToken)
+                {
+                    AdditionalProperties =
+                    {
+                        ["gcm.azrepos.bindauthority"] = authAuthority
+                    }
+                };
             }
         }
 
@@ -126,6 +133,11 @@ namespace Microsoft.AzureRepos
                 _context.Trace.WriteLine($"Storing credential with service={service} account={account}...");
                 _context.CredentialStore.AddOrUpdate(service, account, input.Password);
                 _context.Trace.WriteLine("Credential was successfully stored.");
+            }
+            else if (input.TryGetArgument("gcm.azrepos.bindauthority", out string authority))
+            {
+                _context.Trace.WriteLine($"Signing user {input.UserName} in to authority '{authority}'...");
+                _bindingManager.SignIn(authority, input.UserName);
             }
             else
             {
@@ -222,25 +234,35 @@ namespace Microsoft.AzureRepos
             return new GitCredential(result.AccountUpn, pat);
         }
 
-        private async Task<IMicrosoftAuthenticationResult> GetAzureAccessTokenAsync(Uri remoteUri, string userName)
+        private async Task<IMicrosoftAuthenticationResult> GetAzureAccessTokenAsync(InputArguments input)
         {
+            Uri remoteUri = input.GetRemoteUri();
+            string userName = input.UserName;
+
             // We should not allow unencrypted communication and should inform the user
             if (StringComparer.OrdinalIgnoreCase.Equals(remoteUri.Scheme, "http"))
             {
                 throw new Exception("Unencrypted HTTP is not supported for Azure Repos. Ensure the repository remote URL is using HTTPS.");
             }
 
+            // TODO: can we avoid needing the org name at all if we move to binding users -> authorities?
             Uri orgUri = UriHelpers.CreateOrganizationUri(remoteUri, out string orgName);
 
-            _context.Trace.WriteLine($"Determining Microsoft Authentication authority for Azure DevOps organization '{orgName}'...");
-            string authAuthority = _authorityCache.GetAuthority(orgName);
-            if (authAuthority is null)
+            // Newer Git clients include the WWW-Authenticate header information will include the
+            // correct authority/AAD tenant to use - try to use that if we have it!
+            if (!TryGetAuthorityFromHeaders(input.Headers, out string authAuthority))
             {
-                // If there is no cached value we must query for it and cache it for future use
-                _context.Trace.WriteLine($"No cached authority value - querying {orgUri} for authority...");
-                authAuthority = await _azDevOps.GetAuthorityAsync(orgUri);
-                _authorityCache.UpdateAuthority(orgName, authAuthority);
+                _context.Trace.WriteLine($"Determining Microsoft Authentication authority for Azure DevOps organization '{orgName}'...");
+                authAuthority = _authorityCache.GetAuthority(orgName);
+                if (authAuthority is null)
+                {
+                    // If there is no cached value we must query for it and cache it for future use
+                    _context.Trace.WriteLine($"No cached authority value - querying {orgUri} for authority...");
+                    authAuthority = await _azDevOps.GetAuthorityAsync(orgUri);
+                    _authorityCache.UpdateAuthority(orgName, authAuthority);
+                }
             }
+
             _context.Trace.WriteLine($"Authority is '{authAuthority}'.");
 
             //
@@ -260,6 +282,11 @@ namespace Microsoft.AzureRepos
                  (UriHelpers.IsAzureDevOpsHost(remoteUri.Host) && !icmp.Equals(orgName, userName))))
             {
                 _context.Trace.WriteLine("Using username as specified in remote.");
+            }
+            else if (TryGetAuthorityFromHeaders(input.Headers, out string headerAuthority))
+            {
+                _context.Trace.WriteLine($"Looking up user for authority '{headerAuthority}'...");
+                userName = _bindingManager.GetUser(headerAuthority);
             }
             else
             {
@@ -281,6 +308,26 @@ namespace Microsoft.AzureRepos
                 $"Acquired Azure access token. Account='{result.AccountUpn}' Token='{{0}}'", new object[] {result.AccessToken});
 
             return result;
+        }
+
+        private static readonly Regex MsIdWwwAuthHeaderRegex =
+            new Regex(@"^WWW-Authenticate:\s+Bearer\s+authorization_uri=(?'authority'\S+)",
+                RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        private bool TryGetAuthorityFromHeaders(IList<string> headers, out string authority)
+        {
+            foreach (string header in headers)
+            {
+                Match match = MsIdWwwAuthHeaderRegex.Match(header);
+                if (match.Success)
+                {
+                    authority = match.Groups["authority"].Value;
+                    return true;
+                }
+            }
+
+            authority = null;
+            return false;
         }
 
         private string GetClientId()
