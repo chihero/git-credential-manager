@@ -44,8 +44,8 @@ namespace GitCredentialManager.Commands
             Context.Settings.RemoteUri = input.GetRemoteUri();
 
             // Determine the host provider
-            Context.Trace.WriteLine("Detecting host provider for input:");
-            Context.Trace.WriteDictionarySecrets(inputDict, new []{ "password" }, StringComparer.OrdinalIgnoreCase);
+            Context.Trace.WriteLine("Detecting host provider with input:");
+            Context.Trace.WriteInputArguments(input);
             IHostProvider provider = await _hostProviderRegistry.GetProviderAsync(input);
             Context.Trace.WriteLine($"Host provider '{provider.Name}' was selected.");
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Text;
 
 namespace GitCredentialManager
 {
@@ -15,6 +16,7 @@ namespace GitCredentialManager
     public class InputArguments
     {
         private readonly IReadOnlyDictionary<string, string> _dict;
+        private IList<string> _headers;
 
         public InputArguments(IDictionary<string, string> dict)
         {
@@ -27,17 +29,50 @@ namespace GitCredentialManager
             _dict = new ReadOnlyDictionary<string, string>(dict);
         }
 
-        #region Common Arguments
 
         public string Protocol => GetArgumentOrDefault("protocol");
         public string Host     => GetArgumentOrDefault("host");
         public string Path     => GetArgumentOrDefault("path");
         public string UserName => GetArgumentOrDefault("username");
         public string Password => GetArgumentOrDefault("password");
+        public IList<string> Headers => _headers ??= DecodeHeaders();
 
-        #endregion
+        private IList<string> DecodeHeaders()
+        {
+            if (!TryGetArgument("headers", out string str))
+            {
+                return Array.Empty<string>();
+            }
 
-        #region Public Methods
+            // Header values are sent encoded/escaped over the credential helper wire-format,
+            // so we must decode them in the first instance.
+            var sb = new StringBuilder(str)
+                .Replace(@"\\", @"\")
+                .Replace(@"\0", "\0")
+                .Replace(@"\n", "\n")
+                .Replace(@"\r", "\r");
+
+            // Split the headers in to individual lines (HTTP headers are CR-LF terminated)
+            string[] split = sb.ToString().Split(new[] { "\r\n" }, StringSplitOptions.None);
+
+            var lines = new List<string>();
+            foreach (string line in split)
+            {
+                // If the line starts with a tab ('\t') then this is a continuation of a previous
+                // header field and we should append this line to the end of the previously processed field.
+                if (line.StartsWith("\t") && lines.Count > 0)
+                {
+                    string prev = lines[lines.Count - 1];
+                    lines.Add($"{prev}{line}");
+                }
+                else
+                {
+                    lines.Add(line);
+                }
+            }
+
+            return lines;
+        }
 
         public string this[string key]
         {
@@ -114,7 +149,5 @@ namespace GitCredentialManager
 
             return null;
         }
-
-        #endregion
     }
 }

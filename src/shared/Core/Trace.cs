@@ -120,7 +120,7 @@ namespace GitCredentialManager
 
     public class Trace : DisposableObject, ITrace
     {
-        private const string SecretMask = "********";
+        internal const string SecretMask = "********";
 
         private readonly object _writersLock = new object();
         private readonly List<TextWriter> _writers = new List<TextWriter>();
@@ -341,5 +341,42 @@ namespace GitCredentialManager
         public override void Write(string value) => Debug.Write(value);
 
         public override void WriteLine(string value) => Debug.WriteLine(value);
+    }
+
+    public static class TraceExtensions
+    {
+        public static void WriteInputArguments(this ITrace trace, InputArguments input,
+            [System.Runtime.CompilerServices.CallerFilePath] string filePath = "",
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
+            [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        {
+            trace.WriteLine("Standard arguments:");
+            trace.WriteLine($"\tprotocol={input.Protocol}", filePath, lineNumber, memberName);
+            trace.WriteLine($"\thost={input.Host}", filePath, lineNumber, memberName);
+
+            if (input.Path != null)
+                trace.WriteLine($"\tpath={input.Path}", filePath, lineNumber, memberName);
+
+            if (input.UserName != null)
+                trace.WriteLine($"\tusername={input.UserName}", filePath, lineNumber, memberName);
+
+            if (input.Password != null)
+            {
+                trace.WriteLine(
+                    trace.IsSecretTracingEnabled
+                        ? $"\tpassword={input.Password}"
+                        : $"\tpassword={Trace.SecretMask}",
+                    filePath, lineNumber, memberName);
+            }
+
+            if (input.Headers.Count > 0)
+            {
+                trace.WriteLine("Response headers:");
+                foreach (string header in input.Headers)
+                {
+                    trace.WriteLine(header, filePath, lineNumber, memberName);
+                }
+            }
+        }
     }
 }
