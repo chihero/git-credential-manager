@@ -41,6 +41,11 @@ namespace GitCredentialManager.Commands
                 output["type"] = result.CredentialType;
             }
 
+            foreach (KeyValuePair<string, string> kvp in result.AdditionalProperties)
+            {
+                output[kvp.Key] = kvp.Value;
+            }
+
             // Write the values to standard out
             Context.Streams.Out.WriteDictionary(output);
         }

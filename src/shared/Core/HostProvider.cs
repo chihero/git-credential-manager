@@ -71,6 +71,9 @@ namespace GitCredentialManager
         public ICredential Credential { get; }
 
         public string CredentialType { get; }
+
+        public IDictionary<string, string> AdditionalProperties { get; } =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>
