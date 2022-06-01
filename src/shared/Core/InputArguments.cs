@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Text.RegularExpressions;
 
 namespace GitCredentialManager
 {
@@ -15,6 +16,8 @@ namespace GitCredentialManager
     public class InputArguments
     {
         private readonly IReadOnlyDictionary<string, string> _dict;
+
+        private IList<string> _wwwAuthenticate;
 
         public InputArguments(IDictionary<string, string> dict)
         {
@@ -35,6 +38,8 @@ namespace GitCredentialManager
         public string UserName => GetArgumentOrDefault("username");
         public string Password => GetArgumentOrDefault("password");
 
+        public IList<string> WwwAuthenticate => _wwwAuthenticate ?? (_wwwAuthenticate = GetMultiArgumentOrDefault("wwwauth"));
+
         #endregion
 
         #region Public Methods
@@ -52,6 +57,28 @@ namespace GitCredentialManager
         public bool TryGetArgument(string key, out string value)
         {
             return _dict.TryGetValue(key, out value);
+        }
+
+        public IList<string> GetMultiArgumentOrDefault(string key)
+        {
+            return TryGetMultiArgument(key, out IList<string> values) ? values : Array.Empty<string>();
+        }
+
+        public bool TryGetMultiArgument(string key, out IList<string> values)
+        {
+            values = new List<string>();
+
+            var keyRegex = new Regex(@$"{key}\[\d+\]", RegexOptions.IgnoreCase);
+            foreach (KeyValuePair<string,string> kvp in _dict)
+            {
+                Match match = keyRegex.Match(kvp.Key);
+                if (match.Success)
+                {
+                    values.Add(kvp.Value);
+                }
+            }
+
+            return values.Count > 0;
         }
 
         public bool TryGetHostAndPort(out string host, out int? port)
