@@ -107,7 +107,7 @@ namespace Microsoft.AzureRepos
                 // for user account lookups when getting Azure Access Tokens.
                 var azureResult = await GetAzureAccessTokenAsync(remoteUri, input.UserName);
                 var credential = new GitCredential(azureResult.AccountUpn, azureResult.AccessToken);
-                return new GetCredentialResult(credential);
+                return new GetCredentialResult(credential, Constants.Http.WwwAuthenticateBearerScheme);
             }
         }
 
