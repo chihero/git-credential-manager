@@ -35,6 +35,12 @@ namespace GitCredentialManager.Commands
             output["username"] = result.Credential.Account;
             output["password"] = result.Credential.Password;
 
+            // Return result/credential metadata
+            if (!string.IsNullOrWhiteSpace(result.CredentialType))
+            {
+                output["type"] = result.CredentialType;
+            }
+
             // Write the values to standard out
             Context.Streams.Out.WriteDictionary(output);
         }

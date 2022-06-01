@@ -62,12 +62,15 @@ namespace GitCredentialManager
 
     public class GetCredentialResult
     {
-        public GetCredentialResult(ICredential credential)
+        public GetCredentialResult(ICredential credential, string credentialType = null)
         {
             Credential = credential;
+            CredentialType = credentialType;
         }
 
         public ICredential Credential { get; }
+
+        public string CredentialType { get; }
     }
 
     /// <summary>
