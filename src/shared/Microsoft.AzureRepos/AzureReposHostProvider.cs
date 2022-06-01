@@ -4,6 +4,7 @@ using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using GitCredentialManager;
 using GitCredentialManager.Authentication;
@@ -105,7 +106,7 @@ namespace Microsoft.AzureRepos
             {
                 // Include the username request here so that we may use it as an override
                 // for user account lookups when getting Azure Access Tokens.
-                var azureResult = await GetAzureAccessTokenAsync(remoteUri, input.UserName);
+                var azureResult = await GetAzureAccessTokenAsync(input);
                 var credential = new GitCredential(azureResult.AccountUpn, azureResult.AccessToken);
                 return new GetCredentialResult(credential, Constants.Http.WwwAuthenticateBearerScheme);
             }
@@ -223,25 +224,48 @@ namespace Microsoft.AzureRepos
             return new GitCredential(result.AccountUpn, pat);
         }
 
-        private async Task<IMicrosoftAuthenticationResult> GetAzureAccessTokenAsync(Uri remoteUri, string userName)
+        private async Task<IMicrosoftAuthenticationResult> GetAzureAccessTokenAsync(InputArguments input)
         {
             // We should not allow unencrypted communication and should inform the user
-            if (StringComparer.OrdinalIgnoreCase.Equals(remoteUri.Scheme, "http"))
+            if (StringComparer.OrdinalIgnoreCase.Equals(input.Protocol, "http"))
             {
                 throw new Exception("Unencrypted HTTP is not supported for Azure Repos. Ensure the repository remote URL is using HTTPS.");
             }
 
+            Uri remoteUri = input.GetRemoteUri();
+            string userName = input.UserName;
+
             Uri orgUri = UriHelpers.CreateOrganizationUri(remoteUri, out string orgName);
 
-            _context.Trace.WriteLine($"Determining Microsoft Authentication authority for Azure DevOps organization '{orgName}'...");
-            string authAuthority = _authorityCache.GetAuthority(orgName);
+            string authAuthority = null;
+            Regex msBearerRegex = new Regex("^Bearer authorization_uri=(?'uri'.+)", RegexOptions.IgnoreCase);
+            foreach (string header in input.WwwAuthenticate)
+            {
+                Match match = msBearerRegex.Match(header);
+                if (match.Success)
+                {
+                    authAuthority = match.Groups["uri"].Value;
+                    break;
+                }
+            }
+
             if (authAuthority is null)
             {
-                // If there is no cached value we must query for it and cache it for future use
-                _context.Trace.WriteLine($"No cached authority value - querying {orgUri} for authority...");
-                authAuthority = await _azDevOps.GetAuthorityAsync(orgUri);
-                _authorityCache.UpdateAuthority(orgName, authAuthority);
+                _context.Trace.WriteLine($"Determining Microsoft Authentication authority for Azure DevOps organization '{orgName}'...");
+                authAuthority = _authorityCache.GetAuthority(orgName);
+                if (authAuthority is null)
+                {
+                    // If there is no cached value we must query for it and cache it for future use
+                    _context.Trace.WriteLine($"No cached authority value - querying {orgUri} for authority...");
+                    authAuthority = await _azDevOps.GetAuthorityAsync(orgUri);
+                    _authorityCache.UpdateAuthority(orgName, authAuthority);
+                }
             }
+            else
+            {
+                _context.Trace.WriteLine("Microsoft Authentication authority found in header information.");
+            }
+
             _context.Trace.WriteLine($"Authority is '{authAuthority}'.");
 
             //
