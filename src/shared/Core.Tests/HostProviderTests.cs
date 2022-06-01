@@ -35,10 +35,10 @@ namespace GitCredentialManager.Tests
                 },
             };
 
-            ICredential actualCredential = await ((IHostProvider) provider).GetCredentialAsync(input);
+            GetCredentialResult result = await ((IHostProvider) provider).GetCredentialAsync(input);
 
-            Assert.Equal(userName, actualCredential.Account);
-            Assert.Equal(password, actualCredential.Password);
+            Assert.Equal(userName, result.Credential.Account);
+            Assert.Equal(password, result.Credential.Password);
         }
 
         [Fact]
@@ -66,11 +66,11 @@ namespace GitCredentialManager.Tests
                 },
             };
 
-            ICredential actualCredential = await ((IHostProvider) provider).GetCredentialAsync(input);
+            GetCredentialResult result = await ((IHostProvider) provider).GetCredentialAsync(input);
 
             Assert.True(generateWasCalled);
-            Assert.Equal(userName, actualCredential.Account);
-            Assert.Equal(password, actualCredential.Password);
+            Assert.Equal(userName, result.Credential.Account);
+            Assert.Equal(password, result.Credential.Password);
         }
 
 
