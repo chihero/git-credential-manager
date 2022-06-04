@@ -67,11 +67,7 @@ namespace GitCredentialManager
         /// <returns>True if running on macOS, false otherwise.</returns>
         public static bool IsMacOS()
         {
-#if NETFRAMEWORK
-            return Environment.OSVersion.Platform == PlatformID.MacOSX;
-#elif NETSTANDARD
             return RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-#endif
         }
 
         /// <summary>
@@ -80,11 +76,7 @@ namespace GitCredentialManager
         /// <returns>True if running on Windows, false otherwise.</returns>
         public static bool IsWindows()
         {
-#if NETFRAMEWORK
-            return Environment.OSVersion.Platform == PlatformID.Win32NT;
-#elif NETSTANDARD
             return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-#endif
         }
 
         /// <summary>
@@ -93,11 +85,7 @@ namespace GitCredentialManager
         /// <returns>True if running on a Linux distribution, false otherwise.</returns>
         public static bool IsLinux()
         {
-#if NETFRAMEWORK
-            return Environment.OSVersion.Platform == PlatformID.Unix;
-#elif NETSTANDARD
             return RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
-#endif
         }
 
         /// <summary>
@@ -249,9 +237,6 @@ namespace GitCredentialManager
 
         private static string GetCpuArchitecture()
         {
-#if NETFRAMEWORK
-            return Environment.Is64BitOperatingSystem ? "x86-64" : "x86";
-#elif NETSTANDARD
             switch (RuntimeInformation.OSArchitecture)
             {
                 case Architecture.Arm:
@@ -265,16 +250,11 @@ namespace GitCredentialManager
                 default:
                     return RuntimeInformation.OSArchitecture.ToString();
             }
-#endif
         }
 
         private static string GetClrVersion()
         {
-#if NETFRAMEWORK
-            return $".NET Framework {Environment.Version}";
-#elif NETSTANDARD
             return RuntimeInformation.FrameworkDescription;
-#endif
         }
 
         #endregion

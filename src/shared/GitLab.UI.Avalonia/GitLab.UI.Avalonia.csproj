@@ -3,7 +3,6 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
-    <RuntimeIdentifiers>osx-x64;linux-x64</RuntimeIdentifiers>
     <RootNamespace>GitLab.UI</RootNamespace>
     <AssemblyName>GitLab.UI</AssemblyName>
   </PropertyGroup>

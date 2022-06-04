@@ -40,7 +40,7 @@ mkdir -p "$PAYLOAD","$SYMBOLS"
 # Publish core application executables
 Write-Output "Publishing core application..."
 dotnet publish "$GCM_SRC" `
-    --framework net472 `
+    --framework net6.0 `
 	--configuration "$CONFIGURATION" `
 	--runtime win-x86 `
 	--output "$PAYLOAD"
