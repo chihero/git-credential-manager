@@ -17,10 +17,8 @@ namespace GitCredentialManager
         /// <summary>
         /// Get the first credential from the store that matches the given query.
         /// </summary>
-        /// <param name="service">Name of the service to match against. Use null to match all values.</param>
-        /// <param name="account">Account name to match against. Use null to match all values.</param>
         /// <returns>First matching credential or null if none are found.</returns>
-        ICredential Get(string service, string account);
+        ICredential Get(CredentialQuery query);
 
         /// <summary>
         /// Add or update credential in the store with the specified key.
@@ -33,10 +31,26 @@ namespace GitCredentialManager
         /// <summary>
         /// Delete credential from the store that matches the given query.
         /// </summary>
+        /// <returns>True if the credential was deleted, false otherwise.</returns>
+        bool Remove(CredentialQuery query);
+    }
+
+    public class CredentialQuery : ICredentialAttributes
+    {
+        /// <summary>
+        /// Represents a query in to a <see cref="ICredentialStore"/>.
+        /// </summary>
         /// <param name="service">Name of the service to match against. Use null to match all values.</param>
         /// <param name="account">Account name to match against. Use null to match all values.</param>
-        /// <returns>True if the credential was deleted, false otherwise.</returns>
-        bool Remove(string service, string account);
+        public CredentialQuery(string service = null, string account = null)
+        {
+            Service = service;
+            Account = account;
+        }
+
+        public string Service { get; set; }
+
+        public string Account { get; set; }
     }
 
     public class CredentialStore : ICredentialStore
@@ -52,12 +66,10 @@ namespace GitCredentialManager
             _context = context;
         }
 
-        #region ICredentialStore
-
-        public ICredential Get(string service, string account)
+        public ICredential Get(CredentialQuery query)
         {
             EnsureBackingStore();
-            return _backingStore.Get(service, account);
+            return _backingStore.Get(query);
         }
 
         public void AddOrUpdate(string service, string account, string secret)
@@ -66,13 +78,11 @@ namespace GitCredentialManager
             _backingStore.AddOrUpdate(service, account, secret);
         }
 
-        public bool Remove(string service, string account)
+        public bool Remove(CredentialQuery query)
         {
             EnsureBackingStore();
-            return _backingStore.Remove(service, account);
+            return _backingStore.Remove(query);
         }
-
-        #endregion
 
         private void EnsureBackingStore()
         {
@@ -369,6 +379,19 @@ namespace GitCredentialManager
             gpgPath = _context.Environment.LocateExecutable("gpg");
             _context.Trace.WriteLine($"Using PATH-located GPG (gpg) executable: {gpgPath}");
             return gpgPath;
+        }
+    }
+
+    public static class CredentialStoreExtensions
+    {
+        public static ICredential Get(this ICredentialStore store, string service, string account)
+        {
+            return store.Get(new CredentialQuery(service, account));
+        }
+
+        public static bool Remove(this ICredentialStore store, string service, string account)
+        {
+            return store.Remove(new CredentialQuery(service, account));
         }
     }
 }

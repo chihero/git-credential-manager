@@ -23,39 +23,39 @@ namespace GitCredentialManager.Interop.MacOS
             _namespace = @namespace;
         }
 
-        public ICredential Get(string service, string account)
+        public ICredential Get(CredentialQuery query)
         {
-            IntPtr query = IntPtr.Zero;
+            IntPtr queryPtr = IntPtr.Zero;
             IntPtr resultPtr = IntPtr.Zero;
             IntPtr servicePtr = IntPtr.Zero;
             IntPtr accountPtr = IntPtr.Zero;
 
             try
             {
-                query = CFDictionaryCreateMutable(
+                queryPtr = CFDictionaryCreateMutable(
                     IntPtr.Zero,
                     0,
                     IntPtr.Zero, IntPtr.Zero);
 
-                CFDictionaryAddValue(query, kSecClass, kSecClassGenericPassword);
-                CFDictionaryAddValue(query, kSecMatchLimit, kSecMatchLimitOne);
-                CFDictionaryAddValue(query, kSecReturnData, kCFBooleanTrue);
-                CFDictionaryAddValue(query, kSecReturnAttributes, kCFBooleanTrue);
+                CFDictionaryAddValue(queryPtr, kSecClass, kSecClassGenericPassword);
+                CFDictionaryAddValue(queryPtr, kSecMatchLimit, kSecMatchLimitOne);
+                CFDictionaryAddValue(queryPtr, kSecReturnData, kCFBooleanTrue);
+                CFDictionaryAddValue(queryPtr, kSecReturnAttributes, kCFBooleanTrue);
 
-                if (!string.IsNullOrWhiteSpace(service))
+                if (!string.IsNullOrWhiteSpace(query.Service))
                 {
-                    string fullService = CreateServiceName(service);
+                    string fullService = CreateServiceName(query.Service);
                     servicePtr = CreateCFStringUtf8(fullService);
-                    CFDictionaryAddValue(query, kSecAttrService, servicePtr);
+                    CFDictionaryAddValue(queryPtr, kSecAttrService, servicePtr);
                 }
 
-                if (!string.IsNullOrWhiteSpace(account))
+                if (!string.IsNullOrWhiteSpace(query.Account))
                 {
-                    accountPtr = CreateCFStringUtf8(account);
-                    CFDictionaryAddValue(query, kSecAttrAccount, accountPtr);
+                    accountPtr = CreateCFStringUtf8(query.Account);
+                    CFDictionaryAddValue(queryPtr, kSecAttrAccount, accountPtr);
                 }
 
-                int searchResult = SecItemCopyMatching(query, out resultPtr);
+                int searchResult = SecItemCopyMatching(queryPtr, out resultPtr);
 
                 switch (searchResult)
                 {
@@ -79,7 +79,7 @@ namespace GitCredentialManager.Interop.MacOS
             }
             finally
             {
-                if (query != IntPtr.Zero) CFRelease(query);
+                if (queryPtr != IntPtr.Zero) CFRelease(queryPtr);
                 if (servicePtr != IntPtr.Zero) CFRelease(servicePtr);
                 if (accountPtr != IntPtr.Zero) CFRelease(accountPtr);
                 if (resultPtr != IntPtr.Zero) CFRelease(resultPtr);
@@ -90,7 +90,7 @@ namespace GitCredentialManager.Interop.MacOS
         {
             EnsureArgument.NotNullOrWhiteSpace(service, nameof(service));
 
-            IntPtr query = IntPtr.Zero;
+            IntPtr queryPtr = IntPtr.Zero;
             IntPtr servicePtr = IntPtr.Zero;
             IntPtr accountPtr = IntPtr.Zero;
             IntPtr resultPtr = IntPtr.Zero;
@@ -98,30 +98,30 @@ namespace GitCredentialManager.Interop.MacOS
             try
             {
                 // Check if an entry already exists in the keychain
-                query = CFDictionaryCreateMutable(
+                queryPtr = CFDictionaryCreateMutable(
                     IntPtr.Zero,
                     0,
                     IntPtr.Zero, IntPtr.Zero);
 
-                CFDictionaryAddValue(query, kSecClass, kSecClassGenericPassword);
-                CFDictionaryAddValue(query, kSecMatchLimit, kSecMatchLimitOne);
-                CFDictionaryAddValue(query, kSecReturnData, kCFBooleanTrue);
-                CFDictionaryAddValue(query, kSecReturnAttributes, kCFBooleanTrue);
+                CFDictionaryAddValue(queryPtr, kSecClass, kSecClassGenericPassword);
+                CFDictionaryAddValue(queryPtr, kSecMatchLimit, kSecMatchLimitOne);
+                CFDictionaryAddValue(queryPtr, kSecReturnData, kCFBooleanTrue);
+                CFDictionaryAddValue(queryPtr, kSecReturnAttributes, kCFBooleanTrue);
 
                 if (!string.IsNullOrWhiteSpace(service))
                 {
                     string fullService = CreateServiceName(service);
                     servicePtr = CreateCFStringUtf8(fullService);
-                    CFDictionaryAddValue(query, kSecAttrService, servicePtr);
+                    CFDictionaryAddValue(queryPtr, kSecAttrService, servicePtr);
                 }
 
                 if (!string.IsNullOrWhiteSpace(account))
                 {
                     accountPtr = CreateCFStringUtf8(account);
-                    CFDictionaryAddValue(query, kSecAttrAccount, accountPtr);
+                    CFDictionaryAddValue(queryPtr, kSecAttrAccount, accountPtr);
                 }
 
-                int searchResult = SecItemCopyMatching(query, out resultPtr);
+                int searchResult = SecItemCopyMatching(queryPtr, out resultPtr);
                 switch (searchResult)
                 {
                     // Update existing entry
@@ -144,41 +144,41 @@ namespace GitCredentialManager.Interop.MacOS
                 if (resultPtr  != IntPtr.Zero) CFRelease(resultPtr);
                 if (accountPtr != IntPtr.Zero) CFRelease(accountPtr);
                 if (servicePtr != IntPtr.Zero) CFRelease(servicePtr);
-                if (query      != IntPtr.Zero) CFRelease(query);
+                if (queryPtr      != IntPtr.Zero) CFRelease(queryPtr);
             }
         }
 
-        public bool Remove(string service, string account)
+        public bool Remove(CredentialQuery query)
         {
-            IntPtr query = IntPtr.Zero;
+            IntPtr queryPtr = IntPtr.Zero;
             IntPtr servicePtr = IntPtr.Zero;
             IntPtr accountPtr = IntPtr.Zero;
 
             try
             {
-                query = CFDictionaryCreateMutable(
+                queryPtr = CFDictionaryCreateMutable(
                     IntPtr.Zero,
                     0,
                     IntPtr.Zero, IntPtr.Zero);
 
-                CFDictionaryAddValue(query, kSecClass, kSecClassGenericPassword);
-                CFDictionaryAddValue(query, kSecMatchLimit, kSecMatchLimitOne);
-                CFDictionaryAddValue(query, kSecReturnRef, kCFBooleanTrue);
+                CFDictionaryAddValue(queryPtr, kSecClass, kSecClassGenericPassword);
+                CFDictionaryAddValue(queryPtr, kSecMatchLimit, kSecMatchLimitOne);
+                CFDictionaryAddValue(queryPtr, kSecReturnRef, kCFBooleanTrue);
 
-                if (!string.IsNullOrWhiteSpace(service))
+                if (!string.IsNullOrWhiteSpace(query.Service))
                 {
-                    string fullService = CreateServiceName(service);
+                    string fullService = CreateServiceName(query.Service);
                     servicePtr = CreateCFStringUtf8(fullService);
-                    CFDictionaryAddValue(query, kSecAttrService, servicePtr);
+                    CFDictionaryAddValue(queryPtr, kSecAttrService, servicePtr);
                 }
 
-                if (!string.IsNullOrWhiteSpace(account))
+                if (!string.IsNullOrWhiteSpace(query.Account))
                 {
-                    accountPtr = CreateCFStringUtf8(account);
-                    CFDictionaryAddValue(query, kSecAttrAccount, accountPtr);
+                    accountPtr = CreateCFStringUtf8(query.Account);
+                    CFDictionaryAddValue(queryPtr, kSecAttrAccount, accountPtr);
                 }
 
-                int deleteResult = SecItemDelete(query);
+                int deleteResult = SecItemDelete(queryPtr);
                 switch (deleteResult)
                 {
                     case OK:
@@ -195,7 +195,7 @@ namespace GitCredentialManager.Interop.MacOS
             }
             finally
             {
-                if (query != IntPtr.Zero) CFRelease(query);
+                if (queryPtr != IntPtr.Zero) CFRelease(queryPtr);
                 if (servicePtr != IntPtr.Zero) CFRelease(servicePtr);
                 if (accountPtr != IntPtr.Zero) CFRelease(accountPtr);
             }

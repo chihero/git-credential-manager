@@ -22,9 +22,9 @@ namespace GitCredentialManager
 
         #region ICredentialStore
 
-        public ICredential Get(string service, string account)
+        public ICredential Get(CredentialQuery query)
         {
-            var input = MakeGitCredentialsEntry(service, account);
+            var input = MakeGitCredentialsEntry(query.Service, query.Account);
 
             var result = _git.InvokeHelperAsync(
                 $"credential-cache get {_options}",
@@ -52,9 +52,9 @@ namespace GitCredentialManager
             ).GetAwaiter().GetResult();
         }
 
-        public bool Remove(string service, string account)
+        public bool Remove(CredentialQuery query)
         {
-            var input = MakeGitCredentialsEntry(service, account);
+            var input = MakeGitCredentialsEntry(query.Service, query.Account);
 
             // per https://git-scm.com/docs/gitcredentials :
             // For a store or erase operation, the helper’s output is ignored.

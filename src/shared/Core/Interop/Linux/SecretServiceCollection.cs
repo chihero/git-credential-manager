@@ -29,7 +29,7 @@ namespace GitCredentialManager.Interop.Linux
             _namespace = @namespace;
         }
 
-        public unsafe ICredential Get(string service, string account)
+        public unsafe ICredential Get(CredentialQuery query)
         {
             GHashTable* queryAttrs = null;
             GList* results = null;
@@ -39,7 +39,7 @@ namespace GitCredentialManager.Interop.Linux
             {
                 SecretService* secService = GetSecretService();
 
-                queryAttrs = CreateSearchQuery(service, account);
+                queryAttrs = CreateSearchQuery(query);
 
                 SecretSchema schema = GetSchema();
 
@@ -165,7 +165,7 @@ namespace GitCredentialManager.Interop.Linux
             }
         }
 
-        public unsafe bool Remove(string service, string account)
+        public unsafe bool Remove(CredentialQuery query)
         {
             GHashTable* attributes = null;
             GError* error = null;
@@ -175,7 +175,7 @@ namespace GitCredentialManager.Interop.Linux
                 SecretService* secService = GetSecretService();
 
                 // Create search query
-                attributes = CreateSearchQuery(service, account);
+                attributes = CreateSearchQuery(query);
 
                 SecretSchema schema = GetSchema();
 
@@ -203,8 +203,11 @@ namespace GitCredentialManager.Interop.Linux
             }
         }
 
-        private unsafe GHashTable* CreateSearchQuery(string service, string account)
+        private unsafe GHashTable* CreateSearchQuery(CredentialQuery query)
         {
+            string service = query.Service;
+            string account = query.Account;
+
             // Build search query
             GHashTable* queryAttrs = g_hash_table_new_full(
                 g_str_hash, g_str_equal,

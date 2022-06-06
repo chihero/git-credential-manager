@@ -19,6 +19,6 @@ namespace GitCredentialManager.Interop.Windows
 
         public string TargetName { get; }
 
-        string ICredential.Account => UserName;
+        string ICredentialAttributes.Account => UserName;
     }
 }

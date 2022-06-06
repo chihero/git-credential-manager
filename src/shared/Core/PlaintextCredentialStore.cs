@@ -22,13 +22,11 @@ namespace GitCredentialManager
         protected string Namespace { get; }
         protected virtual string CredentialFileExtension => ".credential";
 
-        #region ICredentialStore
-
-        public ICredential Get(string service, string account)
+        public ICredential Get(CredentialQuery query)
         {
-            string serviceSlug = CreateServiceSlug(service);
+            string serviceSlug = CreateServiceSlug(query.Service);
             string searchPath = Path.Combine(StoreRoot, serviceSlug);
-            bool anyAccount = string.IsNullOrWhiteSpace(account);
+            bool anyAccount = string.IsNullOrWhiteSpace(query.Account);
 
             if (!FileSystem.DirectoryExists(searchPath))
             {
@@ -40,12 +38,12 @@ namespace GitCredentialManager
             foreach (string fullPath in allFiles)
             {
                 string accountFile = Path.GetFileNameWithoutExtension(fullPath);
-                if (anyAccount || StringComparer.OrdinalIgnoreCase.Equals(account, accountFile))
+                if (anyAccount || StringComparer.OrdinalIgnoreCase.Equals(query.Account, accountFile))
                 {
                     // Validate the credential metadata also matches our search
                     if (TryDeserializeCredential(fullPath, out FileCredential credential) &&
-                        StringComparer.OrdinalIgnoreCase.Equals(service, credential.Service) &&
-                        (anyAccount || StringComparer.OrdinalIgnoreCase.Equals(account, credential.Account)))
+                        StringComparer.OrdinalIgnoreCase.Equals(query.Service, credential.Service) &&
+                        (anyAccount || StringComparer.OrdinalIgnoreCase.Equals(query.Account, credential.Account)))
                     {
                         return credential;
                     }
@@ -73,11 +71,11 @@ namespace GitCredentialManager
             SerializeCredential(credential);
         }
 
-        public bool Remove(string service, string account)
+        public bool Remove(CredentialQuery query)
         {
-            string serviceSlug = CreateServiceSlug(service);
+            string serviceSlug = CreateServiceSlug(query.Service);
             string searchPath = Path.Combine(StoreRoot, serviceSlug);
-            bool anyAccount = string.IsNullOrWhiteSpace(account);
+            bool anyAccount = string.IsNullOrWhiteSpace(query.Account);
 
             if (!FileSystem.DirectoryExists(searchPath))
             {
@@ -89,12 +87,12 @@ namespace GitCredentialManager
             foreach (string fullPath in allFiles)
             {
                 string accountFile = Path.GetFileNameWithoutExtension(fullPath);
-                if (anyAccount || StringComparer.OrdinalIgnoreCase.Equals(account, accountFile))
+                if (anyAccount || StringComparer.OrdinalIgnoreCase.Equals(query.Account, accountFile))
                 {
                     // Validate the credential metadata also matches our search
                     if (TryDeserializeCredential(fullPath, out FileCredential credential) &&
-                        StringComparer.OrdinalIgnoreCase.Equals(service, credential.Service) &&
-                        (anyAccount || StringComparer.OrdinalIgnoreCase.Equals(account, credential.Account)))
+                        StringComparer.OrdinalIgnoreCase.Equals(query.Service, credential.Service) &&
+                        (anyAccount || StringComparer.OrdinalIgnoreCase.Equals(query.Account, credential.Account)))
                     {
                         // Delete the credential file
                         FileSystem.DeleteFile(fullPath);
@@ -105,8 +103,6 @@ namespace GitCredentialManager
 
             return false;
         }
-
-        #endregion
 
         protected virtual bool TryDeserializeCredential(string path, out FileCredential credential)
         {

@@ -13,8 +13,6 @@ namespace GitCredentialManager.Interop.Windows
 
         private readonly string _namespace;
 
-        #region Constructors
-
         /// <summary>
         /// Open the Windows Credential Manager vault for the current user.
         /// </summary>
@@ -26,13 +24,9 @@ namespace GitCredentialManager.Interop.Windows
             _namespace = @namespace;
         }
 
-        #endregion
-
-        #region ICredentialStore
-
-        public ICredential Get(string service, string account)
+        public ICredential Get(CredentialQuery query)
         {
-            return Enumerate(service, account).FirstOrDefault();
+            return Enumerate(query).FirstOrDefault();
         }
 
         public void AddOrUpdate(string service, string account, string secret)
@@ -102,9 +96,9 @@ namespace GitCredentialManager.Interop.Windows
             }
         }
 
-        public bool Remove(string service, string account)
+        public bool Remove(CredentialQuery query)
         {
-            WindowsCredential credential = Enumerate(service, account).FirstOrDefault();
+            WindowsCredential credential = Enumerate(query).FirstOrDefault();
 
             if (credential != null)
             {
@@ -129,8 +123,6 @@ namespace GitCredentialManager.Interop.Windows
             return false;
         }
 
-        #endregion
-
         /// <summary>
         /// Check if we can persist credentials to for the current process and logon session.
         /// </summary>
@@ -154,7 +146,7 @@ namespace GitCredentialManager.Interop.Windows
             return persist >= CredentialPersist.LocalMachine;
         }
 
-        private IEnumerable<WindowsCredential> Enumerate(string service, string account)
+        private IEnumerable<WindowsCredential> Enumerate(CredentialQuery query)
         {
             IntPtr credList = IntPtr.Zero;
 
@@ -177,7 +169,7 @@ namespace GitCredentialManager.Interop.Windows
                             IntPtr credPtr = Marshal.ReadIntPtr(credList, i * ptrSize);
                             Win32Credential credential = Marshal.PtrToStructure<Win32Credential>(credPtr);
 
-                            if (!IsMatch(service, account, credential))
+                            if (!IsMatch(query, credential))
                             {
                                 continue;
                             }
@@ -266,8 +258,11 @@ namespace GitCredentialManager.Interop.Windows
             return url;
         }
 
-        private bool IsMatch(string service, string account, Win32Credential credential)
+        private bool IsMatch(CredentialQuery query, Win32Credential credential)
         {
+            string service = query.Service;
+            string account = query.Account;
+
             // Match against the username first
             if (!string.IsNullOrWhiteSpace(account) &&
                 !StringComparer.Ordinal.Equals(account, credential.UserName))

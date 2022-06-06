@@ -2,15 +2,21 @@
 namespace GitCredentialManager
 {
     /// <summary>
-    /// Represents a credential.
+    /// Represents metadata/attributes about a credential.
     /// </summary>
-    public interface ICredential
+    public interface ICredentialAttributes
     {
         /// <summary>
         /// Account associated with this credential.
         /// </summary>
-        string Account { get; }
+        public string Account { get; }
+    }
 
+    /// <summary>
+    /// Represents a credential. A credential consists of attributes/metadata and a secret value.
+    /// </summary>
+    public interface ICredential : ICredentialAttributes
+    {
         /// <summary>
         /// Secret.
         /// </summary>

@@ -14,9 +14,9 @@ namespace GitCredentialManager.Tests.Objects
 
         #region ICredentialStore
 
-        ICredential ICredentialStore.Get(string service, string account)
+        ICredential ICredentialStore.Get(CredentialQuery query)
         {
-            return TryGet(service, account, out TestCredential credential) ? credential : null;
+            return TryGet(query.Service, query.Account, out TestCredential credential) ? credential : null;
         }
 
         void ICredentialStore.AddOrUpdate(string service, string account, string secret)
@@ -24,12 +24,12 @@ namespace GitCredentialManager.Tests.Objects
             Add(service, account, secret);
         }
 
-        bool ICredentialStore.Remove(string service, string account)
+        bool ICredentialStore.Remove(CredentialQuery query)
         {
             foreach (var key in _store.Keys)
             {
-                if ((service == null || key.service == service) &&
-                    (account == null || key.account == account))
+                if ((query.Service == null || key.service == query.Service) &&
+                    (query.Account == null || key.account == query.Account))
                 {
                     _store.Remove(key);
                     return true;
