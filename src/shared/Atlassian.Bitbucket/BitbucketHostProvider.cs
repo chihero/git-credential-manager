@@ -72,7 +72,7 @@ namespace Atlassian.Bitbucket
             return supported;
         }
 
-        public async Task<ICredential> GetCredentialAsync(InputArguments input)
+        public async Task<GetCredentialResult> GetCredentialAsync(InputArguments input)
         {
             // We should not allow unencrypted communication and should inform the user
             if (StringComparer.OrdinalIgnoreCase.Equals(input.Protocol, "http")
@@ -85,8 +85,10 @@ namespace Atlassian.Bitbucket
 
             AuthenticationModes authModes = GetSupportedAuthenticationModes(remoteUri);
 
-            return await GetStoredCredentials(remoteUri, input.UserName, authModes) ??
-                   await GetRefreshedCredentials(remoteUri, input.UserName, authModes);
+            ICredential credential = await GetStoredCredentials(remoteUri, input.UserName, authModes) ??
+                                 await GetRefreshedCredentials(remoteUri, input.UserName, authModes);
+
+            return new GetCredentialResult(credential);
         }
 
         private async Task<ICredential> GetStoredCredentials(Uri remoteUri, string userName, AuthenticationModes authModes)
