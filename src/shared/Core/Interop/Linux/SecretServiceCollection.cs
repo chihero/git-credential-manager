@@ -18,8 +18,6 @@ namespace GitCredentialManager.Interop.Linux
 
         private readonly string _namespace;
 
-        #region Constructors
-
         /// <summary>
         /// Open the default secret collection for the current user.
         /// </summary>
@@ -30,10 +28,6 @@ namespace GitCredentialManager.Interop.Linux
             PlatformUtils.EnsureLinux();
             _namespace = @namespace;
         }
-
-        #endregion
-
-        #region ICredentialStore
 
         public unsafe ICredential Get(string service, string account)
         {
@@ -65,7 +59,7 @@ namespace GitCredentialManager.Interop.Linux
                     throw new InteropException("Failed to search for credentials", code, new Exception(message));
                 }
 
-                if (results != null && results->data != null)
+                if (results != null && results->data != IntPtr.Zero)
                 {
                     SecretItem* item = (SecretItem*) results->data;
 
@@ -208,8 +202,6 @@ namespace GitCredentialManager.Interop.Linux
                 if (error != null) g_error_free(error);
             }
         }
-
-        #endregion
 
         private unsafe GHashTable* CreateSearchQuery(string service, string account)
         {
