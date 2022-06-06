@@ -39,7 +39,7 @@ namespace GitCredentialManager.Tests
             ICredential actualCredential = result.Credential;
 
             Assert.Equal(userName, actualCredential.Account);
-            Assert.Equal(password, actualCredential.Password);
+            Assert.Equal(password, actualCredential.Secret);
         }
 
         [Fact]
@@ -72,7 +72,7 @@ namespace GitCredentialManager.Tests
 
             Assert.True(generateWasCalled);
             Assert.Equal(userName, actualCredential.Account);
-            Assert.Equal(password, actualCredential.Password);
+            Assert.Equal(password, actualCredential.Secret);
         }
 
 
@@ -123,7 +123,7 @@ namespace GitCredentialManager.Tests
             Assert.Equal(1, context.CredentialStore.Count);
             Assert.True(context.CredentialStore.TryGet(service, userName, out var storedCredential));
             Assert.Equal(userName, storedCredential.Account);
-            Assert.Equal(password, storedCredential.Password);
+            Assert.Equal(password, storedCredential.Secret);
         }
 
         [Fact]
@@ -150,7 +150,7 @@ namespace GitCredentialManager.Tests
             Assert.Equal(1, context.CredentialStore.Count);
             Assert.True(context.CredentialStore.TryGet(testService, testUserName, out var storedCredential));
             Assert.Equal(testUserName, storedCredential.Account);
-            Assert.Equal(testPasswordNew, storedCredential.Password);
+            Assert.Equal(testPasswordNew, storedCredential.Secret);
         }
 
         #endregion

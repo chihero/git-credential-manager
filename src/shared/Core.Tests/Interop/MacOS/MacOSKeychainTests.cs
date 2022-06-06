@@ -31,7 +31,7 @@ namespace GitCredentialManager.Tests.Interop.MacOS
 
                 Assert.NotNull(outCredential1);
                 Assert.Equal(account, outCredential1.Account);
-                Assert.Equal(password, outCredential1.Password);
+                Assert.Equal(password, outCredential1.Secret);
 
                 // Update
                 keychain.AddOrUpdate(service, account, newPassword);
@@ -41,7 +41,7 @@ namespace GitCredentialManager.Tests.Interop.MacOS
 
                 Assert.NotNull(outCredential2);
                 Assert.Equal(account, outCredential2.Account);
-                Assert.Equal(newPassword, outCredential2.Password);
+                Assert.Equal(newPassword, outCredential2.Secret);
             }
             // There is an unknown issue that the keychain can sometimes get itself in where all API calls
             // result in an errSecAuthFailed error. The only solution seems to be a machine restart, which

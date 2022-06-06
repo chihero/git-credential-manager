@@ -112,7 +112,7 @@ namespace Atlassian.Bitbucket
                 return null;
             }
 
-            _context.Trace.WriteLineSecrets($"Found stored credentials: {credentials.Account}/{{0}}", new object[] { credentials.Password });
+            _context.Trace.WriteLineSecrets($"Found stored credentials: {credentials.Account}/{{0}}", new object[] { credentials.Secret });
 
             // Check credentials are still valid
             if (!await ValidateCredentialsWork(remoteUri, credentials, authModes))
@@ -230,7 +230,7 @@ namespace Atlassian.Bitbucket
             var refreshTokenService = GetRefreshTokenServiceName(remoteUri);
             _context.Trace.WriteLine("Refreshing OAuth credentials using refresh token...");
 
-            OAuth2TokenResult refreshResult = await _bitbucketAuth.RefreshOAuthCredentialsAsync(refreshToken.Password);
+            OAuth2TokenResult refreshResult = await _bitbucketAuth.RefreshOAuthCredentialsAsync(refreshToken.Secret);
 
             // Resolve the username
             _context.Trace.WriteLine("Resolving username for refreshed OAuth credential...");
@@ -375,10 +375,10 @@ namespace Atlassian.Bitbucket
 
         private async Task<bool> RequiresTwoFactorAuthenticationAsync(ICredential credentials)
         {
-            _context.Trace.WriteLineSecrets($"Check if 2FA is required for credentials ({credentials.Account}/{{0}})...", new object[] { credentials.Password });
+            _context.Trace.WriteLineSecrets($"Check if 2FA is required for credentials ({credentials.Account}/{{0}})...", new object[] { credentials.Secret });
 
             RestApiResult<UserInfo> result = await _bitbucketApi.GetUserInformationAsync(
-                credentials.Account, credentials.Password, isBearerToken: false);
+                credentials.Account, credentials.Secret, isBearerToken: false);
             switch (result.StatusCode)
             {
                 // 2FA may not be required
@@ -409,7 +409,7 @@ namespace Atlassian.Bitbucket
             // (once/if we get such metadata storage), and return false if they have.
             // This would be more efficient than having to make REST API calls to check.
 
-            _context.Trace.WriteLineSecrets($"Validate credentials ({credentials.Account}/{{0}}) are fresh for {remoteUri} ...", new object[] { credentials.Password });
+            _context.Trace.WriteLineSecrets($"Validate credentials ({credentials.Account}/{{0}}) are fresh for {remoteUri} ...", new object[] { credentials.Secret });
 
             if (!IsBitbucketOrg(remoteUri))
             {
@@ -426,7 +426,7 @@ namespace Atlassian.Bitbucket
             {
                 try
                 {
-                    await ResolveOAuthUserNameAsync(credentials.Password);
+                    await ResolveOAuthUserNameAsync(credentials.Secret);
                     _context.Trace.WriteLine("Validated existing credentials using OAuth");
                     return true;
                 }
@@ -440,7 +440,7 @@ namespace Atlassian.Bitbucket
             {
                 try
                 {
-                    await ResolveBasicAuthUserNameAsync(credentials.Account, credentials.Password);
+                    await ResolveBasicAuthUserNameAsync(credentials.Account, credentials.Secret);
                     _context.Trace.WriteLine("Validated existing credentials using BasicAuth");
                     return true;
                 }

@@ -9,7 +9,7 @@ namespace GitCredentialManager.Interop.MacOS
         {
             Service = service;
             Account = account;
-            Password = password;
+            Secret = password;
             Label = label;
         }
 
@@ -19,7 +19,7 @@ namespace GitCredentialManager.Interop.MacOS
 
         public string Label { get; }
 
-        public string Password { get; }
+        public string Secret { get; }
 
         private string DebuggerDisplay => $"{Label} [Service: {Service}, Account: {Account}]";
     }

@@ -70,7 +70,7 @@ namespace GitCredentialManager.Interop.Posix
         {
             string gpgId = GetGpgId();
 
-            var sb = new StringBuilder(credential.Password);
+            var sb = new StringBuilder(credential.Secret);
             sb.AppendFormat("{1}service={0}{1}", credential.Service, Environment.NewLine);
             sb.AppendFormat("account={0}{1}", credential.Account, Environment.NewLine);
             string fileContents = sb.ToString();

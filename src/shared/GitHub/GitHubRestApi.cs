@@ -290,7 +290,7 @@ namespace GitHub
             return api.CreatePersonalAccessTokenAsync(
                 targetUri,
                 credentials?.Account,
-                credentials?.Password,
+                credentials?.Secret,
                 authenticationCode,
                 scopes);
         }

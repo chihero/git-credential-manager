@@ -155,7 +155,7 @@ namespace GitCredentialManager
             using (var stream = FileSystem.OpenFileStream(credential.FullPath, FileMode.Create, FileAccess.Write, FileShare.None))
             using (var writer = new StreamWriter(stream))
             {
-                writer.WriteLine(credential.Password);
+                writer.WriteLine(credential.Secret);
                 writer.WriteLine("service={0}", credential.Service);
                 writer.WriteLine("account={0}", credential.Account);
                 writer.Flush();

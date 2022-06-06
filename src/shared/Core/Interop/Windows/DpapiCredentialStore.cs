@@ -63,7 +63,7 @@ namespace GitCredentialManager.Interop.Windows
             }
 
             // Use DPAPI to encrypt the password value, and then store the base64 encoding of the resulting bytes
-            byte[] plainBytes = Encoding.UTF8.GetBytes(credential.Password);
+            byte[] plainBytes = Encoding.UTF8.GetBytes(credential.Secret);
             byte[] cryptoBytes = ProtectedData.Protect(
                 plainBytes, null, DataProtectionScope.CurrentUser);
             string cryptoBase64 = Convert.ToBase64String(cryptoBytes);

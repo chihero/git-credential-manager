@@ -146,7 +146,7 @@ namespace GitHub
                     // We must store the PAT now so they can resume/repeat the operation with the same,
                     // now SSO authorized, PAT.
                     // See: https://github.com/GitCredentialManager/git-credential-manager/issues/133
-                    Context.CredentialStore.AddOrUpdate(service, patCredential.Account, patCredential.Password);
+                    Context.CredentialStore.AddOrUpdate(service, patCredential.Account, patCredential.Secret);
                     return patCredential;
 
                 case AuthenticationModes.Browser:
@@ -157,7 +157,7 @@ namespace GitHub
 
                 case AuthenticationModes.Pat:
                     // The token returned by the user should be good to use directly as the password for Git
-                    string token = promptResult.Credential.Password;
+                    string token = promptResult.Credential.Secret;
 
                     // Resolve the GitHub user handle if we don't have a specific username already from the
                     // initial request. The reason for this is GitHub requires a (any?) value for the username

@@ -33,7 +33,7 @@ namespace GitCredentialManager.Commands
 
             // Return the credential to Git
             output["username"] = result.Credential.Account;
-            output["password"] = result.Credential.Password;
+            output["password"] = result.Credential.Secret;
 
             // Write the values to standard out
             Context.Streams.Out.WriteDictionary(output);

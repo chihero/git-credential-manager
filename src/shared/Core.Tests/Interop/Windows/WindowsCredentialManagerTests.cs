@@ -33,7 +33,7 @@ namespace GitCredentialManager.Tests.Interop.Windows
                 var winCred = cred as WindowsCredential;
                 Assert.NotNull(winCred);
                 Assert.Equal(userName, winCred.UserName);
-                Assert.Equal(password, winCred.Password);
+                Assert.Equal(password, winCred.Secret);
                 Assert.Equal(service, winCred.Service);
                 Assert.Equal(expectedTargetName, winCred.TargetName);
             }
@@ -69,7 +69,7 @@ namespace GitCredentialManager.Tests.Interop.Windows
                 var winCred = cred as WindowsCredential;
                 Assert.NotNull(winCred);
                 Assert.Equal(userName, winCred.UserName);
-                Assert.Equal(password, winCred.Password);
+                Assert.Equal(password, winCred.Secret);
                 Assert.Equal(service, winCred.Service);
                 Assert.Equal(expectedTargetName, winCred.TargetName);
             }
@@ -133,7 +133,7 @@ namespace GitCredentialManager.Tests.Interop.Windows
                 var winCred1 = cred1 as WindowsCredential;
                 Assert.NotNull(winCred1);
                 Assert.Equal(userName1, winCred1.UserName);
-                Assert.Equal(password1, winCred1.Password);
+                Assert.Equal(password1, winCred1.Secret);
                 Assert.Equal(service,   winCred1.Service);
                 Assert.Equal(expectedTargetName1, winCred1.TargetName);
 
@@ -142,7 +142,7 @@ namespace GitCredentialManager.Tests.Interop.Windows
                 var winCred2 = cred2 as WindowsCredential;
                 Assert.NotNull(winCred2);
                 Assert.Equal(userName2, winCred2.UserName);
-                Assert.Equal(password2, winCred2.Password);
+                Assert.Equal(password2, winCred2.Secret);
                 Assert.Equal(service,   winCred2.Service);
                 Assert.Equal(expectedTargetName2, winCred2.TargetName);
             }
@@ -184,7 +184,7 @@ namespace GitCredentialManager.Tests.Interop.Windows
                 var winCred1 = cred1 as WindowsCredential;
                 Assert.NotNull(winCred1);
                 Assert.Equal(userName1, winCred1.UserName);
-                Assert.Equal(password1, winCred1.Password);
+                Assert.Equal(password1, winCred1.Secret);
                 Assert.Equal(service,   winCred1.Service);
                 Assert.Equal(expectedTargetName1, winCred1.TargetName);
 
@@ -193,7 +193,7 @@ namespace GitCredentialManager.Tests.Interop.Windows
                 var winCred2 = cred2 as WindowsCredential;
                 Assert.NotNull(winCred2);
                 Assert.Equal(userName2, winCred2.UserName);
-                Assert.Equal(password2, winCred2.Password);
+                Assert.Equal(password2, winCred2.Secret);
                 Assert.Equal(service,   winCred2.Service);
                 Assert.Equal(expectedTargetName2, winCred2.TargetName);
             }

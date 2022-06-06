@@ -27,7 +27,7 @@ namespace Atlassian.Bitbucket.Tests
             Assert.NotNull(result);
             Assert.Equal(AuthenticationModes.Basic, result.AuthenticationMode);
             Assert.Equal(username, result.Credential.Account);
-            Assert.Equal(password, result.Credential.Password);
+            Assert.Equal(password, result.Credential.Secret);
         }
 
         [Fact]
@@ -83,7 +83,7 @@ namespace Atlassian.Bitbucket.Tests
             Assert.NotNull(result);
             Assert.Equal(AuthenticationModes.Basic, result.AuthenticationMode);
             Assert.Equal(username, result.Credential.Account);
-            Assert.Equal(password, result.Credential.Password);
+            Assert.Equal(password, result.Credential.Secret);
         }
 
         [Fact]
@@ -105,7 +105,7 @@ namespace Atlassian.Bitbucket.Tests
             Assert.NotNull(result);
             Assert.Equal(AuthenticationModes.Basic, result.AuthenticationMode);
             Assert.Equal(username, result.Credential.Account);
-            Assert.Equal(password, result.Credential.Password);
+            Assert.Equal(password, result.Credential.Secret);
         }
 
         [Fact]
@@ -153,7 +153,7 @@ namespace Atlassian.Bitbucket.Tests
 
             Assert.Equal(AuthenticationModes.Basic, result.AuthenticationMode);
             Assert.Equal(result.Credential.Account, expectedUserName);
-            Assert.Equal(result.Credential.Password, expectedPassword);
+            Assert.Equal(result.Credential.Secret, expectedPassword);
 
             authMock.Verify(x => x.InvokeHelperAsync(helperPath, expectedArgs, null, CancellationToken.None),
                 Times.Once);
@@ -189,7 +189,7 @@ namespace Atlassian.Bitbucket.Tests
 
             Assert.Equal(AuthenticationModes.Basic, result.AuthenticationMode);
             Assert.Equal(result.Credential.Account, expectedUserName);
-            Assert.Equal(result.Credential.Password, expectedPassword);
+            Assert.Equal(result.Credential.Secret, expectedPassword);
 
             authMock.Verify(x => x.InvokeHelperAsync(helperPath, expectedArgs, null, CancellationToken.None),
                 Times.Once);
@@ -225,7 +225,7 @@ namespace Atlassian.Bitbucket.Tests
 
             Assert.Equal(AuthenticationModes.Basic, result.AuthenticationMode);
             Assert.Equal(result.Credential.Account, expectedUserName);
-            Assert.Equal(result.Credential.Password, expectedPassword);
+            Assert.Equal(result.Credential.Secret, expectedPassword);
 
             authMock.Verify(x => x.InvokeHelperAsync(helperPath, expectedArgs, null, CancellationToken.None),
                 Times.Once);

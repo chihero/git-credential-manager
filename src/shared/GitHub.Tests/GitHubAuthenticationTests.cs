@@ -93,7 +93,7 @@ namespace GitHub.Tests
             var result = await auth.Object.GetAuthenticationAsync(new Uri("https://github.com"), null, AuthenticationModes.All);
             Assert.Equal(AuthenticationModes.Basic, result.AuthenticationMode);
             Assert.Equal("tim", result.Credential.Account);
-            Assert.Equal("hunter2", result.Credential.Password);
+            Assert.Equal("hunter2", result.Credential.Secret);
         }
     }
 }

@@ -93,7 +93,7 @@ namespace GitCredentialManager.Tests.Interop.Windows
 
             ICredential credential = store.Get(service, userName);
 
-            Assert.Equal(password, credential.Password);
+            Assert.Equal(password, credential.Secret);
             Assert.Equal(userName, credential.Account);
         }
 

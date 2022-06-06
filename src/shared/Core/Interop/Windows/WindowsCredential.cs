@@ -7,7 +7,7 @@ namespace GitCredentialManager.Interop.Windows
         {
             Service = service;
             UserName = userName;
-            Password = password;
+            Secret = password;
             TargetName = targetName;
         }
 
@@ -15,7 +15,7 @@ namespace GitCredentialManager.Interop.Windows
 
         public string UserName { get; }
 
-        public string Password { get; }
+        public string Secret { get; }
 
         public string TargetName { get; }
 

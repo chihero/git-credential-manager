@@ -64,7 +64,7 @@ namespace GitLab.Tests
             var result = await auth.GetAuthenticationAsync(null, null, AuthenticationModes.All);
             Assert.Equal(AuthenticationModes.Pat, result.AuthenticationMode);
             Assert.Equal("username", result.Credential.Account);
-            Assert.Equal("token", result.Credential.Password);
+            Assert.Equal("token", result.Credential.Secret);
         }
 
         [Fact]
@@ -78,7 +78,7 @@ namespace GitLab.Tests
             var result = await auth.GetAuthenticationAsync(null, null, AuthenticationModes.All);
             Assert.Equal(AuthenticationModes.Basic, result.AuthenticationMode);
             Assert.Equal("username", result.Credential.Account);
-            Assert.Equal("password", result.Credential.Password);
+            Assert.Equal("password", result.Credential.Secret);
         }
 
         [Fact]

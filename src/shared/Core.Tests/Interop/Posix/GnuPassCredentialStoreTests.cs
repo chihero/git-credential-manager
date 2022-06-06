@@ -43,7 +43,7 @@ namespace GitCredentialManager.Tests.Interop.Posix
 
                 Assert.NotNull(outCredential);
                 Assert.Equal(userName, userName);
-                Assert.Equal(password, outCredential.Password);
+                Assert.Equal(password, outCredential.Secret);
                 Assert.True(fs.Files.ContainsKey(expectedFilePath));
                 Assert.Equal(expectedFileBytes, fs.Files[expectedFilePath]);
             }

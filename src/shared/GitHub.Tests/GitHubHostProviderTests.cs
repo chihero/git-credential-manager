@@ -209,7 +209,7 @@ namespace GitHub.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(expectedUserName, credential.Account);
-            Assert.Equal(tokenValue, credential.Password);
+            Assert.Equal(tokenValue, credential.Secret);
 
             ghAuthMock.Verify(
                 x => x.GetOAuthTokenViaBrowserAsync(
@@ -257,7 +257,7 @@ namespace GitHub.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(expectedUserName, credential.Account);
-            Assert.Equal(patValue, credential.Password);
+            Assert.Equal(patValue, credential.Secret);
 
             ghApiMock.Verify(
                 x => x.CreatePersonalAccessTokenAsync(
@@ -311,7 +311,7 @@ namespace GitHub.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(expectedUserName, credential.Account);
-            Assert.Equal(patValue, credential.Password);
+            Assert.Equal(patValue, credential.Secret);
 
             ghApiMock.Verify(
                 x => x.CreatePersonalAccessTokenAsync(

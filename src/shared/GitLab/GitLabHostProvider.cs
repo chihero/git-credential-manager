@@ -173,7 +173,7 @@ namespace GitLab
         {
             string service = GetServiceName(input);
             ICredential credential = Context.CredentialStore.Get(service, input.UserName);
-            if (credential?.Account == "oauth2" && await IsOAuthTokenExpired(input.GetRemoteUri(), credential.Password))
+            if (credential?.Account == "oauth2" && await IsOAuthTokenExpired(input.GetRemoteUri(), credential.Secret))
             {
                 Context.Trace.WriteLine("Removing expired OAuth access token...");
                 Context.CredentialStore.Remove(service, credential.Account);
@@ -186,7 +186,7 @@ namespace GitLab
             }
 
             string refreshService = GetRefreshTokenServiceName(input);
-            string refreshToken = Context.CredentialStore.Get(refreshService, input.UserName)?.Password;
+            string refreshToken = Context.CredentialStore.Get(refreshService, input.UserName)?.Secret;
             if (refreshToken != null)
             {
                 Context.Trace.WriteLine("Refreshing OAuth token...");
@@ -249,7 +249,7 @@ namespace GitLab
             public string Account => "oauth2";
             public string AccessToken { get; }
             public string RefreshToken { get; }
-            string ICredential.Password => AccessToken;
+            string ICredential.Secret => AccessToken;
         }
 
         private async Task<OAuthCredential> GenerateOAuthCredentialAsync(InputArguments input)

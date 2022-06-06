@@ -51,11 +51,11 @@ namespace GitCredentialManager.Diagnostics
                     return Task.FromResult(false);
                 }
 
-                if (!StringComparer.Ordinal.Equals(password, outCredential.Password))
+                if (!StringComparer.Ordinal.Equals(password, outCredential.Secret))
                 {
                     log.Append("Test credential password did not match!");
                     log.AppendLine($"Expected: {password}");
-                    log.AppendLine($"Actual: {outCredential.Password}");
+                    log.AppendLine($"Actual: {outCredential.Secret}");
                     return Task.FromResult(false);
                 }
             }

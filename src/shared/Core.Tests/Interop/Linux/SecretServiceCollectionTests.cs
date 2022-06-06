@@ -28,7 +28,7 @@ namespace GitCredentialManager.Tests.Interop.Linux
 
                 Assert.NotNull(outCredential);
                 Assert.Equal(userName, userName);
-                Assert.Equal(password, outCredential.Password);
+                Assert.Equal(password, outCredential.Secret);
             }
             finally
             {

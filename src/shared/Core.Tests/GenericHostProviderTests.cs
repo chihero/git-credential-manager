@@ -94,7 +94,7 @@ namespace GitCredentialManager.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(testUserName, credential.Account);
-            Assert.Equal(testPassword, credential.Password);
+            Assert.Equal(testPassword, credential.Secret);
             wiaAuthMock.Verify(x => x.GetIsSupportedAsync(It.IsAny<Uri>()), Times.Never);
             basicAuthMock.Verify(x => x.GetCredentials(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
@@ -128,7 +128,7 @@ namespace GitCredentialManager.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(testUserName, credential.Account);
-            Assert.Equal(testPassword, credential.Password);
+            Assert.Equal(testPassword, credential.Secret);
             wiaAuthMock.Verify(x => x.GetIsSupportedAsync(It.IsAny<Uri>()), Times.Never);
             basicAuthMock.Verify(x => x.GetCredentials(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
@@ -159,7 +159,7 @@ namespace GitCredentialManager.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(testUserName, credential.Account);
-            Assert.Equal(testPassword, credential.Password);
+            Assert.Equal(testPassword, credential.Secret);
             wiaAuthMock.Verify(x => x.GetIsSupportedAsync(It.IsAny<Uri>()), Times.Never);
             basicAuthMock.Verify(x => x.GetCredentials(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
@@ -206,7 +206,7 @@ namespace GitCredentialManager.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(string.Empty, credential.Account);
-            Assert.Equal(string.Empty, credential.Password);
+            Assert.Equal(string.Empty, credential.Secret);
             basicAuthMock.Verify(x => x.GetCredentials(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
@@ -237,7 +237,7 @@ namespace GitCredentialManager.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(testUserName, credential.Account);
-            Assert.Equal(testPassword, credential.Password);
+            Assert.Equal(testPassword, credential.Secret);
             basicAuthMock.Verify(x => x.GetCredentials(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
 

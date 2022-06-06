@@ -187,7 +187,7 @@ namespace Microsoft.AzureRepos.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(urlAccount, credential.Account);
-            Assert.Equal(accessToken, credential.Password);
+            Assert.Equal(accessToken, credential.Secret);
         }
 
         [Fact]
@@ -239,7 +239,7 @@ namespace Microsoft.AzureRepos.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(urlAccount, credential.Account);
-            Assert.Equal(accessToken, credential.Password);
+            Assert.Equal(accessToken, credential.Secret);
         }
 
         [Fact]
@@ -292,7 +292,7 @@ namespace Microsoft.AzureRepos.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(account, credential.Account);
-            Assert.Equal(accessToken, credential.Password);
+            Assert.Equal(accessToken, credential.Secret);
         }
 
         [Fact]
@@ -342,7 +342,7 @@ namespace Microsoft.AzureRepos.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(account, credential.Account);
-            Assert.Equal(accessToken, credential.Password);
+            Assert.Equal(accessToken, credential.Secret);
         }
 
         [Fact]
@@ -394,7 +394,7 @@ namespace Microsoft.AzureRepos.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(account, credential.Account);
-            Assert.Equal(accessToken, credential.Password);
+            Assert.Equal(accessToken, credential.Secret);
         }
 
         [Fact]
@@ -447,7 +447,7 @@ namespace Microsoft.AzureRepos.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(account, credential.Account);
-            Assert.Equal(accessToken, credential.Password);
+            Assert.Equal(accessToken, credential.Secret);
         }
 
         [Fact]
@@ -496,7 +496,7 @@ namespace Microsoft.AzureRepos.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(account, credential.Account);
-            Assert.Equal(personalAccessToken, credential.Password);
+            Assert.Equal(personalAccessToken, credential.Secret);
         }
 
         [Fact]
@@ -532,7 +532,7 @@ namespace Microsoft.AzureRepos.Tests
 
             Assert.NotNull(credential);
             Assert.Equal(account, credential.Account);
-            Assert.Equal(personalAccessToken, credential.Password);
+            Assert.Equal(personalAccessToken, credential.Secret);
         }
 
         [Fact]

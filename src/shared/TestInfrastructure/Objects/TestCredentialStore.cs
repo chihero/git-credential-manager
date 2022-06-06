@@ -94,13 +94,13 @@ namespace GitCredentialManager.Tests.Objects
         {
             Service = service;
             Account = account;
-            Password = password;
+            Secret = password;
         }
 
         public string Service { get; }
 
         public string Account { get; }
 
-        public string Password { get; }
+        public string Secret { get; }
     }
 }

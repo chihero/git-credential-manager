@@ -12,9 +12,9 @@ namespace GitCredentialManager
         string Account { get; }
 
         /// <summary>
-        /// Password.
+        /// Secret.
         /// </summary>
-        string Password { get; }
+        string Secret { get; }
     }
 
     /// <summary>
@@ -22,14 +22,14 @@ namespace GitCredentialManager
     /// </summary>
     public class GitCredential : ICredential
     {
-        public GitCredential(string userName, string password)
+        public GitCredential(string account, string secret)
         {
-            Account = userName;
-            Password = password;
+            Account = account;
+            Secret = secret;
         }
 
         public string Account { get; }
 
-        public string Password { get; }
+        public string Secret { get; }
     }
 }

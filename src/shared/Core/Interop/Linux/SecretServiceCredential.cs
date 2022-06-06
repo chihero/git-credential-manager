@@ -9,14 +9,14 @@ namespace GitCredentialManager.Interop.Linux
         {
             Service = service;
             Account = account;
-            Password = password;
+            Secret = password;
         }
 
         public string Service { get; }
 
         public string Account { get; }
 
-        public string Password { get; }
+        public string Secret { get; }
 
         private string DebuggerDisplay => $"[Service: {Service}, Account: {Account}]";
     }
