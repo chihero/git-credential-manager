@@ -12,8 +12,6 @@ namespace GitCredentialManager.Interop.MacOS
     {
         private readonly string _namespace;
 
-        #region Constructors
-
         /// <summary>
         /// Open the default keychain (current user's login keychain).
         /// </summary>
@@ -24,10 +22,6 @@ namespace GitCredentialManager.Interop.MacOS
             PlatformUtils.EnsureMacOS();
             _namespace = @namespace;
         }
-
-        #endregion
-
-        #region ICredentialStore
 
         public ICredential Get(string service, string account)
         {
@@ -96,66 +90,67 @@ namespace GitCredentialManager.Interop.MacOS
         {
             EnsureArgument.NotNullOrWhiteSpace(service, nameof(service));
 
-            byte[] secretBytes = Encoding.UTF8.GetBytes(secret);
-
-            IntPtr passwordData = IntPtr.Zero;
-            IntPtr itemRef = IntPtr.Zero;
-
-            string serviceName = CreateServiceName(service);
-
-
-            uint serviceNameLength = (uint) serviceName.Length;
-            uint accountLength = (uint) (account?.Length ?? 0);
+            IntPtr query = IntPtr.Zero;
+            IntPtr servicePtr = IntPtr.Zero;
+            IntPtr accountPtr = IntPtr.Zero;
+            IntPtr resultPtr = IntPtr.Zero;
 
             try
             {
                 // Check if an entry already exists in the keychain
-                int findResult = SecKeychainFindGenericPassword(
-                    IntPtr.Zero, serviceNameLength, serviceName, accountLength, account,
-                    out uint _, out passwordData, out itemRef);
+                query = CFDictionaryCreateMutable(
+                    IntPtr.Zero,
+                    0,
+                    IntPtr.Zero, IntPtr.Zero);
 
-                switch (findResult)
+                CFDictionaryAddValue(query, kSecClass, kSecClassGenericPassword);
+                CFDictionaryAddValue(query, kSecMatchLimit, kSecMatchLimitOne);
+                CFDictionaryAddValue(query, kSecReturnData, kCFBooleanTrue);
+                CFDictionaryAddValue(query, kSecReturnAttributes, kCFBooleanTrue);
+
+                if (!string.IsNullOrWhiteSpace(service))
+                {
+                    string fullService = CreateServiceName(service);
+                    servicePtr = CreateCFStringUtf8(fullService);
+                    CFDictionaryAddValue(query, kSecAttrService, servicePtr);
+                }
+
+                if (!string.IsNullOrWhiteSpace(account))
+                {
+                    accountPtr = CreateCFStringUtf8(account);
+                    CFDictionaryAddValue(query, kSecAttrAccount, accountPtr);
+                }
+
+                int searchResult = SecItemCopyMatching(query, out resultPtr);
+                switch (searchResult)
                 {
                     // Update existing entry
                     case OK:
-                        ThrowIfError(
-                            SecKeychainItemModifyAttributesAndData(itemRef, IntPtr.Zero, (uint) secretBytes.Length, secretBytes),
-                            "Could not update existing item"
-                        );
+                        Update(service, account, secret);
                         break;
 
                     // Create new entry
                     case ErrorSecItemNotFound:
-                        ThrowIfError(
-                            SecKeychainAddGenericPassword(IntPtr.Zero, serviceNameLength, serviceName, accountLength,
-                                account, (uint) secretBytes.Length, secretBytes, out itemRef),
-                            "Could not create new item"
-                        );
+                        Add(service, account, secret);
                         break;
 
                     default:
-                        ThrowIfError(findResult);
+                        ThrowIfError(searchResult);
                         break;
                 }
             }
             finally
             {
-                if (passwordData != IntPtr.Zero)
-                {
-                    SecKeychainItemFreeContent(IntPtr.Zero, passwordData);
-                }
-
-                if (itemRef != IntPtr.Zero)
-                {
-                    CFRelease(itemRef);
-                }
+                if (resultPtr  != IntPtr.Zero) CFRelease(resultPtr);
+                if (accountPtr != IntPtr.Zero) CFRelease(accountPtr);
+                if (servicePtr != IntPtr.Zero) CFRelease(servicePtr);
+                if (query      != IntPtr.Zero) CFRelease(query);
             }
         }
 
         public bool Remove(string service, string account)
         {
             IntPtr query = IntPtr.Zero;
-            IntPtr itemRefPtr = IntPtr.Zero;
             IntPtr servicePtr = IntPtr.Zero;
             IntPtr accountPtr = IntPtr.Zero;
 
@@ -183,35 +178,149 @@ namespace GitCredentialManager.Interop.MacOS
                     CFDictionaryAddValue(query, kSecAttrAccount, accountPtr);
                 }
 
-                // Search for the credential to delete and get the SecKeychainItem ref.
-                int searchResult = SecItemCopyMatching(query, out itemRefPtr);
-                switch (searchResult)
+                int deleteResult = SecItemDelete(query);
+                switch (deleteResult)
                 {
                     case OK:
-                        // Delete the item
-                        ThrowIfError(
-                            SecKeychainItemDelete(itemRefPtr)
-                        );
+                        // Item was deleted
                         return true;
 
                     case ErrorSecItemNotFound:
                         return false;
 
                     default:
-                        ThrowIfError(searchResult);
+                        ThrowIfError(deleteResult);
                         return false;
                 }
             }
             finally
             {
                 if (query != IntPtr.Zero) CFRelease(query);
-                if (itemRefPtr != IntPtr.Zero) CFRelease(itemRefPtr);
                 if (servicePtr != IntPtr.Zero) CFRelease(servicePtr);
                 if (accountPtr != IntPtr.Zero) CFRelease(accountPtr);
             }
         }
 
-        #endregion
+        public void Add(string service, string account, string secret)
+        {
+            IntPtr attributes = IntPtr.Zero;
+            IntPtr servicePtr = IntPtr.Zero;
+            IntPtr accountPtr = IntPtr.Zero;
+            IntPtr dataPtr = IntPtr.Zero;
+
+            try
+            {
+                attributes = CFDictionaryCreateMutable(
+                    IntPtr.Zero,
+                    0,
+                    IntPtr.Zero, IntPtr.Zero);
+
+                CFDictionaryAddValue(attributes, kSecClass, kSecClassGenericPassword);
+
+                if (!string.IsNullOrWhiteSpace(service))
+                {
+                    string fullService = CreateServiceName(service);
+                    servicePtr = CreateCFStringUtf8(fullService);
+                    CFDictionaryAddValue(attributes, kSecAttrService, servicePtr);
+                }
+
+                if (!string.IsNullOrWhiteSpace(account))
+                {
+                    accountPtr = CreateCFStringUtf8(account);
+                    CFDictionaryAddValue(attributes, kSecAttrAccount, accountPtr);
+                }
+
+                if (!string.IsNullOrWhiteSpace(secret))
+                {
+                    byte[] secretBytes = Encoding.UTF8.GetBytes(secret);
+                    dataPtr = CFDataCreate(IntPtr.Zero, secretBytes, secretBytes.Length);
+                    CFDictionaryAddValue(attributes, kSecValueData, dataPtr);
+                }
+
+                var zeroPtr = IntPtr.Zero;
+                int addResult = SecItemAdd(attributes, out zeroPtr);
+                switch (addResult)
+                {
+                    case OK:
+                        // Item was added
+                        break;
+
+                    default:
+                        ThrowIfError(addResult);
+                        break;
+                }
+            }
+            finally
+            {
+                if (attributes != IntPtr.Zero) CFRelease(attributes);
+                if (servicePtr != IntPtr.Zero) CFRelease(servicePtr);
+                if (accountPtr != IntPtr.Zero) CFRelease(accountPtr);
+                if (dataPtr    != IntPtr.Zero) CFRelease(dataPtr);
+            }
+        }
+
+        public void Update(string service, string account, string secret)
+        {
+            IntPtr query = IntPtr.Zero;
+            IntPtr updateDict = IntPtr.Zero;
+            IntPtr servicePtr = IntPtr.Zero;
+            IntPtr accountPtr = IntPtr.Zero;
+            IntPtr dataPtr = IntPtr.Zero;
+
+            try
+            {
+                query = CFDictionaryCreateMutable(
+                    IntPtr.Zero,
+                    0,
+                    IntPtr.Zero, IntPtr.Zero);
+                updateDict = CFDictionaryCreateMutable(
+                    IntPtr.Zero,
+                    0,
+                    IntPtr.Zero, IntPtr.Zero);
+
+                CFDictionaryAddValue(query, kSecClass, kSecClassGenericPassword);
+
+                if (!string.IsNullOrWhiteSpace(service))
+                {
+                    string fullService = CreateServiceName(service);
+                    servicePtr = CreateCFStringUtf8(fullService);
+                    CFDictionaryAddValue(query, kSecAttrService, servicePtr);
+                }
+
+                if (!string.IsNullOrWhiteSpace(account))
+                {
+                    accountPtr = CreateCFStringUtf8(account);
+                    CFDictionaryAddValue(query, kSecAttrAccount, accountPtr);
+                }
+
+                if (!string.IsNullOrWhiteSpace(secret))
+                {
+                    byte[] secretBytes = Encoding.UTF8.GetBytes(secret);
+                    dataPtr = CFDataCreate(IntPtr.Zero, secretBytes, secretBytes.Length);
+                    CFDictionaryAddValue(updateDict, kSecValueData, dataPtr);
+                }
+
+                int addResult = SecItemUpdate(query, updateDict);
+                switch (addResult)
+                {
+                    case OK:
+                        // Item was updated
+                        break;
+
+                    default:
+                        ThrowIfError(addResult);
+                        break;
+                }
+            }
+            finally
+            {
+                if (query      != IntPtr.Zero) CFRelease(query);
+                if (updateDict != IntPtr.Zero) CFRelease(updateDict);
+                if (servicePtr != IntPtr.Zero) CFRelease(servicePtr);
+                if (accountPtr != IntPtr.Zero) CFRelease(accountPtr);
+                if (dataPtr    != IntPtr.Zero) CFRelease(dataPtr);
+            }
+        }
 
         private static IntPtr CreateCFStringUtf8(string str)
         {

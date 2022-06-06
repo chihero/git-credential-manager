@@ -108,6 +108,15 @@ namespace GitCredentialManager.Interop.MacOS.Native
             IntPtr data);
 
         [DllImport(SecurityFrameworkLib, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int SecItemAdd(IntPtr attributes, out IntPtr result);
+
+        [DllImport(SecurityFrameworkLib, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int SecItemUpdate(IntPtr query, IntPtr attributesToUpdate);
+
+        [DllImport(SecurityFrameworkLib, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        public static extern int SecItemDelete(IntPtr query);
+
+        [DllImport(SecurityFrameworkLib, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         public static extern int SecItemCopyMatching(IntPtr query, out IntPtr result);
 
         [DllImport(SecurityFrameworkLib, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]

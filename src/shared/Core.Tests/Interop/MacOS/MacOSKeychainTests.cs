@@ -19,6 +19,7 @@ namespace GitCredentialManager.Tests.Interop.MacOS
             string service = $"https://example.com/{Guid.NewGuid():N}";
             const string account = "john.doe";
             const string password = "letmein123"; // [SuppressMessage("Microsoft.Security", "CS001:SecretInline", Justification="Fake credential")]
+            const string newPassword = "lewmein123_new"; // [SuppressMessage("Microsoft.Security", "CS001:SecretInline", Justification="Fake credential")]
 
             try
             {
@@ -26,11 +27,21 @@ namespace GitCredentialManager.Tests.Interop.MacOS
                 keychain.AddOrUpdate(service, account, password);
 
                 // Read
-                ICredential outCredential = keychain.Get(service, account);
+                ICredential outCredential1 = keychain.Get(service, account);
 
-                Assert.NotNull(outCredential);
-                Assert.Equal(account, outCredential.Account);
-                Assert.Equal(password, outCredential.Password);
+                Assert.NotNull(outCredential1);
+                Assert.Equal(account, outCredential1.Account);
+                Assert.Equal(password, outCredential1.Password);
+
+                // Update
+                keychain.AddOrUpdate(service, account, newPassword);
+
+                // Read
+                ICredential outCredential2 = keychain.Get(service, account);
+
+                Assert.NotNull(outCredential2);
+                Assert.Equal(account, outCredential2.Account);
+                Assert.Equal(newPassword, outCredential2.Password);
             }
             // There is an unknown issue that the keychain can sometimes get itself in where all API calls
             // result in an errSecAuthFailed error. The only solution seems to be a machine restart, which
