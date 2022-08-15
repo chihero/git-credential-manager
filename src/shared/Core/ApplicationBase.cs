@@ -84,11 +84,6 @@ namespace GitCredentialManager
 
         public static string GetEntryApplicationPath()
         {
-#if NETFRAMEWORK
-            // Single file publishing does not exist with .NET Framework so
-            // we can just use reflection to get the entry assembly path.
-            return Assembly.GetEntryAssembly().Location;
-#else
             // Assembly::Location always returns an empty string if the application
             // was published as a single file
 #pragma warning disable IL3000
@@ -108,7 +103,6 @@ namespace GitCredentialManager
             }
 
             return candidatePath;
-#endif
         }
 
         /// <summary>

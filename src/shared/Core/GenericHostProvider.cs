@@ -58,7 +58,7 @@ namespace GitCredentialManager
             }
             else if (IsWindowsAuthAllowed)
             {
-                if (PlatformUtils.IsWindows())
+                if (OperatingSystem.IsWindows())
                 {
                     Context.Trace.WriteLine($"Checking host '{uri.AbsoluteUri}' for Windows Integrated Authentication...");
                     bool isWiaSupported = await _winAuth.GetIsSupportedAsync(uri);

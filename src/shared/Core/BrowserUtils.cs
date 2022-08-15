@@ -26,7 +26,7 @@ namespace GitCredentialManager
             string url = uri.ToString();
 
             ProcessStartInfo psi = null;
-            if (PlatformUtils.IsLinux())
+            if (OperatingSystem.IsLinux())
             {
                 // On Linux, 'shell execute' utilities like xdg-open launch a process without
                 // detaching from the standard in/out descriptors. Some applications (like

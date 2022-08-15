@@ -86,7 +86,7 @@ namespace GitCredentialManager
             Streams = new StandardStreams();
             Trace   = new Trace();
 
-            if (PlatformUtils.IsWindows())
+            if (OperatingSystem.IsWindows())
             {
                 FileSystem        = new WindowsFileSystem();
                 SessionManager    = new WindowsSessionManager();
@@ -102,7 +102,7 @@ namespace GitCredentialManager
                                         );
                 Settings          = new WindowsSettings(Environment, Git, Trace);
             }
-            else if (PlatformUtils.IsMacOS())
+            else if (OperatingSystem.IsMacOS())
             {
                 FileSystem        = new MacOSFileSystem();
                 SessionManager    = new MacOSSessionManager();
@@ -118,7 +118,7 @@ namespace GitCredentialManager
                                         );
                 Settings          = new Settings(Environment, Git);
             }
-            else if (PlatformUtils.IsLinux())
+            else if (OperatingSystem.IsLinux())
             {
                 FileSystem        = new LinuxFileSystem();
                 // TODO: support more than just 'Posix' or X11
@@ -153,14 +153,14 @@ namespace GitCredentialManager
             const string winGitName = "git.exe";
 
             string gitExecPath;
-            string programName = PlatformUtils.IsWindows() ? winGitName : unixGitName;
+            string programName = OperatingSystem.IsWindows() ? winGitName : unixGitName;
 
             // Use the GIT_EXEC_PATH environment variable if set
             if (environment.Variables.TryGetValue(Constants.EnvironmentVariables.GitExecutablePath,
                 out gitExecPath))
             {
                 // If we're invoked from WSL we must locate the UNIX Git executable
-                if (PlatformUtils.IsWindows() && WslUtils.IsWslPath(gitExecPath))
+                if (OperatingSystem.IsWindows() && WslUtils.IsWslPath(gitExecPath))
                 {
                     programName = unixGitName;
                 }

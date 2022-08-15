@@ -4,11 +4,8 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
+using Microsoft.Identity.Client.Broker;
 using Microsoft.Identity.Client.Extensions.Msal;
-
-#if NETFRAMEWORK
-using Microsoft.Identity.Client.Desktop;
-#endif
 
 namespace GitCredentialManager.Authentication
 {
@@ -129,16 +126,13 @@ namespace GitCredentialManager.Authentication
             // If the user has expressed a preference in how the want to perform the interactive authentication flows then we respect that.
             // Otherwise, depending on the current platform and session type we try to show the most appropriate authentication interface:
             //
-            // On Windows 10 & .NET Framework, MSAL supports the Web Account Manager (WAM) broker - we try to use that if possible
+            // On Windows 10+ MSAL supports the Web Account Manager (WAM) broker - we try to use that if possible
             // in the first instance.
             //
-            // On .NET Framework MSAL supports the WinForms based 'embedded' webview UI. For Windows + .NET Framework this is the
-            // best and natural experience.
+            // On Windows MSAL supports the WinForms based 'embedded' webview UI.
             //
-            // On other runtimes (e.g., .NET Core) MSAL only supports the system webview flow (launch the user's browser),
+            // On other platforms MSAL only supports the system webview flow (launch the user's browser),
             // and the device-code flows.
-            //
-            //     Note: .NET Core 3 allows using WinForms when run on Windows but MSAL does not yet support this.
             //
             // The system webview flow requires that the redirect URI is a loopback address, and that we are in an interactive session.
             //
@@ -281,19 +275,16 @@ namespace GitCredentialManager.Authentication
 
             // If we have a parent window ID we should tell MSAL about it so it can parent any authentication dialogs
             // correctly. We only support this on Windows right now as MSAL only supports embedded/dialogs on Windows.
-            if (PlatformUtils.IsWindows() && !string.IsNullOrWhiteSpace(Context.Settings.ParentWindowId) &&
+            if (OperatingSystem.IsWindows() && !string.IsNullOrWhiteSpace(Context.Settings.ParentWindowId) &&
                 int.TryParse(Context.Settings.ParentWindowId, out int hWndInt) && hWndInt > 0)
             {
                 appBuilder.WithParentActivityOrWindow(() => new IntPtr(hWndInt));
             }
 
-            // On Windows 10+ & .NET Framework try and use the WAM broker
+            // On Windows 10+ try and use the WAM broker
             if (enableBroker && PlatformUtils.IsWindowsBrokerSupported())
             {
-#if NETFRAMEWORK
-                appBuilder.WithExperimentalFeatures();
-                appBuilder.WithWindowsBroker();
-#endif
+                appBuilder.WithBrokerPreview();
             }
 
             IPublicClientApplication app = appBuilder.Build();
@@ -313,7 +304,7 @@ namespace GitCredentialManager.Authentication
             Context.Trace.WriteLine(
                 "Configuring Microsoft Authentication token cache to instance shared with Microsoft developer tools...");
 
-            if (!PlatformUtils.IsWindows() && !PlatformUtils.IsPosix())
+            if (!OperatingSystem.IsWindows() && !PlatformUtils.IsPosix())
             {
                 string osType = PlatformUtils.GetPlatformInformation().OperatingSystemType;
                 Context.Trace.WriteLine($"Token cache integration is not supported on {osType}.");
@@ -337,7 +328,7 @@ namespace GitCredentialManager.Authentication
                 Context.Trace.WriteLine("Cannot persist Microsoft Authentication data securely!");
                 Context.Trace.WriteException(ex);
 
-                if (PlatformUtils.IsMacOS())
+                if (OperatingSystem.IsMacOS())
                 {
                     // On macOS sometimes the Keychain returns the "errSecAuthFailed" error - we don't know why
                     // but it appears to be something to do with not being able to access the keychain.
@@ -346,7 +337,7 @@ namespace GitCredentialManager.Authentication
                         "warning: there is a problem accessing the login Keychain - either manually lock and unlock the " +
                         "login Keychain, or restart the computer to remedy this");
                 }
-                else if (PlatformUtils.IsLinux())
+                else if (OperatingSystem.IsLinux())
                 {
                     // On Linux the SecretService/keyring might not be available so we must fall-back to a plaintext file.
                     Context.Streams.Error.WriteLine("warning: using plain-text fallback token cache");
@@ -372,7 +363,7 @@ namespace GitCredentialManager.Authentication
         {
             const string cacheFileName = "msal.cache";
             string cacheDirectory;
-            if (PlatformUtils.IsWindows())
+            if (OperatingSystem.IsWindows())
             {
                 // The shared MSAL cache is located at "%LocalAppData%\.IdentityService\msal.cache" on Windows.
                 cacheDirectory = Path.Combine(
@@ -458,7 +449,6 @@ namespace GitCredentialManager.Authentication
 
         public static bool CanUseBroker(ICommandContext context)
         {
-#if NETFRAMEWORK
             // We only support the broker on Windows 10+ and in an interactive session
             if (!context.SessionManager.IsDesktopSession || !PlatformUtils.IsWindowsBrokerSupported())
             {
@@ -477,32 +467,25 @@ namespace GitCredentialManager.Authentication
             }
 
             return defaultValue;
-#else
-            // OS broker requires .NET Framework right now until we migrate to .NET 5.0 (net5.0-windows10.x.y.z)
-            return false;
-#endif
         }
 
         private bool CanUseEmbeddedWebView()
         {
-            // If we're in an interactive session and on .NET Framework then MSAL can show the WinForms-based embedded UI
-#if NETFRAMEWORK
-            return Context.SessionManager.IsDesktopSession;
-#else
-            return false;
-#endif
+            // If we're in an interactive session and on Windows then MSAL can show the WinForms-based embedded UI
+            return OperatingSystem.IsWindows() && Context.SessionManager.IsDesktopSession;
         }
 
         private void EnsureCanUseEmbeddedWebView()
         {
-#if NETFRAMEWORK
             if (!Context.SessionManager.IsDesktopSession)
             {
                 throw new InvalidOperationException("Embedded web view is not available without a desktop session.");
             }
-#else
-            throw new InvalidOperationException("Embedded web view is not available on .NET Core.");
-#endif
+
+            if (!OperatingSystem.IsWindows())
+            {
+                throw new InvalidOperationException("Embedded web view is only available on Windows.");
+            }
         }
 
         private bool CanUseSystemWebView(IPublicClientApplication app, Uri redirectUri)

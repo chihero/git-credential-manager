@@ -276,7 +276,7 @@ namespace GitCredentialManager
             string path = Context.ApplicationPath;
 
             // On Windows we must use UNIX style path separators
-            if (PlatformUtils.IsWindows())
+            if (OperatingSystem.IsWindows())
             {
                 path = path.Replace('\\', '/');
             }

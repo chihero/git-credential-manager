@@ -51,12 +51,12 @@ namespace GitCredentialManager.Diagnostics
             log.AppendLine($"CacheFileName: {cacheProps.CacheFileName}");
             log.AppendLine($"CacheFilePath: {cacheProps.CacheFilePath}");
 
-            if (PlatformUtils.IsMacOS())
+            if (OperatingSystem.IsMacOS())
             {
                 log.AppendLine($"MacKeyChainAccountName: {cacheProps.MacKeyChainAccountName}");
                 log.AppendLine($"MacKeyChainServiceName: {cacheProps.MacKeyChainServiceName}");
             }
-            else if (PlatformUtils.IsLinux())
+            else if (OperatingSystem.IsLinux())
             {
                 log.AppendLine($"KeyringCollection: {cacheProps.KeyringCollection}");
                 log.AppendLine($"KeyringSchemaName: {cacheProps.KeyringSchemaName}");

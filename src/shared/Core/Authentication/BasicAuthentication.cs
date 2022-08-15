@@ -33,7 +33,7 @@ namespace GitCredentialManager.Authentication
 
             // TODO: we only support system GUI prompts on Windows currently
             if (Context.Settings.IsGuiPromptsEnabled && Context.SessionManager.IsDesktopSession &&
-                PlatformUtils.IsWindows())
+                OperatingSystem.IsWindows())
             {
                 return GetCredentialsByUi(resource, userName);
             }

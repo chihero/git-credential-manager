@@ -124,7 +124,7 @@ namespace GitCredentialManager.Authentication
                 // Use the default helper if none was specified.
                 // On Windows append ".exe" for the default helpers only. If a user has specified their own
                 // helper they should append the correct extension.
-                helperName = PlatformUtils.IsWindows() ? $"{defaultValue}.exe" : defaultValue;
+                helperName = OperatingSystem.IsWindows() ? $"{defaultValue}.exe" : defaultValue;
             }
 
             // If the user set the helper override to the empty string then they are signalling not to use a helper

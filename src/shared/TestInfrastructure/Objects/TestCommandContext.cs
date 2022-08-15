@@ -10,7 +10,7 @@ namespace GitCredentialManager.Tests.Objects
     {
         public TestCommandContext()
         {
-            AppPath = PlatformUtils.IsWindows()
+            AppPath = OperatingSystem.IsWindows()
                 ? @"C:\Program Files\Git Credential Manager Core\git-credential-manager-core.exe"
                 : "/usr/local/bin/git-credential-manager-core";
 

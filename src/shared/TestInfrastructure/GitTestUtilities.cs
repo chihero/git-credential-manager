@@ -10,7 +10,7 @@ namespace GitCredentialManager.Tests
         public static string GetGitPath()
         {
             ProcessStartInfo psi;
-            if (PlatformUtils.IsWindows())
+            if (OperatingSystem.IsWindows())
             {
                 psi = new ProcessStartInfo(
                     Path.Combine(

@@ -94,7 +94,7 @@ namespace GitCredentialManager.UI
         private static void SetParentExternal(Window window, IntPtr parentHandle)
         {
             // We only support parenting on the Windows platform at the moment.
-            if (!PlatformUtils.IsWindows())
+            if (!OperatingSystem.IsWindows())
             {
                 return;
             }
