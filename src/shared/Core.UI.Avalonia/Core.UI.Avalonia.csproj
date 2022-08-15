@@ -12,8 +12,21 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="0.10.18" />
-    <PackageReference Include="Avalonia.Desktop" Version="0.10.18" />
+    <PackageReference Include="Avalonia.Skia" Version="0.10.18" />
     <PackageReference Include="Avalonia.Diagnostics" Version="0.10.18" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(OSPlatform)' == 'osx'">
+    <PackageReference Include="Avalonia.Native" Version="0.10.18" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(OSPlatform)' == 'linux'">
+    <PackageReference Include="Avalonia.Skia" Version="0.10.18" />
+    <PackageReference Include="Avalonia.X11" Version="0.10.18" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(OSPlatform)' == 'windows'">
+    <PackageReference Include="Avalonia.Win32" Version="0.10.18" />
   </ItemGroup>
 
   <ItemGroup>
