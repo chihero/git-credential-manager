@@ -8,9 +8,9 @@ $THISDIR = $pwd.path
 $ROOT = (Get-Item $THISDIR).parent.parent.parent.FullName
 $SRC = "$ROOT/src"
 $GCM_SRC = "$SRC/shared/Git-Credential-Manager"
-$BITBUCKET_UI_SRC = "$SRC/windows/Atlassian.Bitbucket.UI.Windows"
-$GITHUB_UI_SRC = "$SRC/windows/GitHub.UI.Windows"
-$GITLAB_UI_SRC = "$SRC/windows/GitLab.UI.Windows"
+$BITBUCKET_UI_SRC = "$SRC/shared/Atlassian.Bitbucket.UI.Avalonia"
+$GITHUB_UI_SRC = "$SRC/shared/GitHub.UI.Avalonia"
+$GITLAB_UI_SRC = "$SRC/shared/GitLab.UI.Avalonia"
 
 # Perform pre-execution checks
 $PAYLOAD = "$OUTPUT"
@@ -43,6 +43,8 @@ dotnet publish "$GCM_SRC" `
 	--configuration "$CONFIGURATION" `
 	--runtime win-x86 `
 	--self-contained `
+	-p:PublishTrimmed=true `
+	-p:TrimMode=copyused `
 	--output "$PAYLOAD"
 
 Write-Output "Publishing Bitbucket UI helper..."
@@ -50,6 +52,8 @@ dotnet publish "$BITBUCKET_UI_SRC" `
 	--configuration "$CONFIGURATION" `
 	--runtime win-x86 `
 	--self-contained `
+	-p:PublishTrimmed=true `
+	-p:TrimMode=copyused `
 	--output "$PAYLOAD"
 
 Write-Output "Publishing GitHub UI helper..."
@@ -57,6 +61,8 @@ dotnet publish "$GITHUB_UI_SRC" `
 	--configuration "$CONFIGURATION" `
 	--runtime win-x86 `
 	--self-contained `
+	-p:PublishTrimmed=true `
+	-p:TrimMode=copyused `
 	--output "$PAYLOAD"
 
 Write-Output "Publishing GitLab UI helper..."
@@ -64,6 +70,8 @@ dotnet publish "$GITLAB_UI_SRC" `
 	--configuration "$CONFIGURATION" `
 	--runtime win-x86 `
 	--self-contained `
+	-p:PublishTrimmed=true `
+	-p:TrimMode=copyused `
 	--output "$PAYLOAD"
 
 # Collect symbols
