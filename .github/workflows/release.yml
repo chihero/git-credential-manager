@@ -341,7 +341,7 @@ jobs:
         WINDOWS_OP_CODE: ${{ secrets.WINDOWS_OPERATION_CODE }}
       run: |
         python .github\run_esrp_signing.py `
-          .\out\windows\Installer.Windows\bin\WindowsRelease\net6.0 `
+          .\out\windows\Installer.Windows\bin\WindowsRelease\net7.0 `
           $env:WINDOWS_KEY_CODE `
           $env:WINDOWS_OP_CODE `
           --params 'OpusName' 'Microsoft' `

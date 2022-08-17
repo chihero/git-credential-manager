@@ -26,7 +26,7 @@ GITHUB_UI_SRC="$SRC/shared/GitHub.UI.Avalonia"
 GITLAB_UI_SRC="$SRC/shared/GitLab.UI.Avalonia"
 
 # Build parameters
-FRAMEWORK=net6.0
+FRAMEWORK=net7.0
 
 # Parse script arguments
 for i in "$@"
