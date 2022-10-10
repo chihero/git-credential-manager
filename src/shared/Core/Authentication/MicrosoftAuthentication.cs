@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using GitCredentialManager.Interop.Windows.Native;
 using Microsoft.Identity.Client;
+using Microsoft.Identity.Client.Broker;
 using Microsoft.Identity.Client.Extensions.Msal;
-
-#if NETFRAMEWORK
-using Microsoft.Identity.Client.Desktop;
-#endif
 
 namespace GitCredentialManager.Authentication
 {
@@ -41,55 +39,6 @@ namespace GitCredentialManager.Authentication
             "live", "liveconnect", "liveid",
         };
 
-        #region Broker Initialization
-
-        public static bool IsBrokerInitialized { get; private set; }
-
-        public static void InitializeBroker()
-        {
-            if (IsBrokerInitialized)
-            {
-                return;
-            }
-
-            IsBrokerInitialized = true;
-
-            // Broker is only supported on Windows 10 and later
-            if (!PlatformUtils.IsWindowsBrokerSupported())
-            {
-                return;
-            }
-
-            // Nothing to do when not an elevated user
-            if (!PlatformUtils.IsElevatedUser())
-            {
-                return;
-            }
-
-            // Lower COM security so that MSAL can make the calls to WAM
-            int result = Interop.Windows.Native.Ole32.CoInitializeSecurity(
-                IntPtr.Zero,
-                -1,
-                IntPtr.Zero,
-                IntPtr.Zero,
-                Interop.Windows.Native.Ole32.RpcAuthnLevel.None,
-                Interop.Windows.Native.Ole32.RpcImpLevel.Impersonate,
-                IntPtr.Zero,
-                Interop.Windows.Native.Ole32.EoAuthnCap.None,
-                IntPtr.Zero
-            );
-
-            if (result != 0)
-            {
-                throw new Exception(
-                    $"Failed to set COM process security to allow Windows broker from an elevated process (0x{result:x})." +
-                    Environment.NewLine +
-                    $"See {Constants.HelpUrls.GcmWamComSecurity} for more information.");
-            }
-        }
-
-        #endregion
-
         public MicrosoftAuthentication(ICommandContext context)
             : base(context) { }
 
@@ -99,17 +48,7 @@ namespace GitCredentialManager.Authentication
             string authority, string clientId, Uri redirectUri, string[] scopes, string userName)
         {
             // Check if we can and should use OS broker authentication
-            bool useBroker = false;
-            if (CanUseBroker(Context))
-            {
-                // Can only use the broker if it has been initialized
-                useBroker = IsBrokerInitialized;
-
-                if (IsBrokerInitialized)
-                    Context.Trace.WriteLine("OS broker is available and enabled.");
-                else
-                    Context.Trace.WriteLine("OS broker has not been initialized and cannot not be used.");
-            }
+            bool useBroker = IsBrokerEnabled(Context);
 
             // Create the public client application for authentication
             IPublicClientApplication app = await CreatePublicClientApplicationAsync(authority, clientId, redirectUri, useBroker);
@@ -281,19 +220,30 @@ namespace GitCredentialManager.Authentication
 
             // If we have a parent window ID we should tell MSAL about it so it can parent any authentication dialogs
             // correctly. We only support this on Windows right now as MSAL only supports embedded/dialogs on Windows.
-            if (PlatformUtils.IsWindows() && !string.IsNullOrWhiteSpace(Context.Settings.ParentWindowId) &&
-                int.TryParse(Context.Settings.ParentWindowId, out int hWndInt) && hWndInt > 0)
+            if (PlatformUtils.IsWindows())
             {
-                appBuilder.WithParentActivityOrWindow(() => new IntPtr(hWndInt));
+                // Check if the user or caller has provided a specific parent
+                if (!string.IsNullOrWhiteSpace(Context.Settings.ParentWindowId) &&
+                    int.TryParse(Context.Settings.ParentWindowId, out int hWndInt) && hWndInt > 0)
+                {
+                    appBuilder.WithParentActivityOrWindow(() => new IntPtr(hWndInt));
+                }
+                else
+                {
+                    // Try to get the parent of the console window
+                    IntPtr consoleHandle = Kernel32.GetConsoleWindow();
+                    if (consoleHandle != IntPtr.Zero)
+                    {
+                        IntPtr handle = User32.GetAncestor(consoleHandle, GetAncestorFlags.GetRootOwner);
+                        appBuilder.WithParentActivityOrWindow(() => handle);
+                    }
+                }
             }
 
             // On Windows 10+ & .NET Framework try and use the WAM broker
             if (enableBroker && PlatformUtils.IsWindowsBrokerSupported())
             {
-#if NETFRAMEWORK
-                appBuilder.WithExperimentalFeatures();
-                appBuilder.WithWindowsBroker();
-#endif
+                appBuilder.WithBrokerPreview();
             }
 
             IPublicClientApplication app = appBuilder.Build();
@@ -456,9 +406,8 @@ namespace GitCredentialManager.Authentication
 
         #region Auth flow capability detection
 
-        public static bool CanUseBroker(ICommandContext context)
+        public static bool IsBrokerEnabled(ICommandContext context)
         {
-#if NETFRAMEWORK
             // We only support the broker on Windows 10+ and in an interactive session
             if (!context.SessionManager.IsDesktopSession || !PlatformUtils.IsWindowsBrokerSupported())
             {
@@ -477,10 +426,6 @@ namespace GitCredentialManager.Authentication
             }
 
             return defaultValue;
-#else
-            // OS broker requires .NET Framework right now until we migrate to .NET 5.0 (net5.0-windows10.x.y.z)
-            return false;
-#endif
         }
 
         private bool CanUseEmbeddedWebView()

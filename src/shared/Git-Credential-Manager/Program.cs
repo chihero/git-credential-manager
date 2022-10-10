@@ -3,7 +3,6 @@ using Atlassian.Bitbucket;
 using GitHub;
 using GitLab;
 using Microsoft.AzureRepos;
-using GitCredentialManager.Authentication;
 
 namespace GitCredentialManager
 {
@@ -15,22 +14,6 @@ namespace GitCredentialManager
             using (var context = new CommandContext(appPath))
             using (var app = new Application(context))
             {
-                // Workaround for https://github.com/AzureAD/microsoft-authentication-library-for-dotnet/issues/2560
-                if (MicrosoftAuthentication.CanUseBroker(context))
-                {
-                    try
-                    {
-                        MicrosoftAuthentication.InitializeBroker();
-                    }
-                    catch (Exception ex)
-                    {
-                        context.Streams.Error.WriteLine(
-                            "warning: broker initialization failed{0}{1}",
-                            Environment.NewLine, ex.Message
-                        );
-                    }
-                }
-
                 // Register all supported host providers at the normal priority.
                 // The generic provider should never win against a more specific one, so register it with low priority.
                 app.RegisterProvider(new AzureReposHostProvider(context), HostProviderPriority.Normal);

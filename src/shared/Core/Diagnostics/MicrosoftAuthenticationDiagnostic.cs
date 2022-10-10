@@ -21,24 +21,14 @@ namespace GitCredentialManager.Diagnostics
 
         protected override async Task<bool> RunInternalAsync(StringBuilder log, IList<string> additionalFiles)
         {
-            if (MicrosoftAuthentication.CanUseBroker(_context))
+            log.Append("Checking broker state...");
+            if (MicrosoftAuthentication.IsBrokerEnabled(_context))
             {
-                log.Append("Checking broker initialization state...");
-                if (MicrosoftAuthentication.IsBrokerInitialized)
-                {
-                    log.AppendLine(" Initialized");
-                }
-                else
-                {
-                    log.AppendLine("  Not initialized");
-                    log.Append("Initializing broker...");
-                    MicrosoftAuthentication.InitializeBroker();
-                    log.AppendLine("OK");
-                }
+                log.AppendLine(" Enabled.");
             }
             else
             {
-                log.AppendLine("Broker not supported.");
+                log.AppendLine(" Not enabled.");
             }
 
             var msAuth = new MicrosoftAuthentication(_context);

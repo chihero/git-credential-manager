@@ -10,6 +10,9 @@ namespace GitCredentialManager.Interop.Windows.Native
     {
         private const string LibraryName = "kernel32.dll";
 
+        [DllImport(LibraryName)]
+        public static extern IntPtr GetConsoleWindow();
+
         /// <summary>
         /// Creates or opens a file or I/O device.
         /// <para/>
