@@ -13,7 +13,7 @@ namespace GitCredentialManager.Authentication
     public interface IMicrosoftAuthentication
     {
         Task<IMicrosoftAuthenticationResult> GetTokenAsync(string authority, string clientId, Uri redirectUri,
-            string[] scopes, string userName);
+            string[] scopes, string userName, bool useMsaPassThru);
     }
 
     public interface IMicrosoftAuthenticationResult
@@ -45,13 +45,14 @@ namespace GitCredentialManager.Authentication
         #region IMicrosoftAuthentication
 
         public async Task<IMicrosoftAuthenticationResult> GetTokenAsync(
-            string authority, string clientId, Uri redirectUri, string[] scopes, string userName)
+            string authority, string clientId, Uri redirectUri, string[] scopes, string userName, bool useMsaPassThru)
         {
             // Check if we can and should use OS broker authentication
             bool useBroker = IsBrokerEnabled(Context);
 
             // Create the public client application for authentication
-            IPublicClientApplication app = await CreatePublicClientApplicationAsync(authority, clientId, redirectUri, useBroker);
+            IPublicClientApplication app = await CreatePublicClientApplicationAsync(
+                authority, clientId, redirectUri, useBroker, useMsaPassThru);
 
             AuthenticationResult result = null;
 
@@ -200,7 +201,7 @@ namespace GitCredentialManager.Authentication
         }
 
         private async Task<IPublicClientApplication> CreatePublicClientApplicationAsync(
-            string authority, string clientId, Uri redirectUri, bool enableBroker)
+            string authority, string clientId, Uri redirectUri, bool enableBroker, bool useMsaPassThru)
         {
             var httpFactoryAdaptor = new MsalHttpClientFactoryAdaptor(Context.HttpClientFactory);
 
@@ -244,6 +245,11 @@ namespace GitCredentialManager.Authentication
             if (enableBroker && PlatformUtils.IsWindowsBrokerSupported())
             {
                 appBuilder.WithBrokerPreview();
+                appBuilder.WithWindowsBrokerOptions(new WindowsBrokerOptions
+                {
+                    HeaderText = "ℹ️ Enter credentials for use with Git Credential Manager.",
+                    MsaPassthrough = true
+                });
             }
 
             IPublicClientApplication app = appBuilder.Build();
@@ -487,6 +493,16 @@ namespace GitCredentialManager.Authentication
 
             public string AccessToken => _msalResult.AccessToken;
             public string AccountUpn => _msalResult.Account.Username;
+        }
+    }
+
+    public static class MicrosoftAuthenticationExtensions
+    {
+        public static Task<IMicrosoftAuthenticationResult> GetTokenAsync(this IMicrosoftAuthentication msauth,
+            string authority, string clientId, Uri redirectUri,
+            string[] scopes, string userName)
+        {
+            return msauth.GetTokenAsync(authority, clientId, redirectUri, scopes, userName, false);
         }
     }
 }
