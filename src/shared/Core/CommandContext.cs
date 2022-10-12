@@ -121,7 +121,6 @@ namespace GitCredentialManager
             else if (PlatformUtils.IsLinux())
             {
                 FileSystem        = new LinuxFileSystem();
-                // TODO: support more than just 'Posix' or X11
                 SessionManager    = new PosixSessionManager();
                 SystemPrompts     = new LinuxSystemPrompts();
                 Environment       = new PosixEnvironment(FileSystem);
