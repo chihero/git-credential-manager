@@ -5,6 +5,20 @@ namespace GitCredentialManager
 {
     public static class BrowserUtils
     {
+        private static bool? _isWebBrowserAvailable;
+
+        public static bool IsWebBrowserAvailable(ICommandContext context) =>
+            IsWebBrowserAvailable(context.Environment, context.FileSystem, context.SessionManager);
+
+        public static bool IsWebBrowserAvailable(IEnvironment env, IFileSystem fs, ISessionManager sm) =>
+            _isWebBrowserAvailable ??= GetWebBrowserAvailable(env, fs, sm);
+
+        private static bool GetWebBrowserAvailable(IEnvironment env, IFileSystem fs, ISessionManager sm)
+        {
+            // We require an interactive desktop session to be able to launch a browser
+            return sm.IsDesktopSession;
+        }
+
         public static void OpenDefaultBrowser(IEnvironment environment, string url)
         {
             if (!Uri.TryCreate(url, UriKind.Absolute, out Uri uri))
@@ -28,6 +42,7 @@ namespace GitCredentialManager
             ProcessStartInfo psi = null;
             if (PlatformUtils.IsLinux())
             {
+                //
                 // On Linux, 'shell execute' utilities like xdg-open launch a process without
                 // detaching from the standard in/out descriptors. Some applications (like
                 // Chromium) write messages to stdout, which is currently hooked up and being

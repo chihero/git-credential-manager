@@ -64,8 +64,8 @@ namespace GitHub
 
         public async Task<AuthenticationPromptResult> GetAuthenticationAsync(Uri targetUri, string userName, AuthenticationModes modes)
         {
-            // If we don't have a desktop session/GUI then we cannot offer browser
-            if (!Context.SessionManager.IsDesktopSession)
+            // If we cannot start a browser then don't offer the option
+            if (!BrowserUtils.IsWebBrowserAvailable(Context))
             {
                 modes = modes & ~AuthenticationModes.Browser;
             }
@@ -255,8 +255,8 @@ namespace GitHub
 
             var oauthClient = new GitHubOAuth2Client(HttpClient, Context.Settings, targetUri);
 
-            // We require a desktop session to launch the user's default web browser
-            if (!Context.SessionManager.IsDesktopSession)
+            // Can we launch the user's default web browser?
+            if (!BrowserUtils.IsWebBrowserAvailable(Context))
             {
                 throw new InvalidOperationException("Browser authentication requires a desktop session");
             }
