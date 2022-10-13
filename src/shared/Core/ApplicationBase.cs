@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -84,31 +84,54 @@ namespace GitCredentialManager
 
         public static string GetEntryApplicationPath()
         {
-#if NETFRAMEWORK
-            // Single file publishing does not exist with .NET Framework so
-            // we can just use reflection to get the entry assembly path.
-            return Assembly.GetEntryAssembly().Location;
-#else
-            // Assembly::Location always returns an empty string if the application
-            // was published as a single file
-#pragma warning disable IL3000
-            bool isSingleFile = string.IsNullOrEmpty(Assembly.GetEntryAssembly()?.Location);
-#pragma warning restore IL3000
+            string argv0 = null;
 
-            // Use "argv[0]" to get the full path to the entry executable in
-            // .NET 5+ when published as a single file.
-            string[] args = Environment.GetCommandLineArgs();
-            string candidatePath = args[0];
-
-            // If we have not been published as a single file then we must strip the
-            // ".dll" file extension to get the default AppHost/SuperHost name.
-            if (!isSingleFile && Path.HasExtension(candidatePath))
+            if (PlatformUtils.IsWindows())
             {
-                return Path.ChangeExtension(candidatePath, null);
+                argv0 = GetWindowsArgv0();
+            }
+            else if (PlatformUtils.IsMacOS())
+            {
+                argv0 = GetMacOSArgv0();
+            }
+            else if (PlatformUtils.IsLinux())
+            {
+                argv0 = GetLinuxArgv0();
             }
 
-            return candidatePath;
-#endif
+            argv0 ??= Process.GetCurrentProcess().MainModule?.FileName
+                      ?? Environment.GetCommandLineArgs()[0];
+
+            if (Path.IsPathRooted(argv0))
+            {
+                return argv0;
+            }
+
+            return Path.GetFullPath(
+                Path.Combine(Environment.CurrentDirectory, argv0)
+            );
+        }
+
+        private static string GetLinuxArgv0()
+        {
+            string cmdline = File.ReadAllText("/proc/self/cmdline");
+            return cmdline.Split('\0')[0];
+        }
+
+        private static string GetMacOSArgv0()
+        {
+            IntPtr ptr = Interop.MacOS.Native.LibC._NSGetArgv();
+            IntPtr argvPtr = Marshal.ReadIntPtr(ptr);
+            IntPtr argv0Ptr = Marshal.ReadIntPtr(argvPtr);
+            return Marshal.PtrToStringAnsi(argv0Ptr);
+        }
+
+        private static string GetWindowsArgv0()
+        {
+            IntPtr argvPtr = Interop.Windows.Native.Shell32.CommandLineToArgvW(
+                Interop.Windows.Native.Kernel32.GetCommandLine(), out _);
+            IntPtr argv0Ptr = Marshal.ReadIntPtr(argvPtr);
+            return Marshal.PtrToStringAuto(argv0Ptr);
         }
 
         /// <summary>

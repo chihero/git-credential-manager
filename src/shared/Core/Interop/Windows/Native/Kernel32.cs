@@ -226,6 +226,13 @@ namespace GitCredentialManager.Interop.Windows.Native
         public static extern bool SetConsoleMode(
             [In] SafeFileHandle consoleHandle,
             [In, MarshalAs(UnmanagedType.U4)] ConsoleMode consoleMode);
+
+        /// <summary>
+        /// Retrieves the command-line string for the current process.
+        /// </summary>
+        /// <returns>The return value is the command-line string for the current process.</returns>
+        [DllImport(LibraryName, CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Unicode, SetLastError = true)]
+        public static extern IntPtr GetCommandLine();
     }
 
     [Flags]
