@@ -8,10 +8,10 @@ $THISDIR = $pwd.path
 $ROOT = (Get-Item $THISDIR).parent.parent.parent.FullName
 $SRC = "$ROOT/src"
 $GCM_SRC = "$SRC/shared/Git-Credential-Manager"
-$GCM_UI_SRC = "$SRC/windows/Git-Credential-Manager.UI.Windows"
-$BITBUCKET_UI_SRC = "$SRC/windows/Atlassian.Bitbucket.UI.Windows"
-$GITHUB_UI_SRC = "$SRC/windows/GitHub.UI.Windows"
-$GITLAB_UI_SRC = "$SRC/windows/GitLab.UI.Windows"
+$GCM_UI_SRC = "$SRC/shared/Git-Credential-Manager.UI.Avalonia"
+$BITBUCKET_UI_SRC = "$SRC/shared/Atlassian.Bitbucket.UI.Avalonia"
+$GITHUB_UI_SRC = "$SRC/shared/GitHub.UI.Avalonia"
+$GITLAB_UI_SRC = "$SRC/shared/GitLab.UI.Avalonia"
 
 # Perform pre-execution checks
 $PAYLOAD = "$OUTPUT"

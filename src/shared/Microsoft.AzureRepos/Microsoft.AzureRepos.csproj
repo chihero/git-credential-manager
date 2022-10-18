@@ -6,6 +6,7 @@
     <RootNamespace>Microsoft.AzureRepos</RootNamespace>
     <IsTestProject>false</IsTestProject>
     <LangVersion>latest</LangVersion>
+    <PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
 
   <ItemGroup>

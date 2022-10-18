@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>GitHub.UI</RootNamespace>
     <AssemblyName>GitHub.UI.Shared</AssemblyName>
+    <PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
 
   <ItemGroup>

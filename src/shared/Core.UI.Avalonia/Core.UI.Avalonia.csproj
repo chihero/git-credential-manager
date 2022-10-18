@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>gcmcoreuiavn</AssemblyName>
     <RootNamespace>GitCredentialManager.UI</RootNamespace>
+    <PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
 
   <ItemGroup>

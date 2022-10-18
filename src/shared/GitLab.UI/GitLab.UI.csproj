@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>GitLab.UI</RootNamespace>
     <AssemblyName>GitLab.UI.Shared</AssemblyName>
+    <PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
 
   <ItemGroup>

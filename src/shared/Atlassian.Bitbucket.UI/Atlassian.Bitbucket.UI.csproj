@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>Atlassian.Bitbucket.UI</RootNamespace>
     <AssemblyName>Atlassian.Bitbucket.UI.Shared</AssemblyName>
+    <PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
 
   <ItemGroup>
