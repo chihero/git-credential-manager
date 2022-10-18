@@ -9,7 +9,8 @@ namespace GitCredentialManager.Tests
         [Fact]
         public void InputArguments_Ctor_Null_ThrowsArgNullException()
         {
-            Assert.Throws<ArgumentNullException>(() => new InputArguments(null));
+            Assert.Throws<ArgumentNullException>(() => new InputArguments((IDictionary<string, string>)null));
+            Assert.Throws<ArgumentNullException>(() => new InputArguments((IDictionary<string, IList<string>>)null));
         }
 
         [Fact]

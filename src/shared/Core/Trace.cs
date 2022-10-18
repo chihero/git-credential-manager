@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -78,6 +79,25 @@ namespace GitCredentialManager
         /// <param name="memberName">Name of the member in which this method is called.</param>
         void WriteDictionarySecrets<TKey, TValue>(
             IDictionary<TKey, TValue> dictionary,
+            TKey[] secretKeys,
+            IEqualityComparer<TKey> keyComparer = null,
+            [System.Runtime.CompilerServices.CallerFilePath] string filePath = "",
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
+            [System.Runtime.CompilerServices.CallerMemberName] string memberName = "");
+
+        /// <summary>
+        /// Write the contents of a multi-dictionary that contains sensitive information to the trace writer.
+        /// <para/>
+        /// Calls <see cref="object.ToString"/> on all keys and values, except keys specified as secret.
+        /// </summary>
+        /// <param name="dictionary">The multi-dictionary to write.</param>
+        /// <param name="secretKeys">Dictionary keys that contain secrets/sensitive information.</param>
+        /// <param name="keyComparer">Comparer to use for <paramref name="secretKeys"/>.</param>
+        /// <param name="filePath">Path of the file this method is called from.</param>
+        /// <param name="lineNumber">Line number of file this method is called from.</param>
+        /// <param name="memberName">Name of the member in which this method is called.</param>
+        void WriteDictionarySecrets<TKey, TValue>(
+            IDictionary<TKey, IList<TValue>> dictionary,
             TKey[] secretKeys,
             IEqualityComparer<TKey> keyComparer = null,
             [System.Runtime.CompilerServices.CallerFilePath] string filePath = "",
@@ -213,15 +233,39 @@ namespace GitCredentialManager
         {
             foreach (KeyValuePair<TKey, TValue> entry in dictionary)
             {
-                bool isSecretEntry = !(secretKeys is null) &&
-                                     secretKeys.Contains(entry.Key, keyComparer ?? EqualityComparer<TKey>.Default);
-                if (isSecretEntry && !this.IsSecretTracingEnabled)
+                if (IsSecretEntry(entry, secretKeys, keyComparer) && !IsSecretTracingEnabled)
                 {
                     WriteLine($"\t{entry.Key}={SecretMask}", filePath, lineNumber, memberName);
                 }
                 else
                 {
                     WriteLine($"\t{entry.Key}={entry.Value}", filePath, lineNumber, memberName);
+                }
+            }
+        }
+
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed")]
+        public void WriteDictionarySecrets<TKey, TValue>(
+            IDictionary<TKey, IList<TValue>> dictionary,
+            TKey[] secretKeys,
+            IEqualityComparer<TKey> keyComparer = null,
+            [System.Runtime.CompilerServices.CallerFilePath] string filePath = "",
+            [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0,
+            [System.Runtime.CompilerServices.CallerMemberName] string memberName = "")
+        {
+            foreach (KeyValuePair<TKey, IList<TValue>> entry in dictionary)
+            {
+                string multiStr = entry.Value.Count > 1 ? "[]" : null;
+                foreach (TValue value in entry.Value)
+                {
+                    if (IsSecretEntry(entry, secretKeys, keyComparer) && !IsSecretTracingEnabled)
+                    {
+                        WriteLine($"\t{entry.Key}{multiStr}={SecretMask}", filePath, lineNumber, memberName);
+                    }
+                    else
+                    {
+                        WriteLine($"\t{entry.Key}{multiStr}={value}", filePath, lineNumber, memberName);
+                    }
                 }
             }
         }
@@ -329,6 +373,11 @@ namespace GitCredentialManager
             string text = $"{DateTime.Now:HH:mm:ss.ffffff} {source,-23} trace: [{memberName}] {message}";
 
             return text;
+        }
+
+        private static bool IsSecretEntry<TKey, TValue>(KeyValuePair<TKey, TValue> entry, TKey[] secretKeys, IEqualityComparer<TKey> keyComparer)
+        {
+            return secretKeys?.Contains(entry.Key, keyComparer ?? EqualityComparer<TKey>.Default) ?? false;
         }
     }
 
