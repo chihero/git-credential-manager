@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
+using Microsoft.Identity.Client.Broker;
 using Microsoft.Identity.Client.Extensions.Msal;
 
 namespace GitCredentialManager.Authentication
@@ -287,7 +288,7 @@ namespace GitCredentialManager.Authentication
             if (enableBroker && PlatformUtils.IsWindowsBrokerSupported())
             {
                 appBuilder.WithExperimentalFeatures();
-                appBuilder.WithWindowsBroker();
+                appBuilder.WithBrokerPreview();
             }
 
             IPublicClientApplication app = appBuilder.Build();
