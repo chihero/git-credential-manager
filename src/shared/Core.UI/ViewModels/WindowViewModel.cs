@@ -15,7 +15,7 @@ namespace GitCredentialManager.UI.ViewModels
         public WindowViewModel()
         {
             // Default to hiding the system chrome on macOS only for now
-            ExtendClientArea = PlatformUtils.IsMacOS();
+            ExtendClientArea = OperatingSystem.IsMacOS();
         }
 
         public bool WindowResult { get; private set; }
@@ -28,7 +28,7 @@ namespace GitCredentialManager.UI.ViewModels
 
         public bool ShowCustomChrome
         {
-            get => ShowClientChromeOverride || (ExtendClientArea && !PlatformUtils.IsMacOS());
+            get => ShowClientChromeOverride || (ExtendClientArea && !OperatingSystem.IsMacOS());
         }
 
         public bool ShowClientChromeOverride

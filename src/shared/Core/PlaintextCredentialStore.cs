@@ -198,7 +198,7 @@ namespace GitCredentialManager
 
                 if (!serviceUri.IsDefaultPort)
                 {
-                    sb.Append(PlatformUtils.IsWindows() ? '-' : ':');
+                    sb.Append(OperatingSystem.IsWindows() ? '-' : ':');
                     sb.Append(serviceUri.Port);
                 }
 

@@ -113,10 +113,10 @@ namespace GitCredentialManager
 
         private static string GetDefaultStore()
         {
-            if (PlatformUtils.IsWindows())
+            if (OperatingSystem.IsWindows())
                 return StoreNames.WindowsCredentialManager;
 
-            if (PlatformUtils.IsMacOS())
+            if (OperatingSystem.IsMacOS())
                 return StoreNames.MacOSKeychain;
 
             // Other platforms have no default store
@@ -125,7 +125,7 @@ namespace GitCredentialManager
 
         private static void AppendAvailableStoreList(StringBuilder sb)
         {
-            if (PlatformUtils.IsWindows())
+            if (OperatingSystem.IsWindows())
             {
                 sb.AppendFormat("  {1,-13} : Windows Credential Manager (not available over network/SSH sessions){0}",
                     Environment.NewLine, StoreNames.WindowsCredentialManager);
@@ -134,13 +134,13 @@ namespace GitCredentialManager
                     Environment.NewLine, StoreNames.Dpapi);
             }
 
-            if (PlatformUtils.IsMacOS())
+            if (OperatingSystem.IsMacOS())
             {
                 sb.AppendFormat("  {1,-13} : macOS Keychain{0}",
                     Environment.NewLine, StoreNames.MacOSKeychain);
             }
 
-            if (PlatformUtils.IsLinux())
+            if (OperatingSystem.IsLinux())
             {
                 sb.AppendFormat("  {1,-13} : freedesktop.org Secret Service (requires graphical interface){0}",
                     Environment.NewLine, StoreNames.SecretService);
@@ -152,7 +152,7 @@ namespace GitCredentialManager
                     Environment.NewLine, StoreNames.Gpg);
             }
 
-            if (!PlatformUtils.IsWindows())
+            if (!OperatingSystem.IsWindows())
             {
                 sb.AppendFormat("  {1,-13} : Git's in-memory credential cache{0}",
                     Environment.NewLine, StoreNames.Cache);
@@ -164,7 +164,7 @@ namespace GitCredentialManager
 
         private void ValidateWindowsCredentialManager()
         {
-            if (!PlatformUtils.IsWindows())
+            if (!OperatingSystem.IsWindows())
             {
                 throw new Exception(
                     $"Can only use the '{StoreNames.WindowsCredentialManager}' credential store on Windows." +
@@ -185,7 +185,7 @@ namespace GitCredentialManager
 
         private void ValidateDpapi(out string storeRoot)
         {
-            if (!PlatformUtils.IsWindows())
+            if (!OperatingSystem.IsWindows())
             {
                 throw new Exception(
                     $"Can only use the '{StoreNames.Dpapi}' credential store on Windows." +
@@ -208,7 +208,7 @@ namespace GitCredentialManager
 
         private void ValidateMacOSKeychain()
         {
-            if (!PlatformUtils.IsMacOS())
+            if (!OperatingSystem.IsMacOS())
             {
                 throw new Exception(
                     $"Can only use the '{StoreNames.MacOSKeychain}' credential store on macOS." +
@@ -220,7 +220,7 @@ namespace GitCredentialManager
 
         private void ValidateSecretService()
         {
-            if (!PlatformUtils.IsLinux())
+            if (!OperatingSystem.IsLinux())
             {
                 throw new Exception(
                     $"Can only use the '{StoreNames.SecretService}' credential store on Linux." +
@@ -289,7 +289,7 @@ namespace GitCredentialManager
 
         private void ValidateCredentialCache(out string options)
         {
-            if (PlatformUtils.IsWindows())
+            if (OperatingSystem.IsWindows())
             {
                 throw new Exception(
                     $"Can not use the '{StoreNames.Cache}' credential store on Windows due to lack of UNIX socket support in Git for Windows." +

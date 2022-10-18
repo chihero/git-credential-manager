@@ -38,55 +38,6 @@ namespace GitCredentialManager.Authentication
             "live", "liveconnect", "liveid",
         };
 
-        #region Broker Initialization
-
-        public static bool IsBrokerInitialized { get; private set; }
-
-        public static void InitializeBroker()
-        {
-            if (IsBrokerInitialized)
-            {
-                return;
-            }
-
-            IsBrokerInitialized = true;
-
-            // Broker is only supported on Windows 10 and later
-            if (!PlatformUtils.IsWindowsBrokerSupported())
-            {
-                return;
-            }
-
-            // Nothing to do when not an elevated user
-            if (!PlatformUtils.IsElevatedUser())
-            {
-                return;
-            }
-
-            // Lower COM security so that MSAL can make the calls to WAM
-            int result = Interop.Windows.Native.Ole32.CoInitializeSecurity(
-                IntPtr.Zero,
-                -1,
-                IntPtr.Zero,
-                IntPtr.Zero,
-                Interop.Windows.Native.Ole32.RpcAuthnLevel.None,
-                Interop.Windows.Native.Ole32.RpcImpLevel.Impersonate,
-                IntPtr.Zero,
-                Interop.Windows.Native.Ole32.EoAuthnCap.None,
-                IntPtr.Zero
-            );
-
-            if (result != 0)
-            {
-                throw new Exception(
-                    $"Failed to set COM process security to allow Windows broker from an elevated process (0x{result:x})." +
-                    Environment.NewLine +
-                    $"See {Constants.HelpUrls.GcmWamComSecurity} for more information.");
-            }
-        }
-
-        #endregion
-
         public MicrosoftAuthentication(ICommandContext context)
             : base(context) { }
 
@@ -95,17 +46,11 @@ namespace GitCredentialManager.Authentication
         public async Task<IMicrosoftAuthenticationResult> GetTokenAsync(
             string authority, string clientId, Uri redirectUri, string[] scopes, string userName)
         {
-            // Check if we can and should use OS broker authentication
-            bool useBroker = false;
-            if (CanUseBroker(Context))
+            // Check if we should use OS broker authentication
+            bool useBroker = CanUseBroker(Context);
+            if (useBroker)
             {
-                // Can only use the broker if it has been initialized
-                useBroker = IsBrokerInitialized;
-
-                if (IsBrokerInitialized)
-                    Context.Trace.WriteLine("OS broker is available and enabled.");
-                else
-                    Context.Trace.WriteLine("OS broker has not been initialized and cannot not be used.");
+                Context.Trace.WriteLine("OS broker is enabled.");
             }
 
             // Create the public client application for authentication
@@ -278,7 +223,7 @@ namespace GitCredentialManager.Authentication
 
             // If we have a parent window ID we should tell MSAL about it so it can parent any authentication dialogs
             // correctly. We only support this on Windows right now as MSAL only supports embedded/dialogs on Windows.
-            if (PlatformUtils.IsWindows() && !string.IsNullOrWhiteSpace(Context.Settings.ParentWindowId) &&
+            if (OperatingSystem.IsWindows() && !string.IsNullOrWhiteSpace(Context.Settings.ParentWindowId) &&
                 int.TryParse(Context.Settings.ParentWindowId, out int hWndInt) && hWndInt > 0)
             {
                 appBuilder.WithParentActivityOrWindow(() => new IntPtr(hWndInt));
@@ -308,7 +253,7 @@ namespace GitCredentialManager.Authentication
             Context.Trace.WriteLine(
                 "Configuring Microsoft Authentication token cache to instance shared with Microsoft developer tools...");
 
-            if (!PlatformUtils.IsWindows() && !PlatformUtils.IsPosix())
+            if (!OperatingSystem.IsWindows() && !PlatformUtils.IsPosix())
             {
                 string osType = PlatformUtils.GetPlatformInformation().OperatingSystemType;
                 Context.Trace.WriteLine($"Token cache integration is not supported on {osType}.");
@@ -332,7 +277,7 @@ namespace GitCredentialManager.Authentication
                 Context.Trace.WriteLine("Cannot persist Microsoft Authentication data securely!");
                 Context.Trace.WriteException(ex);
 
-                if (PlatformUtils.IsMacOS())
+                if (OperatingSystem.IsMacOS())
                 {
                     // On macOS sometimes the Keychain returns the "errSecAuthFailed" error - we don't know why
                     // but it appears to be something to do with not being able to access the keychain.
@@ -341,7 +286,7 @@ namespace GitCredentialManager.Authentication
                         "warning: there is a problem accessing the login Keychain - either manually lock and unlock the " +
                         "login Keychain, or restart the computer to remedy this");
                 }
-                else if (PlatformUtils.IsLinux())
+                else if (OperatingSystem.IsLinux())
                 {
                     // On Linux the SecretService/keyring might not be available so we must fall-back to a plaintext file.
                     Context.Streams.Error.WriteLine("warning: using plain-text fallback token cache");
@@ -367,7 +312,7 @@ namespace GitCredentialManager.Authentication
         {
             const string cacheFileName = "msal.cache";
             string cacheDirectory;
-            if (PlatformUtils.IsWindows())
+            if (OperatingSystem.IsWindows())
             {
                 // The shared MSAL cache is located at "%LocalAppData%\.IdentityService\msal.cache" on Windows.
                 cacheDirectory = Path.Combine(

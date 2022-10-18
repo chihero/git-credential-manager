@@ -18,15 +18,15 @@ namespace GitCredentialManager.Tests.Objects
             _fileSystem = fileSystem ?? new TestFileSystem();
 
             // Use the current platform separators and comparison types by default
-            _envPathSeparator = envPathSeparator ?? (PlatformUtils.IsWindows() ? ";" : ":");
+            _envPathSeparator = envPathSeparator ?? (OperatingSystem.IsWindows() ? ";" : ":");
 
             _envarComparer = envarComparer ??
-                             (PlatformUtils.IsWindows()
+                             (OperatingSystem.IsWindows()
                                  ? StringComparer.OrdinalIgnoreCase
                                  : StringComparer.Ordinal);
 
             _pathComparer = pathComparer ??
-                            (PlatformUtils.IsLinux()
+                            (OperatingSystem.IsLinux()
                                 ? StringComparer.Ordinal
                                 : StringComparer.OrdinalIgnoreCase);
 

@@ -1,4 +1,7 @@
 
+using System;
+using System.Diagnostics;
+
 namespace GitCredentialManager.Interop.Windows
 {
     /// <summary>
@@ -19,6 +22,8 @@ namespace GitCredentialManager.Interop.Windows
 
         protected override bool TryGetExternalDefault(string section, string property, out string value)
         {
+            Debug.Assert(OperatingSystem.IsWindows());
+
             value = null;
 
             // Check for machine (HKLM) registry keys that match the Git configuration name.

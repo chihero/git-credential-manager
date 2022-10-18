@@ -25,14 +25,14 @@ namespace GitLab.UI.Controls
             this.AttachDevTools();
 #endif
 
-            if (PlatformUtils.IsWindows())
+            if (OperatingSystem.IsWindows())
             {
                 _environment = new WindowsEnvironment(new WindowsFileSystem());
             }
             else
             {
                 IFileSystem fs;
-                if (PlatformUtils.IsMacOS())
+                if (OperatingSystem.IsMacOS())
                 {
                     fs = new MacOSFileSystem();
                 }

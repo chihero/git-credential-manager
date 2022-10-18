@@ -23,22 +23,11 @@ namespace GitCredentialManager.Diagnostics
         {
             if (MicrosoftAuthentication.CanUseBroker(_context))
             {
-                log.Append("Checking broker initialization state...");
-                if (MicrosoftAuthentication.IsBrokerInitialized)
-                {
-                    log.AppendLine(" Initialized");
-                }
-                else
-                {
-                    log.AppendLine("  Not initialized");
-                    log.Append("Initializing broker...");
-                    MicrosoftAuthentication.InitializeBroker();
-                    log.AppendLine("OK");
-                }
+                log.Append("Broker enabled.");
             }
             else
             {
-                log.AppendLine("Broker not supported.");
+                log.AppendLine("Broker not enabled.");
             }
 
             var msAuth = new MicrosoftAuthentication(_context);
@@ -51,12 +40,12 @@ namespace GitCredentialManager.Diagnostics
             log.AppendLine($"CacheFileName: {cacheProps.CacheFileName}");
             log.AppendLine($"CacheFilePath: {cacheProps.CacheFilePath}");
 
-            if (PlatformUtils.IsMacOS())
+            if (OperatingSystem.IsMacOS())
             {
                 log.AppendLine($"MacKeyChainAccountName: {cacheProps.MacKeyChainAccountName}");
                 log.AppendLine($"MacKeyChainServiceName: {cacheProps.MacKeyChainServiceName}");
             }
-            else if (PlatformUtils.IsLinux())
+            else if (OperatingSystem.IsLinux())
             {
                 log.AppendLine($"KeyringCollection: {cacheProps.KeyringCollection}");
                 log.AppendLine($"KeyringSchemaName: {cacheProps.KeyringSchemaName}");

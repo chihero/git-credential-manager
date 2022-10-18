@@ -91,7 +91,7 @@ namespace GitCredentialManager.UI
             // Workaround an issue where "Activate()" and "Focus()" don't actually
             // cause the window to become the top-most window. Avalonia is correctly
             // calling 'makeKeyAndOrderFront' but this isn't working for some reason.
-            if (PlatformUtils.IsMacOS())
+            if (OperatingSystem.IsMacOS())
             {
                 window.Topmost = true;
                 window.Topmost = false;
@@ -103,7 +103,7 @@ namespace GitCredentialManager.UI
         private static void SetParentExternal(Window window, IntPtr parentHandle)
         {
             // We only support parenting on the Windows platform at the moment.
-            if (!PlatformUtils.IsWindows())
+            if (!OperatingSystem.IsWindows())
             {
                 return;
             }

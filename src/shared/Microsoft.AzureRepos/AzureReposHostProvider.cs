@@ -462,7 +462,7 @@ namespace Microsoft.AzureRepos
 
             // On Windows, if there is a "manager-core" entry remaining in the system config then we must not clear
             // the useHttpPath option otherwise this would break the bundled version of GCM in Git for Windows.
-            if (!PlatformUtils.IsWindows() || target != ConfigurationTarget.System ||
+            if (!OperatingSystem.IsWindows() || target != ConfigurationTarget.System ||
                 targetConfig.GetAll(helperKey).All(x => !string.Equals(x, "manager-core")))
             {
                 targetConfig.Unset(configurationLevel, useHttpPathKey);

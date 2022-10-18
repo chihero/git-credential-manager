@@ -167,7 +167,7 @@ namespace GitCredentialManager.Authentication
             // Search the installation directory for an in-box helper
             //
             string appDir = Path.GetDirectoryName(Context.ApplicationPath);
-            string inBoxExePath = Path.Combine(appDir, PlatformUtils.IsWindows() ? $"{helperName}.exe" : helperName);
+            string inBoxExePath = Path.Combine(appDir, OperatingSystem.IsWindows() ? $"{helperName}.exe" : helperName);
             string inBoxDllPath = Path.Combine(appDir, $"{helperName}.dll");
 
             // Look for in-box native executables
@@ -181,7 +181,7 @@ namespace GitCredentialManager.Authentication
             // Look for in-box .NET framework-dependent executables
             if (Context.FileSystem.FileExists(inBoxDllPath))
             {
-                string dotnetName = PlatformUtils.IsWindows() ? "dotnet.exe" : "dotnet";
+                string dotnetName = OperatingSystem.IsWindows() ? "dotnet.exe" : "dotnet";
                 if (!Context.Environment.TryLocateExecutable(dotnetName, out string dotnetPath))
                 {
                     Context.Trace.WriteLine($"Unable to run UI helper '{inBoxDllPath}' without the .NET CLI.");

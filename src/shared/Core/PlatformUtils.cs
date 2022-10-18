@@ -23,7 +23,7 @@ namespace GitCredentialManager
 
         public static bool IsWindowsBrokerSupported()
         {
-            if (!IsWindows())
+            if (!OperatingSystem.IsWindows())
             {
                 return false;
             }
@@ -62,39 +62,12 @@ namespace GitCredentialManager
         }
 
         /// <summary>
-        /// Check if the current Operating System is macOS.
-        /// </summary>
-        /// <returns>True if running on macOS, false otherwise.</returns>
-        public static bool IsMacOS()
-        {
-            return RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-        }
-
-        /// <summary>
-        /// Check if the current Operating System is Windows.
-        /// </summary>
-        /// <returns>True if running on Windows, false otherwise.</returns>
-        public static bool IsWindows()
-        {
-            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-        }
-
-        /// <summary>
-        /// Check if the current Operating System is Linux-based.
-        /// </summary>
-        /// <returns>True if running on a Linux distribution, false otherwise.</returns>
-        public static bool IsLinux()
-        {
-            return RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
-        }
-
-        /// <summary>
         /// Check if the current Operating System is POSIX-compliant.
         /// </summary>
         /// <returns>True if running on a POSIX-compliant Operating System, false otherwise.</returns>
         public static bool IsPosix()
         {
-            return IsMacOS() || IsLinux();
+            return OperatingSystem.IsMacOS() || OperatingSystem.IsLinux();
         }
 
         /// <summary>
@@ -103,7 +76,7 @@ namespace GitCredentialManager
         /// <exception cref="PlatformNotSupportedException">Thrown if the current OS is not macOS.</exception>
         public static void EnsureMacOS()
         {
-            if (!IsMacOS())
+            if (!OperatingSystem.IsMacOS())
             {
                 throw new PlatformNotSupportedException();
             }
@@ -115,7 +88,7 @@ namespace GitCredentialManager
         /// <exception cref="PlatformNotSupportedException">Thrown if the current OS is not Windows.</exception>
         public static void EnsureWindows()
         {
-            if (!IsWindows())
+            if (!OperatingSystem.IsWindows())
             {
                 throw new PlatformNotSupportedException();
             }
@@ -127,7 +100,7 @@ namespace GitCredentialManager
         /// <exception cref="PlatformNotSupportedException">Thrown if the current OS is not Linux-based.</exception>
         public static void EnsureLinux()
         {
-            if (!IsLinux())
+            if (!OperatingSystem.IsLinux())
             {
                 throw new PlatformNotSupportedException();
             }
@@ -147,7 +120,7 @@ namespace GitCredentialManager
 
         public static bool IsElevatedUser()
         {
-            if (IsWindows())
+            if (OperatingSystem.IsWindows())
             {
                 var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
                 var principal = new System.Security.Principal.WindowsPrincipal(identity);
@@ -165,17 +138,17 @@ namespace GitCredentialManager
 
         private static string GetOSType()
         {
-            if (IsWindows())
+            if (OperatingSystem.IsWindows())
             {
                 return "Windows";
             }
 
-            if (IsMacOS())
+            if (OperatingSystem.IsMacOS())
             {
                 return "macOS";
             }
 
-            if (IsLinux())
+            if (OperatingSystem.IsLinux())
             {
                 return "Linux";
             }
@@ -185,12 +158,12 @@ namespace GitCredentialManager
 
         private static string GetOSVersion()
         {
-            if (IsWindows() && RtlGetVersionEx(out RTL_OSVERSIONINFOEX osvi) == 0)
+            if (OperatingSystem.IsWindows() && RtlGetVersionEx(out RTL_OSVERSIONINFOEX osvi) == 0)
             {
                 return $"{osvi.dwMajorVersion}.{osvi.dwMinorVersion} (build {osvi.dwBuildNumber})";
             }
 
-            if (IsMacOS())
+            if (OperatingSystem.IsMacOS())
             {
                 var psi = new ProcessStartInfo
                 {
@@ -210,7 +183,7 @@ namespace GitCredentialManager
                 }
             }
 
-            if (IsLinux())
+            if (OperatingSystem.IsLinux())
             {
                 var psi = new ProcessStartInfo
                 {
