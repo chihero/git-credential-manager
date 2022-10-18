@@ -56,9 +56,6 @@ PROJ_OUT="$OUT/$DOTNET_TOOL"
 PACKAGE="$ROOT/nuget"
 CONFIGURATION="${CONFIGURATION:=Release}"
 
-# Build parameters
-FRAMEWORK=net6.0
-
 # Outputs
 PAYLOAD="$PROJ_OUT/payload/$CONFIGURATION"
 SYMBOLOUT="$PROJ_OUT/payload.sym/$CONFIGURATION"
@@ -92,30 +89,26 @@ fi
 echo "Publishing core application..."
 $DOTNET_ROOT/dotnet publish "$GCM_SRC" \
 	--configuration="$CONFIGURATION" \
-	--framework="$FRAMEWORK" \
 	--output="$(make_absolute "$PAYLOAD")" \
-    -p:UseAppHost=false || exit 1
+	-p:UseAppHost=false || exit 1
 
 echo "Publishing Bitbucket UI helper..."
 $DOTNET_ROOT/dotnet publish "$BITBUCKET_UI_SRC" \
 	--configuration="$CONFIGURATION" \
-	--framework="$FRAMEWORK" \
 	--output="$(make_absolute "$PAYLOAD")" \
-    -p:UseAppHost=false || exit 1
+	-p:UseAppHost=false || exit 1
 
 echo "Publishing GitHub UI helper..."
 $DOTNET_ROOT/dotnet publish "$GITHUB_UI_SRC" \
 	--configuration="$CONFIGURATION" \
-	--framework="$FRAMEWORK" \
 	--output="$(make_absolute "$PAYLOAD")" \
-    -p:UseAppHost=false || exit 1
+	-p:UseAppHost=false || exit 1
 
 echo "Publishing GitLab UI helper..."
 $DOTNET_ROOT/dotnet publish "$GITLAB_UI_SRC" \
 	--configuration="$CONFIGURATION" \
-	--framework="$FRAMEWORK" \
 	--output="$(make_absolute "$PAYLOAD")" \
-    -p:UseAppHost=false || exit 1
+	-p:UseAppHost=false || exit 1
 
 # Collect symbols
 echo "Collecting managed symbols..."

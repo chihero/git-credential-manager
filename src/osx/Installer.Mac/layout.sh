@@ -26,9 +26,6 @@ BITBUCKET_UI_SRC="$SRC/shared/Atlassian.Bitbucket.UI.Avalonia"
 GITHUB_UI_SRC="$SRC/shared/GitHub.UI.Avalonia"
 GITLAB_UI_SRC="$SRC/shared/GitLab.UI.Avalonia"
 
-# Build parameters
-FRAMEWORK=net6.0
-
 # Parse script arguments
 for i in "$@"
 do
@@ -100,7 +97,6 @@ dotnet publish "$GCM_SRC" \
 	--no-restore \
 	-m:1 \
 	--configuration="$CONFIGURATION" \
-	--framework="$FRAMEWORK" \
 	--runtime="$RUNTIME" \
 	--self-contained \
 	--output="$(make_absolute "$PAYLOAD")" || exit 1
@@ -110,7 +106,6 @@ dotnet publish "$GCM_UI_SRC" \
 	--no-restore \
 	-m:1 \
 	--configuration="$CONFIGURATION" \
-	--framework="$FRAMEWORK" \
 	--runtime="$RUNTIME" \
 	--self-contained \
 	--output="$(make_absolute "$PAYLOAD")" || exit 1
@@ -120,7 +115,6 @@ dotnet publish "$BITBUCKET_UI_SRC" \
 	--no-restore \
 	-m:1 \
 	--configuration="$CONFIGURATION" \
-	--framework="$FRAMEWORK" \
 	--runtime="$RUNTIME" \
 	--self-contained \
 	--output="$(make_absolute "$PAYLOAD")" || exit 1
@@ -130,7 +124,6 @@ dotnet publish "$GITHUB_UI_SRC" \
 	--no-restore \
 	-m:1 \
 	--configuration="$CONFIGURATION" \
-	--framework="$FRAMEWORK" \
 	--runtime="$RUNTIME" \
 	--self-contained \
 	--output="$(make_absolute "$PAYLOAD")" || exit 1
@@ -140,7 +133,6 @@ dotnet publish "$GITLAB_UI_SRC" \
 	--no-restore \
 	-m:1 \
 	--configuration="$CONFIGURATION" \
-	--framework="$FRAMEWORK" \
 	--runtime="$RUNTIME" \
 	--self-contained \
 	--output="$(make_absolute "$PAYLOAD")" || exit 1

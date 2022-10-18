@@ -41,31 +41,37 @@ mkdir -p "$PAYLOAD","$SYMBOLS"
 # Publish core application executables
 Write-Output "Publishing core application..."
 dotnet publish "$GCM_SRC" `
-    --framework net472 `
 	--configuration "$CONFIGURATION" `
 	--runtime win-x86 `
+	--self-contained `
 	--output "$PAYLOAD"
 
 Write-Output "Publishing core UI helper..."
 dotnet publish "$GCM_UI_SRC" `
-	--framework net472 `
 	--configuration "$CONFIGURATION" `
 	--runtime win-x86 `
+	--self-contained `
 	--output "$PAYLOAD"
 
 Write-Output "Publishing Bitbucket UI helper..."
 dotnet publish "$BITBUCKET_UI_SRC" `
 	--configuration "$CONFIGURATION" `
+	--runtime win-x86 `
+	--self-contained `
 	--output "$PAYLOAD" 
 
 Write-Output "Publishing GitHub UI helper..."
 dotnet publish "$GITHUB_UI_SRC" `
 	--configuration "$CONFIGURATION" `
+	--runtime win-x86 `
+	--self-contained `
 	--output "$PAYLOAD" 
 
 Write-Output "Publishing GitLab UI helper..."
 dotnet publish "$GITLAB_UI_SRC" `
 	--configuration "$CONFIGURATION" `
+	--runtime win-x86 `
+	--self-contained `
 	--output "$PAYLOAD" 
 
 # Collect symbols

@@ -54,7 +54,6 @@ GITLAB_UI_SRC="$SRC/shared/GitLab.UI.Avalonia"
 PROJ_OUT="$OUT/linux/Packaging.Linux"
 
 # Build parameters
-FRAMEWORK=net6.0
 RUNTIME=linux-x64
 
 # Perform pre-execution checks
@@ -115,7 +114,6 @@ fi
 echo "Publishing core application..."
 $DOTNET_ROOT/dotnet publish "$GCM_SRC" \
 	--configuration="$CONFIGURATION" \
-	--framework="$FRAMEWORK" \
 	--runtime="$RUNTIME" \
 	--self-contained=true \
 	-p:PublishSingleFile=true \
@@ -124,7 +122,6 @@ $DOTNET_ROOT/dotnet publish "$GCM_SRC" \
 echo "Publishing core UI helper..."
 $DOTNET_ROOT/dotnet publish "$GCM_UI_SRC" \
 	--configuration="$CONFIGURATION" \
-	--framework="$FRAMEWORK" \
 	--runtime="$RUNTIME" \
 	--self-contained=true \
 	-p:PublishSingleFile=true \
@@ -133,7 +130,6 @@ $DOTNET_ROOT/dotnet publish "$GCM_UI_SRC" \
 echo "Publishing Bitbucket UI helper..."
 $DOTNET_ROOT/dotnet publish "$BITBUCKET_UI_SRC" \
 	--configuration="$CONFIGURATION" \
-	--framework="$FRAMEWORK" \
 	--runtime="$RUNTIME" \
 	--self-contained=true \
 	-p:PublishSingleFile=true \
@@ -142,7 +138,6 @@ $DOTNET_ROOT/dotnet publish "$BITBUCKET_UI_SRC" \
 echo "Publishing GitHub UI helper..."
 $DOTNET_ROOT/dotnet publish "$GITHUB_UI_SRC" \
 	--configuration="$CONFIGURATION" \
-	--framework="$FRAMEWORK" \
 	--runtime="$RUNTIME" \
 	--self-contained=true \
 	-p:PublishSingleFile=true \
@@ -151,7 +146,6 @@ $DOTNET_ROOT/dotnet publish "$GITHUB_UI_SRC" \
 echo "Publishing GitLab UI helper..."
 $DOTNET_ROOT/dotnet publish "$GITLAB_UI_SRC" \
 	--configuration="$CONFIGURATION" \
-	--framework="$FRAMEWORK" \
 	--runtime="$RUNTIME" \
 	--self-contained=true \
 	-p:PublishSingleFile=true \

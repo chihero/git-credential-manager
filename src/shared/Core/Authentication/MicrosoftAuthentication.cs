@@ -6,10 +6,6 @@ using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 using Microsoft.Identity.Client.Extensions.Msal;
 
-#if NETFRAMEWORK
-using Microsoft.Identity.Client.Desktop;
-#endif
-
 namespace GitCredentialManager.Authentication
 {
     public interface IMicrosoftAuthentication
@@ -290,10 +286,8 @@ namespace GitCredentialManager.Authentication
             // On Windows 10+ & .NET Framework try and use the WAM broker
             if (enableBroker && PlatformUtils.IsWindowsBrokerSupported())
             {
-#if NETFRAMEWORK
                 appBuilder.WithExperimentalFeatures();
                 appBuilder.WithWindowsBroker();
-#endif
             }
 
             IPublicClientApplication app = appBuilder.Build();
@@ -458,7 +452,6 @@ namespace GitCredentialManager.Authentication
 
         public static bool CanUseBroker(ICommandContext context)
         {
-#if NETFRAMEWORK
             // We only support the broker on Windows 10+ and in an interactive session
             if (!context.SessionManager.IsDesktopSession || !PlatformUtils.IsWindowsBrokerSupported())
             {
@@ -477,32 +470,20 @@ namespace GitCredentialManager.Authentication
             }
 
             return defaultValue;
-#else
-            // OS broker requires .NET Framework right now until we migrate to .NET 5.0 (net5.0-windows10.x.y.z)
-            return false;
-#endif
         }
 
         private bool CanUseEmbeddedWebView()
         {
-            // If we're in an interactive session and on .NET Framework then MSAL can show the WinForms-based embedded UI
-#if NETFRAMEWORK
+            // If we're in an interactive session then MSAL can show the WinForms-based embedded UI
             return Context.SessionManager.IsDesktopSession;
-#else
-            return false;
-#endif
         }
 
         private void EnsureCanUseEmbeddedWebView()
         {
-#if NETFRAMEWORK
             if (!Context.SessionManager.IsDesktopSession)
             {
                 throw new InvalidOperationException("Embedded web view is not available without a desktop session.");
             }
-#else
-            throw new InvalidOperationException("Embedded web view is not available on .NET Core.");
-#endif
         }
 
         private bool CanUseSystemWebView(IPublicClientApplication app, Uri redirectUri)
