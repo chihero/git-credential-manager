@@ -75,6 +75,9 @@ namespace GitCredentialManager
             public const string GcmHttpProxy          = "GCM_HTTP_PROXY";
             public const string GitSslNoVerify        = "GIT_SSL_NO_VERIFY";
             public const string GitSslCaInfo          = "GIT_SSL_CAINFO";
+            public const string GitSslCert            = "GIT_SSL_CERT";
+            public const string GitSslCertProtected   = "GIT_SSL_CERT_PASSWORD_PROTECTED";
+            public const string GitSslKey             = "GIT_SSL_KEY";
             public const string GcmInteractive        = "GCM_INTERACTIVE";
             public const string GcmParentWindow       = "GCM_MODAL_PARENTHWND";
             public const string MsAuthFlow            = "GCM_MSAUTH_FLOW";
@@ -135,6 +138,9 @@ namespace GitCredentialManager
                 public const string SslBackend = "sslBackend";
                 public const string SslVerify = "sslVerify";
                 public const string SslCaInfo = "sslCAInfo";
+                public const string SslCert = "sslCert";
+                public const string SslKey = "sslKey";
+                public const string SslCertProtected = "sslcertpasswordprotected";
             }
 
             public static class Remote
@@ -162,6 +168,7 @@ namespace GitCredentialManager
             public const string GcmWamComSecurity      = "https://aka.ms/gcm/wamadmin";
             public const string GcmAutoDetect          = "https://aka.ms/gcm/autodetect";
             public const string GcmExecRename          = "https://aka.ms/gcm/rename";
+            public const string GcmClientCertificates  = "https://aka.ms/gcm/mtls";
         }
 
         private static Version _gcmVersion;

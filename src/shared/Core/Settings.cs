@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Text.RegularExpressions;
 using KnownEnvars = GitCredentialManager.Constants.EnvironmentVariables;
@@ -160,6 +161,25 @@ namespace GitCredentialManager
         /// </summary>
         /// <remarks>The default value is false if unset.</remarks>
         bool UseCustomCertificateBundleWithSchannel { get; }
+
+        /// <summary>
+        /// File containing the SSL certificate when fetching or pushing over HTTPS.
+        /// Can be overridden by the GIT_SSL_CERT environment variable.
+        /// </summary>
+        string ClientCertificatePath { get; }
+
+        /// <summary>
+        /// File containing the SSL private key when fetching or pushing over HTTPS.
+        /// Can be overridden by the GIT_SSL_KEY environment variable.
+        /// </summary>
+        string ClientCertificatePrivateKey { get; }
+
+        /// <summary>
+        /// Enable Git’s password prompt for the SSL certificate.
+        /// Otherwise OpenSSL will prompt the user, possibly many times, if the certificate or private key is encrypted.
+        /// Can be overridden by the GIT_SSL_CERT_PASSWORD_PROTECTED environment variable.
+        /// </summary>
+        bool IsClientCertificatePasswordProtected { get; }
 
         /// <summary>
         /// Maximum number of milliseconds to wait for a network response when probing a remote URL for the purpose
@@ -549,6 +569,15 @@ namespace GitCredentialManager
         public bool UseCustomCertificateBundleWithSchannel =>
             TryGetSetting(null, KnownGitCfg.Http.SectionName, KnownGitCfg.Http.SchannelUseSslCaInfo, out string schannelUseSslCaInfo) &&
                 schannelUseSslCaInfo.ToBooleanyOrDefault(false);
+
+        public string ClientCertificatePath =>
+            TryGetPathSetting(KnownEnvars.GitSslCert, KnownGitCfg.Http.SectionName, KnownGitCfg.Http.SslCert, out string path) ? path : null;
+
+        public string ClientCertificatePrivateKey =>
+            TryGetPathSetting(KnownEnvars.GitSslKey, KnownGitCfg.Http.SectionName, KnownGitCfg.Http.SslKey, out string path) ? path : null;
+
+        public bool IsClientCertificatePasswordProtected =>
+            TryGetSetting(KnownEnvars.GitSslCertProtected, KnownGitCfg.Http.SectionName, KnownGitCfg.Http.SslCertProtected, out string value) && value.IsTruthy();
 
         public int AutoDetectProviderTimeout
         {

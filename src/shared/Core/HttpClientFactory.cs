@@ -179,6 +179,81 @@ namespace GitCredentialManager
 #endif
             }
 
+            // Configure client certificates for mutual TLS
+            string clientCertPath = _settings.ClientCertificatePath;
+            if (clientCertPath != null)
+            {
+                X509Certificate2 clientCertificate = null;
+                if (_fileSystem.FileExists(clientCertPath))
+                {
+                    string privateKeyPath = _settings.ClientCertificatePrivateKey;
+
+                    // We are missing the X509Certificate2.CreateFromPemFile APIs on .NET Framework
+                    // and we don't want to add cert/key parsing code to GCM directly.
+                    // Instead we print a warning message; users should use SChannel and the
+                    // Windows Certificate Store.
+#if NETFRAMEWORK
+                    if (privateKeyPath != null)
+                    {
+                        _streams.Error.WriteLine(
+                            "warning: cannot import configured client certificate private key on Windows!");
+                        _streams.Error.WriteLine(
+                            $"warning: See {Constants.HelpUrls.GcmClientCertificates} for more information.");
+                    }
+
+                    clientCertificate = new X509Certificate2(clientCertPath);
+#else
+                    if (privateKeyPath != null)
+                    {
+                        if (_fileSystem.FileExists(privateKeyPath))
+                        {
+                            
+                        }
+                        clientCertificate = X509Certificate2.CreateFromPemFile(clientCertPath, privateKeyPath);
+                    }
+                    else
+                    {
+                        clientCertificate = X509Certificate2.CreateFromPemFile(clientCertPath);
+                    }
+#endif
+                }
+                else if (_settings.TlsBackend == TlsBackend.Schannel &&
+                         TryParseSchannelCertificatePath(clientCertPath, out StoreLocation storeLocation, out string storeName, out string thumbprint))
+                {
+                    using (var store = new X509Store(storeName, storeLocation))
+                    {
+                        try
+                        {
+                            store.Open(OpenFlags.OpenExistingOnly | OpenFlags.ReadOnly);
+                        }
+                        catch (Exception ex)
+                        {
+                            _trace.WriteLine($"Failed to open certificate store '{storeLocation}\\{storeName}'");
+                            _trace.WriteException(ex);
+                        }
+
+                        X509Certificate2Collection certs = store.Certificates.Find(X509FindType.FindByThumbprint, thumbprint, false);
+                        _trace.WriteLine($"Found {certs.Count} certificate(s) with thumbprint '{thumbprint}' in '{storeLocation}\\{storeName}'");
+                        if (certs.Count > 0)
+                        {
+                            handler.ClientCertificates.Add(certs[0]);
+                        }
+                    }
+                }
+                else
+                {
+                    _trace.WriteLine($"Invalid client certificate path '{clientCertPath}'");
+                    _streams.Error.WriteLine($"warning: invalid client certificate path '{clientCertPath}'");
+                }
+
+                if (clientCertificate != null)
+                {
+                    _trace.WriteLine($"Using client certificate '{clientCertificate.Thumbprint}'");
+                    handler.ClientCertificateOptions = ClientCertificateOption.Manual;
+                    handler.ClientCertificates.Add(clientCertificate);
+                }
+            }
+
             var client = new HttpClient(handler);
 
             // Add default headers
@@ -279,6 +354,24 @@ namespace GitCredentialManager
 
             proxy = null;
             return false;
+        }
+
+        private bool TryParseSchannelCertificatePath(string path, out StoreLocation storeLocation, out string storeName,
+            out string thumbprint)
+        {
+            storeName = null;
+            storeLocation = default;
+            thumbprint = null;
+
+            string[] parts = path.Split(new[] { "/" }, 3, StringSplitOptions.None);
+            if (parts.Length != 3)
+            {
+                return false;
+            }
+
+            storeName = parts[0];
+            thumbprint = parts[2];
+            return Enum.TryParse(parts[1], out storeLocation);
         }
     }
 }
