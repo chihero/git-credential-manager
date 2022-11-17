@@ -31,6 +31,10 @@ case "$i" in
     VERSION="${i#*=}"
     shift # past argument=value
     ;;
+    --runtime=*)
+    RUNTIME="${i#*=}"
+    shift # past argument=value
+    ;;
     --install-from-source=*)
     INSTALL_FROM_SOURCE=${i#*=}
     shift # past argument=value
@@ -55,19 +59,43 @@ PROJ_OUT="$OUT/linux/Packaging.Linux"
 
 # Build parameters
 FRAMEWORK=net6.0
-RUNTIME=linux-x64
 
 # Perform pre-execution checks
 CONFIGURATION="${CONFIGURATION:=Debug}"
+INSTALL_FROM_SOURCE=${INSTALL_FROM_SOURCE:=false}
 if [ -z "$VERSION" ]; then
     die "--version was not set"
 fi
 
+if [ -z "$RUNTIME" ]; then
+    TEST_RUNTIME=`uname -m`
+    case $TEST_RUNTIME in
+        "x86_64")
+            RUNTIME="linux-x64"
+            DEB_ARCH="amd64"
+            ;;
+        "arm64")
+            RUNTIME="linux-arm64"
+            DEB_ARCH="arm64"
+            ;;
+        *)
+            die "Unknown runtime '$TEST_RUNTIME'"
+            ;;
+    esac
+fi
+
 if [ $INSTALL_FROM_SOURCE = false ]; then
-    ARCH="`dpkg-architecture -q DEB_HOST_ARCH`"
-    if test -z "$ARCH"; then
-    die "Could not determine host architecture!"
-    fi
+    case $RUNTIME in
+        "linux-x64")
+            DEB_ARCH="amd64"
+            ;;
+        "linux-arm64")
+            DEB_ARCH="arm64"
+            ;;
+        *)
+            die "Unknown runtime '$RUNTIME'"
+            ;;
+    esac
 fi
 
 # Outputs
@@ -76,12 +104,12 @@ SYMBOLOUT="$PROJ_OUT/payload.sym/$CONFIGURATION"
 
 if [ $INSTALL_FROM_SOURCE = false ]; then
     TAROUT="$PROJ_OUT/tar/$CONFIGURATION"
-    TARBALL="$TAROUT/gcm-linux_$ARCH.$VERSION.tar.gz"
-    SYMTARBALL="$TAROUT/gcm-linux_$ARCH.$VERSION-symbols.tar.gz"
+    TARBALL="$TAROUT/gcm-$RUNTIME-$VERSION.tar.gz"
+    SYMTARBALL="$TAROUT/gcm-$RUNTIME-$VERSION-symbols.tar.gz"
 
     DEBOUT="$PROJ_OUT/deb/$CONFIGURATION"
     DEBROOT="$DEBOUT/root"
-    DEBPKG="$DEBOUT/gcm-linux_$ARCH.$VERSION.deb"
+    DEBPKG="$DEBOUT/gcm-$RUNTIME-$VERSION.deb"
 else
     INSTALL_LOCATION="/usr/local"
 fi
@@ -207,7 +235,7 @@ Package: gcm
 Version: $VERSION
 Section: vcs
 Priority: optional
-Architecture: $ARCH
+Architecture: $DEB_ARCH
 Depends:
 Maintainer: GCM <gitfundamentals@github.com>
 Description: Cross Platform Git Credential Manager command line utility.
