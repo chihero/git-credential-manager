@@ -10,7 +10,7 @@ $SRC = "$ROOT/src"
 $GCM_SRC = "$SRC/shared/Git-Credential-Manager"
 $GCM_UI_SRC = "$SRC/windows/Git-Credential-Manager.UI.Windows"
 $BITBUCKET_UI_SRC = "$SRC/shared/Atlassian.Bitbucket.UI.Avalonia"
-$GITHUB_UI_SRC = "$SRC/windows/GitHub.UI.Windows"
+$GITHUB_UI_SRC = "$SRC/shared/GitHub.UI.Avalonia"
 $GITLAB_UI_SRC = "$SRC/windows/GitLab.UI.Windows"
 
 $FRAMEWORK = "net472"
@@ -63,8 +63,10 @@ dotnet publish "$BITBUCKET_UI_SRC" `
 
 Write-Output "Publishing GitHub UI helper..."
 dotnet publish "$GITHUB_UI_SRC" `
+	--framework "$FRAMEWORK" `
 	--configuration "$CONFIGURATION" `
-	--output "$PAYLOAD" 
+	--runtime "$RUNTIME" `
+	--output "$PAYLOAD"
 
 Write-Output "Publishing GitLab UI helper..."
 dotnet publish "$GITLAB_UI_SRC" `
