@@ -46,7 +46,7 @@ namespace GitCredentialManager.UI.Controls
                 // Send a focus request to the child view on idle
                 if (_view is IFocusable focusable)
                 {
-                    Avalonia.Threading.Dispatcher.UIThread.Post(() => focusable.SetFocus(), DispatcherPriority.ApplicationIdle);
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() => focusable.SetFocus(), DispatcherPriority.Normal);
                 }
             }
         }
