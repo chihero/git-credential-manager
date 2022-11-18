@@ -29,9 +29,6 @@ namespace GitCredentialManager
             // (the main thread) so we cannot use any async/await calls between
             // Dispatcher.Initialize and Run.
             Dispatcher.MainThread.Run();
-
-            // Execution should never reach here as AppMain terminates the process on completion.
-            throw new InvalidOperationException("Main dispatcher job queue shutdown unexpectedly");
         }
 
         private static void AppMain(object o)
@@ -90,12 +87,16 @@ namespace GitCredentialManager
                 app.RegisterProvider(new GitLabHostProvider(context),     HostProviderPriority.Normal);
                 app.RegisterProvider(new GenericHostProvider(context),    HostProviderPriority.Low);
 
-                int exitCode = app.RunAsync(args)
-                                  .ConfigureAwait(false)
-                                  .GetAwaiter()
-                                  .GetResult();
+                Environment.ExitCode = app.RunAsync(args)
+                    .ConfigureAwait(false)
+                    .GetAwaiter()
+                    .GetResult();
 
-                Environment.Exit(exitCode);
+                // Shutdown any UI run-loops
+                AvaloniaUi.Shutdown();
+
+                // Stop our main message loop
+                Dispatcher.MainThread.Shutdown();
             }
         }
     }

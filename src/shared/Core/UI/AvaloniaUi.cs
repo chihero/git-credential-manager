@@ -13,6 +13,8 @@ namespace GitCredentialManager.UI
     public static class AvaloniaUi
     {
         private static bool _isAppStarted;
+        private static bool _isAppShutdown;
+        private static CancellationTokenSource _appCts;
 
         public static Task ShowViewAsync(Func<Control> viewFunc, WindowViewModel viewModel, IntPtr parentHandle, CancellationToken ct) =>
             ShowWindowAsync(() => new DialogWindow(viewFunc()), viewModel, parentHandle, ct);
@@ -34,11 +36,17 @@ namespace GitCredentialManager.UI
 
         public static Task ShowWindowAsync(Func<Window> windowFunc, object dataContext, IntPtr parentHandle, CancellationToken ct)
         {
+            if (_isAppShutdown)
+            {
+                throw new InvalidOperationException("Cannot restart Avalonia application!");
+            }
+
             if (!_isAppStarted)
             {
                 _isAppStarted = true;
+                _appCts = new CancellationTokenSource();
 
-                var appRunning = new ManualResetEventSlim();
+                var appInitComplete = new ManualResetEventSlim();
 
                 // Fire and forget (this action never returns) the Avalonia app main loop
                 // over to our dispatcher (running on the main/entry thread).
@@ -49,16 +57,15 @@ namespace GitCredentialManager.UI
                         .LogToTrace()
                         .SetupWithoutStarting();
 
-                    appRunning.Set();
+                    appInitComplete.Set();
 
-                    // Run the application loop (never exits!)
-                    var appCts = new CancellationTokenSource();
-                    appBuilder.Instance.Run(appCts.Token);
+                    // Run the application loop
+                    appBuilder.Instance.Run(_appCts.Token);
                 });
 
                 // Wait for the action posted above to be dequeued from the dispatcher's job queue
                 // and for the Avalonia framework (and their dispatcher) to be initialized.
-                appRunning.Wait();
+                appInitComplete.Wait();
             }
 
             // Post the window action to the Avalonia dispatcher (which should be running)
@@ -153,6 +160,13 @@ namespace GitCredentialManager.UI
             // Avalonia UI itself uses this "incorrect" method, and when experimenting to try and use SetParent
             // (and update the WS_POPUP -> WS_CHILD window style), we get an invisible window.. hmm...
             User32.SetWindowLongPtr(hwnd, (int)WindowLongParam.GWL_HWNDPARENT, parentHwnd);
+        }
+
+        public static void Shutdown()
+        {
+            _appCts?.Cancel();
+            _isAppStarted = false;
+            _isAppShutdown = true;
         }
     }
 }
