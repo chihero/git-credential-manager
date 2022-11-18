@@ -11,7 +11,7 @@ $GCM_SRC = "$SRC/shared/Git-Credential-Manager"
 $GCM_UI_SRC = "$SRC/windows/Git-Credential-Manager.UI.Windows"
 $BITBUCKET_UI_SRC = "$SRC/shared/Atlassian.Bitbucket.UI.Avalonia"
 $GITHUB_UI_SRC = "$SRC/shared/GitHub.UI.Avalonia"
-$GITLAB_UI_SRC = "$SRC/windows/GitLab.UI.Windows"
+$GITLAB_UI_SRC = "$SRC/shared/GitLab.UI.Avalonia"
 
 $FRAMEWORK = "net472"
 $RUNTIME = "win-x86"
@@ -70,8 +70,10 @@ dotnet publish "$GITHUB_UI_SRC" `
 
 Write-Output "Publishing GitLab UI helper..."
 dotnet publish "$GITLAB_UI_SRC" `
+	--framework "$FRAMEWORK" `
 	--configuration "$CONFIGURATION" `
-	--output "$PAYLOAD" 
+	--runtime "$RUNTIME" `
+	--output "$PAYLOAD"
 
 # Create copy of main GCM executable with older "GCM Core" name
 Copy-Item -Path "$PAYLOAD/git-credential-manager.exe" `
