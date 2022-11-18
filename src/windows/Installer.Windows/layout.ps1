@@ -13,6 +13,9 @@ $BITBUCKET_UI_SRC = "$SRC/windows/Atlassian.Bitbucket.UI.Windows"
 $GITHUB_UI_SRC = "$SRC/windows/GitHub.UI.Windows"
 $GITLAB_UI_SRC = "$SRC/windows/GitLab.UI.Windows"
 
+$FRAMEWORK = "net472"
+$RUNTIME = "win-x86"
+
 # Perform pre-execution checks
 $PAYLOAD = "$OUTPUT"
 if ($SYMBOLOUTPUT)
@@ -41,9 +44,9 @@ mkdir -p "$PAYLOAD","$SYMBOLS"
 # Publish core application executables
 Write-Output "Publishing core application..."
 dotnet publish "$GCM_SRC" `
-	--framework net472 `
+	--framework "$FRAMEWORK" `
 	--configuration "$CONFIGURATION" `
-	--runtime win-x86 `
+	--runtime "$RUNTIME" `
 	--output "$PAYLOAD"
 
 Write-Output "Publishing core UI helper..."
