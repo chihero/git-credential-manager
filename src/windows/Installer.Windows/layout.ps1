@@ -9,7 +9,7 @@ $ROOT = (Get-Item $THISDIR).parent.parent.parent.FullName
 $SRC = "$ROOT/src"
 $GCM_SRC = "$SRC/shared/Git-Credential-Manager"
 $GCM_UI_SRC = "$SRC/windows/Git-Credential-Manager.UI.Windows"
-$BITBUCKET_UI_SRC = "$SRC/windows/Atlassian.Bitbucket.UI.Windows"
+$BITBUCKET_UI_SRC = "$SRC/shared/Atlassian.Bitbucket.UI.Avalonia"
 $GITHUB_UI_SRC = "$SRC/windows/GitHub.UI.Windows"
 $GITLAB_UI_SRC = "$SRC/windows/GitLab.UI.Windows"
 
@@ -56,8 +56,10 @@ dotnet publish "$GCM_UI_SRC" `
 
 Write-Output "Publishing Bitbucket UI helper..."
 dotnet publish "$BITBUCKET_UI_SRC" `
+	--framework "$FRAMEWORK" `
 	--configuration "$CONFIGURATION" `
-	--output "$PAYLOAD" 
+	--runtime "$RUNTIME" `
+	--output "$PAYLOAD"
 
 Write-Output "Publishing GitHub UI helper..."
 dotnet publish "$GITHUB_UI_SRC" `
