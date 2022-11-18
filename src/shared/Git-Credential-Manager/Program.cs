@@ -1,9 +1,11 @@
 using System;
+using System.Threading;
 using Atlassian.Bitbucket;
 using GitHub;
 using GitLab;
 using Microsoft.AzureRepos;
 using GitCredentialManager.Authentication;
+using GitCredentialManager.UI;
 
 namespace GitCredentialManager
 {
@@ -11,6 +13,31 @@ namespace GitCredentialManager
     {
         public static void Main(string[] args)
         {
+            // Create the dispatcher on the main thread. This is required
+            // for some platform UI services such as macOS that mandates
+            // all controls are created/accessed on the initial thread
+            // created by the process (the process entry thread).
+            Dispatcher.Initialize();
+
+            // Run AppMain in a new thread and keep the main thread free
+            // to process the dispatcher's job queue.
+            var appMain = new Thread(AppMain) {Name = nameof(AppMain)};
+            appMain.Start(args);
+
+            // Process the dispatcher job queue (aka: message pump, run-loop, etc...)
+            // We must ensure to run this on the same thread that it was created on
+            // (the main thread) so we cannot use any async/await calls between
+            // Dispatcher.Initialize and Run.
+            Dispatcher.MainThread.Run();
+
+            // Execution should never reach here as AppMain terminates the process on completion.
+            throw new InvalidOperationException("Main dispatcher job queue shutdown unexpectedly");
+        }
+
+        private static void AppMain(object o)
+        {
+            string[] args = (string[]) o;
+
             string appPath = ApplicationBase.GetEntryApplicationPath();
             string installDir = ApplicationBase.GetInstallationDirectory();
             using (var context = new CommandContext(appPath, installDir))
