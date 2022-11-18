@@ -8,8 +8,6 @@ namespace Atlassian.Bitbucket
 
         public const string Name = "Bitbucket";
 
-        public const string DefaultAuthenticationHelper = "Atlassian.Bitbucket.UI";
-
         public static class EnvironmentVariables
         {
             public const string AuthenticationHelper = "GCM_BITBUCKET_HELPER";

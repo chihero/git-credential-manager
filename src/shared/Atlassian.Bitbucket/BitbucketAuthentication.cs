@@ -5,9 +5,12 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Atlassian.Bitbucket.Cloud;
+using Atlassian.Bitbucket.UI.ViewModels;
+using Atlassian.Bitbucket.UI.Views;
 using GitCredentialManager;
 using GitCredentialManager.Authentication;
 using GitCredentialManager.Authentication.OAuth;
+using GitCredentialManager.UI;
 
 namespace Atlassian.Bitbucket
 {
@@ -89,14 +92,53 @@ namespace Atlassian.Bitbucket
                 throw new ArgumentException(@$"Must specify at least one {nameof(AuthenticationModes)}", nameof(modes));
             }
 
-            // Shell out to the UI helper and show the Bitbucket u/p prompt
-            if (Context.Settings.IsGuiPromptsEnabled && Context.SessionManager.IsDesktopSession &&
-                TryFindHelperCommand(out string helperCommand, out string args))
+            if (Context.Settings.IsGuiPromptsEnabled && Context.SessionManager.IsDesktopSession)
             {
-                return await GetCredentialsByHelperAsync(targetUri, userName, modes, helperCommand, args);
+                // Shell out to the UI helper and show the Bitbucket credential prompt
+                if (TryFindHelperCommand(out string helperCommand, out string args))
+                {
+                    return await GetCredentialsByHelperAsync(targetUri, userName, modes, helperCommand, args);
+                }
+
+                // Use the in-process UI credential prompt
+                return await GetCredentialsByUiAsync(targetUri, userName, modes);
             }
 
             return GetCredentialsByTty(targetUri, userName, modes);
+        }
+
+        private async Task<CredentialsPromptResult> GetCredentialsByUiAsync(
+            Uri targetUri, string userName, AuthenticationModes modes)
+        {
+            var viewModel = new CredentialsViewModel(Context.Environment)
+            {
+                Url = BitbucketHelper.IsBitbucketOrg(targetUri) ? null : targetUri,
+                UserName = userName,
+                ShowOAuth = (modes & AuthenticationModes.OAuth) != 0,
+                ShowBasic = (modes & AuthenticationModes.Basic) != 0
+            };
+
+            await AvaloniaUi.ShowViewAsync<CredentialsView>(viewModel, GetParentHandle(), CancellationToken.None);
+
+            if (!viewModel.WindowResult || viewModel.SelectedMode == AuthenticationModes.None)
+            {
+                throw new Exception("User cancelled dialog.");
+            }
+
+            switch (viewModel.SelectedMode)
+            {
+                case AuthenticationModes.OAuth:
+                    return new CredentialsPromptResult(AuthenticationModes.OAuth);
+
+                case AuthenticationModes.Basic:
+                    return new CredentialsPromptResult(AuthenticationModes.Basic,
+                        new GitCredential(viewModel.UserName, viewModel.Password)
+                    );
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(AuthenticationModes),
+                        "Unknown authentication mode", viewModel.SelectedMode.ToString());
+            }
         }
 
         private async Task<CredentialsPromptResult> GetCredentialsByHelperAsync(
@@ -235,7 +277,7 @@ namespace Atlassian.Bitbucket
             return TryFindHelperCommand(
                 BitbucketConstants.EnvironmentVariables.AuthenticationHelper,
                 BitbucketConstants.GitConfiguration.Credential.AuthenticationHelper,
-                BitbucketConstants.DefaultAuthenticationHelper,
+                null,
                 out command,
                 out args);
         }

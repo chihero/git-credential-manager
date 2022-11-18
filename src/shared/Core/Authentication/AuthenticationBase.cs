@@ -233,5 +233,15 @@ namespace GitCredentialManager.Authentication
             // Bookend the escaped string with double-quotes '"'
             return $"\"{escapedStr}\"";
         }
+
+        protected IntPtr GetParentHandle()
+        {
+            if (int.TryParse(Context.Settings.ParentWindowId, out int id))
+            {
+                return new IntPtr(id);
+            }
+
+            return IntPtr.Zero;
+        }
     }
 }
