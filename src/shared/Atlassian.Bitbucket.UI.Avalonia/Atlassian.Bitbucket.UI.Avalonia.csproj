@@ -12,7 +12,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Atlassian.Bitbucket.UI\Atlassian.Bitbucket.UI.csproj" />
-    <ProjectReference Include="..\Core.UI.Avalonia\Core.UI.Avalonia.csproj" />
   </ItemGroup>
 
   <ItemGroup>
