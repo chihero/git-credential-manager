@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using GitCredentialManager;
-using Newtonsoft.Json;
 
 namespace Atlassian.Bitbucket.Cloud
 {
@@ -38,11 +40,10 @@ namespace Atlassian.Bitbucket.Cloud
                 {
                     _context.Trace.WriteLine($"HTTP: Response {(int) response.StatusCode} [{response.StatusCode}]");
 
-                    string json = await response.Content.ReadAsStringAsync();
-
                     if (response.IsSuccessStatusCode)
                     {
-                        var obj = JsonConvert.DeserializeObject<UserInfo>(json, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+                        var jsonOptions = new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.Always };
+                        var obj = await response.Content.ReadFromJsonAsync<UserInfo>(jsonOptions);
 
                         return new RestApiResult<IUserInfo>(response.StatusCode, obj);
                     }
@@ -59,9 +60,9 @@ namespace Atlassian.Bitbucket.Cloud
 
         public Task<List<AuthenticationMethod>> GetAuthenticationMethodsAsync()
         {
-            // For Bitbucket Cloud there is no REST API to determine login methods 
-            // instead this is determined later in the process by attempting 
-            // authenticated REST API requests and checking the response. 
+            // For Bitbucket Cloud there is no REST API to determine login methods
+            // instead this is determined later in the process by attempting
+            // authenticated REST API requests and checking the response.
             return Task.FromResult(new List<AuthenticationMethod>());
         }
 

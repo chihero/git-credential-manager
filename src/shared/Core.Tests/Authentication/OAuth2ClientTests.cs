@@ -171,7 +171,7 @@ namespace GitCredentialManager.Tests.Authentication
 
             OAuth2Client client = CreateClient(httpHandler, endpoints);
 
-            var deviceCodeResult = new OAuth2DeviceCodeResult(expectedDeviceCode, expectedUserCode, null, null);
+            var deviceCodeResult = new OAuth2DeviceCodeResult(expectedDeviceCode, expectedUserCode, null, null, null);
 
             Task<OAuth2TokenResult> resultTask = client.GetTokenByDeviceCodeAsync(deviceCodeResult, CancellationToken.None);
 

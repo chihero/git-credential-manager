@@ -4,11 +4,12 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using GitCredentialManager;
-using Newtonsoft.Json;
 
 namespace GitHub
 {
@@ -103,9 +104,7 @@ namespace GitHub
 
                     response.EnsureSuccessStatusCode();
 
-                    string json = await response.Content.ReadAsStringAsync();
-
-                    return JsonConvert.DeserializeObject<GitHubUserInfo>(json);
+                    return await response.Content.ReadFromJsonAsync<GitHubUserInfo>();
                 }
             }
         }
@@ -122,9 +121,7 @@ namespace GitHub
 
                 response.EnsureSuccessStatusCode();
 
-                string json = await response.Content.ReadAsStringAsync();
-
-                return JsonConvert.DeserializeObject<GitHubMetaInfo>(json);
+                return await response.Content.ReadFromJsonAsync<GitHubMetaInfo>();
             }
         }
 
@@ -265,16 +262,16 @@ namespace GitHub
 
     public class GitHubUserInfo
     {
-        [JsonProperty("login")]
+        [JsonPropertyName("login")]
         public string Login { get; set; }
     }
 
     public class GitHubMetaInfo
     {
-        [JsonProperty("installed_version")]
+        [JsonPropertyName("installed_version")]
         public string InstalledVersion { get; set; }
 
-        [JsonProperty("verifiable_password_authentication")]
+        [JsonPropertyName("verifiable_password_authentication")]
         public bool VerifiablePasswordAuthentication { get; set; }
     }
 

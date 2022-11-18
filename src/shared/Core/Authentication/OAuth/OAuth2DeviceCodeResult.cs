@@ -4,12 +4,13 @@ namespace GitCredentialManager.Authentication.OAuth
 {
     public class OAuth2DeviceCodeResult
     {
-        public OAuth2DeviceCodeResult(string deviceCode, string userCode, Uri verificationUri, TimeSpan? interval)
+        public OAuth2DeviceCodeResult(string deviceCode, string userCode, Uri verificationUri, int? interval, int? expiresIn)
         {
             DeviceCode = deviceCode;
             UserCode = userCode;
             VerificationUri = verificationUri;
-            PollingInterval = interval ?? TimeSpan.FromSeconds(5);
+            PollingInterval = interval.ToTimeSpanOrDefault(5, TimeUnit.Seconds);
+            ExpiresIn = expiresIn.ToTimeSpan(TimeUnit.Seconds);
         }
 
         public string DeviceCode { get; }
@@ -20,6 +21,6 @@ namespace GitCredentialManager.Authentication.OAuth
 
         public TimeSpan PollingInterval { get; }
 
-        public TimeSpan? ExpiresIn { get; internal set; }
+        public TimeSpan? ExpiresIn { get; }
     }
 }

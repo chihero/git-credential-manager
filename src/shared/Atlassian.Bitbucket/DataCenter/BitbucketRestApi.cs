@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using GitCredentialManager;
-using Newtonsoft.Json;
 
 namespace Atlassian.Bitbucket.DataCenter
 {
@@ -20,7 +22,7 @@ namespace Atlassian.Bitbucket.DataCenter
             EnsureArgument.NotNull(context, nameof(context));
 
             _context = context;
-        
+
         }
 
         public async Task<RestApiResult<IUserInfo>> GetUserInformationAsync(string userName, string password, bool isBearerToken)
@@ -35,7 +37,7 @@ namespace Atlassian.Bitbucket.DataCenter
             }
 
             // Bitbucket Server/DC doesn't actually provide a REST API we can use to trade an access_token for the owning username,
-            // therefore this is always going to return a placeholder username, however this call does provide a way to validate the 
+            // therefore this is always going to return a placeholder username, however this call does provide a way to validate the
             // credentials we do have
             var requestUri = new Uri(ApiUri, "api/1.0/users");
             using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, requestUri))
@@ -102,11 +104,10 @@ namespace Atlassian.Bitbucket.DataCenter
                 {
                     _context.Trace.WriteLine($"HTTP: Response {(int)response.StatusCode} [{response.StatusCode}]");
 
-                    string json = await response.Content.ReadAsStringAsync();
-
                     if (response.IsSuccessStatusCode)
                     {
-                        var loginOptions = JsonConvert.DeserializeObject<LoginOptions>(json, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+                        var jsonOptions = new JsonSerializerOptions { DefaultIgnoreCondition = JsonIgnoreCondition.Always };
+                        var loginOptions = await response.Content.ReadFromJsonAsync<LoginOptions>(jsonOptions);
 
                         if (loginOptions.Results.Any(r => "LOGIN_FORM".Equals(r.Type)))
                         {
@@ -131,9 +132,9 @@ namespace Atlassian.Bitbucket.DataCenter
 
         private HttpClient HttpClient => _httpClient ??= _context.HttpClientFactory.CreateClient();
 
-        private Uri ApiUri 
+        private Uri ApiUri
         {
-            get 
+            get
             {
                 var remoteUri = _context.Settings?.RemoteUri;
                 if (remoteUri == null)
