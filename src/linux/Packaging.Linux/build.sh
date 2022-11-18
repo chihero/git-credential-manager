@@ -47,7 +47,6 @@ ROOT="$( cd "$THISDIR"/../../.. ; pwd -P )"
 SRC="$ROOT/src"
 OUT="$ROOT/out"
 GCM_SRC="$SRC/shared/Git-Credential-Manager"
-GCM_UI_SRC="$SRC/shared/Git-Credential-Manager.UI.Avalonia"
 PROJ_OUT="$OUT/linux/Packaging.Linux"
 
 # Build parameters
@@ -108,18 +107,9 @@ if [ -z "$DOTNET_ROOT" ]; then
     DOTNET_ROOT="$(dirname $(which dotnet))"
 fi
 
-# Publish core application executables
-echo "Publishing core application..."
+# Publish application executable
+echo "Publishing application..."
 $DOTNET_ROOT/dotnet publish "$GCM_SRC" \
-	--configuration="$CONFIGURATION" \
-	--framework="$FRAMEWORK" \
-	--runtime="$RUNTIME" \
-	--self-contained=true \
-	-p:PublishSingleFile=true \
-	--output="$(make_absolute "$PAYLOAD")" || exit 1
-
-echo "Publishing core UI helper..."
-$DOTNET_ROOT/dotnet publish "$GCM_UI_SRC" \
 	--configuration="$CONFIGURATION" \
 	--framework="$FRAMEWORK" \
 	--runtime="$RUNTIME" \

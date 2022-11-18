@@ -8,7 +8,6 @@ namespace GitCredentialManager
         public const string PersonalAccessTokenUserName = "PersonalAccessToken";
         public const string DefaultCredentialNamespace = "git";
         public const int DefaultAutoDetectProviderTimeoutMs = 2000; // 2 seconds
-        public const string DefaultUiHelper = "git-credential-manager-ui";
 
         public const string ProviderIdAuto  = "auto";
         public const string AuthorityIdAuto = "auto";

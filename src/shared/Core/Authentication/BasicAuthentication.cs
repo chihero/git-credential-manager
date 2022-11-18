@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using GitCredentialManager.UI;
+using GitCredentialManager.UI.ViewModels;
+using GitCredentialManager.UI.Views;
 
 namespace GitCredentialManager.Authentication
 {
@@ -34,15 +38,49 @@ namespace GitCredentialManager.Authentication
 
             ThrowIfUserInteractionDisabled();
 
-            if (Context.Settings.IsGuiPromptsEnabled && Context.SessionManager.IsDesktopSession &&
-                TryFindHelperCommand(out string command, out string args))
+            if (Context.Settings.IsGuiPromptsEnabled && Context.SessionManager.IsDesktopSession)
             {
-                return await GetCredentialsByHelperAsync(command, args, resource, userName);
+                if (TryFindHelperCommand(out string command, out string args))
+                {
+                    return await GetCredentialsByHelperAsync(command, args, resource, userName);
+                }
+
+                return await GetCredentialsByUiAsync(null, resource, userName, false);
             }
 
             ThrowIfTerminalPromptsDisabled();
 
             return GetCredentialsByTty(resource, userName);
+        }
+
+        private async Task<ICredential> GetCredentialsByUiAsync(
+            string title, string resource, string userName, bool noLogo)
+        {
+            var viewModel = new CredentialsViewModel();
+
+            viewModel.Title = !string.IsNullOrWhiteSpace(title)
+                ? title
+                : "Git Credential Manager";
+
+            viewModel.Description = !string.IsNullOrWhiteSpace(resource)
+                ? $"Enter your credentials for '{resource}'"
+                : "Enter your credentials";
+
+            if (!string.IsNullOrWhiteSpace(userName))
+            {
+                viewModel.UserName = userName;
+            }
+
+            viewModel.ShowProductHeader = !noLogo;
+
+            await AvaloniaUi.ShowViewAsync<CredentialsView>(viewModel, GetParentHandle(), CancellationToken.None);
+
+            if (!viewModel.WindowResult)
+            {
+                throw new Exception("User cancelled dialog.");
+            }
+
+            return new GitCredential(viewModel.UserName, viewModel.Password);
         }
 
         private ICredential GetCredentialsByTty(string resource, string userName)
@@ -101,7 +139,7 @@ namespace GitCredentialManager.Authentication
             return TryFindHelperCommand(
                 Constants.EnvironmentVariables.GcmUiHelper,
                 Constants.GitConfiguration.Credential.UiHelper,
-                Constants.DefaultUiHelper,
+                null,
                 out command,
                 out args);
         }

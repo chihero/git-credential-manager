@@ -8,7 +8,6 @@ $THISDIR = $pwd.path
 $ROOT = (Get-Item $THISDIR).parent.parent.parent.FullName
 $SRC = "$ROOT/src"
 $GCM_SRC = "$SRC/shared/Git-Credential-Manager"
-$GCM_UI_SRC = "$SRC/shared/Git-Credential-Manager.UI.Avalonia"
 
 $FRAMEWORK = "net472"
 $RUNTIME = "win-x86"
@@ -38,16 +37,9 @@ if (Test-Path -Path $SYMBOLS)
 # Ensure payload and symbol directories exist
 mkdir -p "$PAYLOAD","$SYMBOLS"
 
-# Publish core application executables
-Write-Output "Publishing core application..."
+# Publish application executable
+Write-Output "Publishing application..."
 dotnet publish "$GCM_SRC" `
-	--framework "$FRAMEWORK" `
-	--configuration "$CONFIGURATION" `
-	--runtime "$RUNTIME" `
-	--output "$PAYLOAD"
-
-Write-Output "Publishing core UI helper..."
-dotnet publish "$GCM_UI_SRC" `
 	--framework "$FRAMEWORK" `
 	--configuration "$CONFIGURATION" `
 	--runtime "$RUNTIME" `
