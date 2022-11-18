@@ -237,36 +237,41 @@ namespace GitHub
             if (Context.Settings.IsGuiPromptsEnabled && Context.SessionManager.IsDesktopSession &&
                 TryFindHelperCommand(out string command, out string args))
             {
-                var promptArgs = new StringBuilder(args);
-                promptArgs.Append("2fa");
-                if (isSms) promptArgs.Append(" --sms");
-
-                IDictionary<string, string> resultDict = await InvokeHelperAsync(command, promptArgs.ToString(), null);
-
-                if (!resultDict.TryGetValue("code", out string authCode))
-                {
-                    throw new Exception("Missing 'code' in response");
-                }
-
-                return authCode;
+                return await GetTwoFactorCodeByHelperAsync(isSms, command, args);
             }
-            else
+
+            return GetTwoFactorCodeByTty(isSms);
+        }
+
+        private async Task<string> GetTwoFactorCodeByHelperAsync(bool isSms, string command, string args)
+        {
+            var promptArgs = new StringBuilder(args);
+            promptArgs.Append("2fa");
+            if (isSms)
             {
-                ThrowIfTerminalPromptsDisabled();
-
-                Context.Terminal.WriteLine("Two-factor authentication is enabled and an authentication code is required.");
-
-                if (isSms)
-                {
-                    Context.Terminal.WriteLine("An SMS containing the authentication code has been sent to your registered device.");
-                }
-                else
-                {
-                    Context.Terminal.WriteLine("Use your registered authentication app to generate an authentication code.");
-                }
-
-                return Context.Terminal.Prompt("Authentication code");
+                promptArgs.Append(" --sms");
             }
+
+            IDictionary<string, string> resultDict = await InvokeHelperAsync(command, promptArgs.ToString(), null);
+
+            if (!resultDict.TryGetValue("code", out string authCode))
+            {
+                throw new Exception("Missing 'code' in response");
+            }
+
+            return authCode;
+        }
+
+        private string GetTwoFactorCodeByTty(bool isSms)
+        {
+            ThrowIfTerminalPromptsDisabled();
+
+            Context.Terminal.WriteLine("Two-factor authentication is enabled and an authentication code is required.");
+            Context.Terminal.WriteLine(isSms
+                ? "An SMS containing the authentication code has been sent to your registered device."
+                : "Use your registered authentication app to generate an authentication code.");
+
+            return Context.Terminal.Prompt("Authentication code");
         }
 
         public async Task<OAuth2TokenResult> GetOAuthTokenViaBrowserAsync(Uri targetUri, IEnumerable<string> scopes)
