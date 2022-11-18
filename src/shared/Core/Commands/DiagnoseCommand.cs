@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -34,11 +33,10 @@ namespace GitCredentialManager.Commands
                 new MicrosoftAuthenticationDiagnostic(context)
             };
 
-            AddOption(
-                new Option<string>(new []{"--output", "-o"}, "Output directory for diagnostic logs.")
-            );
+            var outputOpt = new Option<string>(new[] { "--output", "-o" }, "Output directory for diagnostic logs.");
+            AddOption(outputOpt);
 
-            Handler = CommandHandler.Create<string>(ExecuteAsync);
+            this.SetHandler(ExecuteAsync, outputOpt);
         }
 
         public void AddDiagnostic(IDiagnostic diagnostic)

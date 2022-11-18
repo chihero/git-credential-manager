@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
-using System.CommandLine.Invocation;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -480,57 +479,60 @@ namespace Microsoft.AzureRepos
             var clearCacheCmd = new Command("clear-cache")
             {
                 Description = "Clear the Azure authority cache",
-                Handler = CommandHandler.Create(ClearCacheCmd),
             };
 
-            var orgArg = new Argument("organization")
+            clearCacheCmd.SetHandler(ClearCacheCmd);
+
+            var orgArg = new Argument<string>("organization")
             {
                 Arity = ArgumentArity.ExactlyOne,
                 Description = "Azure DevOps organization name"
             };
-            var localOpt = new Option("--local")
+            var localOpt = new Option<bool>("--local")
             {
                 Description = "Target the local repository Git configuration"
             };
 
-            var listCmd = new Command("list", "List all user account bindings")
-            {
-                Handler = CommandHandler.Create<string, bool, bool>(ListCmd)
-            };
-            listCmd.AddArgument(new Argument("organization")
+            var listCmd = new Command("list", "List all user account bindings");
+            var orgFilterArg = new Argument<string>("organization")
             {
                 Arity = ArgumentArity.ZeroOrOne,
                 Description = "(optional) Filter results by Azure DevOps organization name"
-            });
-            listCmd.AddOption(new Option("--show-remotes")
+            };
+            var showRemoteOpt = new Option<bool>("--show-remotes")
             {
                 Description = "Also show Azure DevOps remote user bindings for the current repository"
-            });
-            listCmd.AddOption(new Option(new[] {"--verbose", "-v"})
+            };
+            var listVerboseOpt = new Option<bool>(new[] { "--verbose", "-v" })
             {
                 Description = "Verbose output - show remote URLs"
-            });
+            };
+            listCmd.AddArgument(orgFilterArg);
+            listCmd.AddOption(showRemoteOpt);
+            listCmd.AddOption(listVerboseOpt);
+            listCmd.SetHandler(ListCmd, orgFilterArg, showRemoteOpt, listVerboseOpt);
 
             var bindCmd = new Command("bind")
             {
                 Description = "Bind a user account to an Azure DevOps organization",
-                Handler = CommandHandler.Create<string, string, bool>(BindCmd),
             };
-            bindCmd.AddArgument(orgArg);
-            bindCmd.AddArgument(new Argument("username")
+            var userArg = new Argument<string>("username")
             {
                 Arity = ArgumentArity.ExactlyOne,
                 Description = "Username or email (e.g.: alice@example.com)"
-            });
+            };
+            bindCmd.AddArgument(orgArg);
+            bindCmd.AddArgument(userArg);
             bindCmd.AddOption(localOpt);
+            bindCmd.SetHandler(BindCmd, orgArg, userArg, localOpt);
 
             var unbindCmd = new Command("unbind")
             {
-                Description = "Remove user account binding for an Azure DevOps organization",
-                Handler = CommandHandler.Create<string, bool>(UnbindCmd),
+                Description = "Remove user account binding for an Azure DevOps organization"
             };
             unbindCmd.AddArgument(orgArg);
             unbindCmd.AddOption(localOpt);
+            unbindCmd.SetHandler(UnbindCmd, orgArg, localOpt);
 
             var rootCmd = new ProviderCommand(this);
             rootCmd.AddCommand(listCmd);
@@ -540,11 +542,10 @@ namespace Microsoft.AzureRepos
             return rootCmd;
         }
 
-        private int ClearCacheCmd()
+        private void ClearCacheCmd()
         {
             _authorityCache.Clear();
             _context.Streams.Out.WriteLine("Authority cache cleared");
-            return 0;
         }
 
         private class RemoteBinding
@@ -554,7 +555,7 @@ namespace Microsoft.AzureRepos
             public Uri Uri { get; set; }
         }
 
-        private int ListCmd(string organization, bool showRemotes, bool verbose)
+        private void ListCmd(string organization, bool showRemotes, bool verbose)
         {
             // Get all organization bindings from the user manager
             IList<AzureReposBinding> bindings = _bindingManager.GetBindings(organization).ToList();
@@ -662,32 +663,30 @@ namespace Microsoft.AzureRepos
                     }
                 }
             }
-
-            return 0;
         }
 
-        private int BindCmd(string organization, string userName, bool local)
+        private Task<int> BindCmd(string organization, string userName, bool local)
         {
             if (local && !_context.Git.IsInsideRepository())
             {
                 _context.Streams.Error.WriteLine("error: not inside a git repository (cannot use --local)");
-                return -1;
+                return Task.FromResult(-1);
             }
 
             _bindingManager.Bind(organization, userName, local);
-            return 0;
+            return Task.FromResult(0);
         }
 
-        private int UnbindCmd(string organization, bool local)
+        private Task<int> UnbindCmd(string organization, bool local)
         {
             if (local && !_context.Git.IsInsideRepository())
             {
                 _context.Streams.Error.WriteLine("error: not inside a git repository (cannot use --local)");
-                return -1;
+                return Task.FromResult(-1);
             }
 
             _bindingManager.Unbind(organization, local);
-            return 0;
+            return Task.FromResult(0);
         }
 
         #endregion
