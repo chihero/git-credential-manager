@@ -7,8 +7,6 @@ namespace GitHub
         public const string GitHubBaseUrlHost = "github.com";
         public const string GistBaseUrlHost = "gist." + GitHubBaseUrlHost;
 
-        public const string DefaultAuthenticationHelper = "GitHub.UI";
-
         // https://github.com/settings/connections/applications/0120e057bd645470c1ed
         public const string OAuthClientId = "0120e057bd645470c1ed";
 

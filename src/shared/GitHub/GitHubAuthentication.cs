@@ -7,6 +7,9 @@ using System.Threading;
 using GitCredentialManager;
 using GitCredentialManager.Authentication;
 using GitCredentialManager.Authentication.OAuth;
+using GitCredentialManager.UI;
+using GitHub.UI.ViewModels;
+using GitHub.UI.Views;
 
 namespace GitHub
 {
@@ -86,13 +89,70 @@ namespace GitHub
 
             ThrowIfUserInteractionDisabled();
 
-            if (Context.Settings.IsGuiPromptsEnabled && Context.SessionManager.IsDesktopSession &&
-                TryFindHelperCommand(out string command, out string args))
+            if (Context.Settings.IsGuiPromptsEnabled && Context.SessionManager.IsDesktopSession)
             {
-                return await GetAuthenticationByHelperAsync(targetUri, userName, modes, command, args);
+                if (TryFindHelperCommand(out string command, out string args))
+                {
+                    return await GetAuthenticationByHelperAsync(targetUri, userName, modes, command, args);
+                }
+
+                return await GetAuthenticationByUiAsync(targetUri, userName, modes);
             }
 
             return GetAuthenticationByTty(targetUri, userName, modes);
+        }
+
+        private async Task<AuthenticationPromptResult> GetAuthenticationByUiAsync(
+            Uri targetUri, string userName, AuthenticationModes modes)
+        {
+            var viewModel = new CredentialsViewModel(Context.Environment)
+            {
+                ShowBrowserLogin = (modes & AuthenticationModes.Browser) != 0,
+                ShowDeviceLogin  = (modes & AuthenticationModes.Device)  != 0,
+                ShowTokenLogin   = (modes & AuthenticationModes.Pat)     != 0,
+                ShowBasicLogin   = (modes & AuthenticationModes.Basic)   != 0,
+            };
+
+            if (!GitHubHostProvider.IsGitHubDotCom(targetUri))
+            {
+                viewModel.EnterpriseUrl = targetUri.ToString();
+            }
+
+            if (!string.IsNullOrWhiteSpace(userName))
+            {
+                viewModel.UserName = userName;
+            }
+
+            await AvaloniaUi.ShowViewAsync<CredentialsView>(viewModel, GetParentHandle(), CancellationToken.None);
+
+            if (!viewModel.WindowResult)
+            {
+                throw new Exception("User cancelled dialog.");
+            }
+
+            switch (viewModel.SelectedMode)
+            {
+                case AuthenticationModes.Basic:
+                    return new AuthenticationPromptResult(
+                        AuthenticationModes.Basic,
+                        new GitCredential(viewModel.UserName, viewModel.Password)
+                    );
+
+                case AuthenticationModes.Browser:
+                    return new AuthenticationPromptResult(AuthenticationModes.Browser);
+
+                case AuthenticationModes.Device:
+                    return new AuthenticationPromptResult(AuthenticationModes.Device);
+
+                case AuthenticationModes.Pat:
+                    return new AuthenticationPromptResult(
+                            AuthenticationModes.Pat,
+                            new GitCredential(userName, viewModel.Token)
+                    );
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
         private async Task<AuthenticationPromptResult> GetAuthenticationByHelperAsync(
@@ -234,13 +294,34 @@ namespace GitHub
         {
             ThrowIfUserInteractionDisabled();
 
-            if (Context.Settings.IsGuiPromptsEnabled && Context.SessionManager.IsDesktopSession &&
-                TryFindHelperCommand(out string command, out string args))
+            if (Context.Settings.IsGuiPromptsEnabled && Context.SessionManager.IsDesktopSession)
             {
-                return await GetTwoFactorCodeByHelperAsync(isSms, command, args);
+                if (TryFindHelperCommand(out string command, out string args))
+                {
+                    return await GetTwoFactorCodeByHelperAsync(isSms, command, args);
+                }
+
+                return await GetTwoFactorCodeByUiAsync(isSms);
             }
 
             return GetTwoFactorCodeByTty(isSms);
+        }
+
+        private async Task<string> GetTwoFactorCodeByUiAsync(bool isSms)
+        {
+            var viewModel = new TwoFactorViewModel(Context.Environment)
+            {
+                IsSms = isSms
+            };
+
+            await AvaloniaUi.ShowViewAsync<TwoFactorView>(viewModel, GetParentHandle(), CancellationToken.None);
+
+            if (!viewModel.WindowResult)
+            {
+                throw new Exception("User cancelled dialog.");
+            }
+
+            return viewModel.Code;
         }
 
         private async Task<string> GetTwoFactorCodeByHelperAsync(bool isSms, string command, string args)
@@ -368,7 +449,7 @@ namespace GitHub
             return TryFindHelperCommand(
                 GitHubConstants.EnvironmentVariables.AuthenticationHelper,
                 GitHubConstants.GitConfiguration.Credential.AuthenticationHelper,
-                GitHubConstants.DefaultAuthenticationHelper,
+                null,
                 out command,
                 out args);
         }
