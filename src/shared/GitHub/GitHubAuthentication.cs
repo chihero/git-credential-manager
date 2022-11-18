@@ -89,126 +89,144 @@ namespace GitHub
             if (Context.Settings.IsGuiPromptsEnabled && Context.SessionManager.IsDesktopSession &&
                 TryFindHelperCommand(out string command, out string args))
             {
-                var promptArgs = new StringBuilder(args);
-                promptArgs.Append("prompt");
-                if (modes == AuthenticationModes.All)
-                {
-                    promptArgs.Append(" --all");
-                }
-                else
-                {
-                    if ((modes & AuthenticationModes.Basic)   != 0) promptArgs.Append(" --basic");
-                    if ((modes & AuthenticationModes.Browser) != 0) promptArgs.Append(" --browser");
-                    if ((modes & AuthenticationModes.Device)  != 0) promptArgs.Append(" --device");
-                    if ((modes & AuthenticationModes.Pat)     != 0) promptArgs.Append(" --pat");
-                }
-                if (!GitHubHostProvider.IsGitHubDotCom(targetUri)) promptArgs.AppendFormat(" --enterprise-url {0}", QuoteCmdArg(targetUri.ToString()));
-                if (!string.IsNullOrWhiteSpace(userName)) promptArgs.AppendFormat(" --username {0}", QuoteCmdArg(userName));
+                return await GetAuthenticationByHelperAsync(targetUri, userName, modes, command, args);
+            }
 
-                IDictionary<string, string> resultDict = await InvokeHelperAsync(command, promptArgs.ToString(), null);
+            return GetAuthenticationByTty(targetUri, userName, modes);
+        }
 
-                if (!resultDict.TryGetValue("mode", out string responseMode))
-                {
-                    throw new Exception("Missing 'mode' in response");
-                }
-
-                switch (responseMode.ToLowerInvariant())
-                {
-                    case "pat":
-                        if (!resultDict.TryGetValue("pat", out string pat))
-                        {
-                            throw new Exception("Missing 'pat' in response");
-                        }
-
-                        return new AuthenticationPromptResult(
-                            AuthenticationModes.Pat, new GitCredential(userName, pat));
-
-                    case "browser":
-                        return new AuthenticationPromptResult(AuthenticationModes.Browser);
-
-                    case "device":
-                        return new AuthenticationPromptResult(AuthenticationModes.Device);
-
-                    case "basic":
-                        if (!resultDict.TryGetValue("username", out userName))
-                        {
-                            throw new Exception("Missing 'username' in response");
-                        }
-
-                        if (!resultDict.TryGetValue("password", out string password))
-                        {
-                            throw new Exception("Missing 'password' in response");
-                        }
-
-                        return new AuthenticationPromptResult(
-                            AuthenticationModes.Basic, new GitCredential(userName, password));
-
-                    default:
-                        throw new Exception($"Unknown mode value in response '{responseMode}'");
-                }
+        private async Task<AuthenticationPromptResult> GetAuthenticationByHelperAsync(
+            Uri targetUri, string userName, AuthenticationModes modes, string command, string args)
+        {
+            var promptArgs = new StringBuilder(args);
+            promptArgs.Append("prompt");
+            if (modes == AuthenticationModes.All)
+            {
+                promptArgs.Append(" --all");
             }
             else
             {
-                ThrowIfTerminalPromptsDisabled();
+                if ((modes & AuthenticationModes.Basic)   != 0) promptArgs.Append(" --basic");
+                if ((modes & AuthenticationModes.Browser) != 0) promptArgs.Append(" --browser");
+                if ((modes & AuthenticationModes.Device)  != 0) promptArgs.Append(" --device");
+                if ((modes & AuthenticationModes.Pat)     != 0) promptArgs.Append(" --pat");
+            }
 
-                switch (modes)
-                {
-                    case AuthenticationModes.Basic:
-                        Context.Terminal.WriteLine("Enter GitHub credentials for '{0}'...", targetUri);
+            if (!GitHubHostProvider.IsGitHubDotCom(targetUri))
+            {
+                promptArgs.AppendFormat(" --enterprise-url {0}", QuoteCmdArg(targetUri.ToString()));
+            }
 
-                        if (string.IsNullOrWhiteSpace(userName))
-                        {
-                            userName = Context.Terminal.Prompt("Username");
-                        }
-                        else
-                        {
-                            Context.Terminal.WriteLine("Username: {0}", userName);
-                        }
+            if (!string.IsNullOrWhiteSpace(userName))
+            {
+                promptArgs.AppendFormat(" --username {0}", QuoteCmdArg(userName));
+            }
 
-                        string password = Context.Terminal.PromptSecret("Password");
+            IDictionary<string, string> resultDict = await InvokeHelperAsync(command, promptArgs.ToString(), null);
 
-                        return new AuthenticationPromptResult(
-                            AuthenticationModes.Basic, new GitCredential(userName, password));
+            if (!resultDict.TryGetValue("mode", out string responseMode))
+            {
+                throw new Exception("Missing 'mode' in response");
+            }
 
-                    case AuthenticationModes.Browser:
-                        return new AuthenticationPromptResult(AuthenticationModes.Browser);
+            switch (responseMode.ToLowerInvariant())
+            {
+                case "pat":
+                    if (!resultDict.TryGetValue("pat", out string pat))
+                    {
+                        throw new Exception("Missing 'pat' in response");
+                    }
 
-                    case AuthenticationModes.Device:
-                        return new AuthenticationPromptResult(AuthenticationModes.Device);
+                    return new AuthenticationPromptResult(
+                        AuthenticationModes.Pat, new GitCredential(userName, pat));
 
-                    case AuthenticationModes.Pat:
-                        Context.Terminal.WriteLine("Enter GitHub personal access token for '{0}'...", targetUri);
-                        string pat = Context.Terminal.PromptSecret("Token");
-                        return new AuthenticationPromptResult(
-                            AuthenticationModes.Pat, new GitCredential(userName, pat));
+                case "browser":
+                    return new AuthenticationPromptResult(AuthenticationModes.Browser);
 
-                    case AuthenticationModes.None:
-                        throw new ArgumentOutOfRangeException(nameof(modes), @$"At least one {nameof(AuthenticationModes)} must be supplied");
+                case "device":
+                    return new AuthenticationPromptResult(AuthenticationModes.Device);
 
-                    default:
-                        var menuTitle = $"Select an authentication method for '{targetUri}'";
-                        var menu = new TerminalMenu(Context.Terminal, menuTitle);
+                case "basic":
+                    if (!resultDict.TryGetValue("username", out userName))
+                    {
+                        throw new Exception("Missing 'username' in response");
+                    }
 
-                        TerminalMenuItem browserItem = null;
-                        TerminalMenuItem deviceItem = null;
-                        TerminalMenuItem basicItem = null;
-                        TerminalMenuItem patItem = null;
+                    if (!resultDict.TryGetValue("password", out string password))
+                    {
+                        throw new Exception("Missing 'password' in response");
+                    }
 
-                        if ((modes & AuthenticationModes.Browser) != 0) browserItem = menu.Add("Web browser");
-                        if ((modes & AuthenticationModes.Device)  != 0) deviceItem = menu.Add("Device code");
-                        if ((modes & AuthenticationModes.Pat)     != 0) patItem   = menu.Add("Personal access token");
-                        if ((modes & AuthenticationModes.Basic)   != 0) basicItem = menu.Add("Username/password");
+                    return new AuthenticationPromptResult(
+                        AuthenticationModes.Basic, new GitCredential(userName, password));
 
-                        // Default to the 'first' choice in the menu
-                        TerminalMenuItem choice = menu.Show(0);
+                default:
+                    throw new Exception($"Unknown mode value in response '{responseMode}'");
+            }
+        }
 
-                        if (choice == browserItem) goto case AuthenticationModes.Browser;
-                        if (choice == deviceItem)  goto case AuthenticationModes.Device;
-                        if (choice == basicItem)   goto case AuthenticationModes.Basic;
-                        if (choice == patItem)     goto case AuthenticationModes.Pat;
+        private AuthenticationPromptResult GetAuthenticationByTty(Uri targetUri, string userName, AuthenticationModes modes)
+        {
+            ThrowIfTerminalPromptsDisabled();
 
-                        throw new Exception();
-                }
+            switch (modes)
+            {
+                case AuthenticationModes.Basic:
+                    Context.Terminal.WriteLine("Enter GitHub credentials for '{0}'...", targetUri);
+
+                    if (string.IsNullOrWhiteSpace(userName))
+                    {
+                        userName = Context.Terminal.Prompt("Username");
+                    }
+                    else
+                    {
+                        Context.Terminal.WriteLine("Username: {0}", userName);
+                    }
+
+                    string password = Context.Terminal.PromptSecret("Password");
+
+                    return new AuthenticationPromptResult(
+                        AuthenticationModes.Basic, new GitCredential(userName, password));
+
+                case AuthenticationModes.Browser:
+                    return new AuthenticationPromptResult(AuthenticationModes.Browser);
+
+                case AuthenticationModes.Device:
+                    return new AuthenticationPromptResult(AuthenticationModes.Device);
+
+                case AuthenticationModes.Pat:
+                    Context.Terminal.WriteLine("Enter GitHub personal access token for '{0}'...", targetUri);
+                    string pat = Context.Terminal.PromptSecret("Token");
+                    return new AuthenticationPromptResult(
+                        AuthenticationModes.Pat, new GitCredential(userName, pat));
+
+                case AuthenticationModes.None:
+                    throw new ArgumentOutOfRangeException(nameof(modes),
+                        @$"At least one {nameof(AuthenticationModes)} must be supplied");
+
+                default:
+                    var menuTitle = $"Select an authentication method for '{targetUri}'";
+                    var menu = new TerminalMenu(Context.Terminal, menuTitle);
+
+                    TerminalMenuItem browserItem = null;
+                    TerminalMenuItem deviceItem = null;
+                    TerminalMenuItem basicItem = null;
+                    TerminalMenuItem patItem = null;
+
+                    if ((modes & AuthenticationModes.Browser) != 0) browserItem = menu.Add("Web browser");
+                    if ((modes & AuthenticationModes.Device) != 0) deviceItem = menu.Add("Device code");
+                    if ((modes & AuthenticationModes.Pat) != 0) patItem = menu.Add("Personal access token");
+                    if ((modes & AuthenticationModes.Basic) != 0) basicItem = menu.Add("Username/password");
+
+                    // Default to the 'first' choice in the menu
+                    TerminalMenuItem choice = menu.Show(0);
+
+                    if (choice == browserItem) goto case AuthenticationModes.Browser;
+                    if (choice == deviceItem) goto case AuthenticationModes.Device;
+                    if (choice == basicItem) goto case AuthenticationModes.Basic;
+                    if (choice == patItem) goto case AuthenticationModes.Pat;
+
+                    throw new Exception();
             }
         }
 
