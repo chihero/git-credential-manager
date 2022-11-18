@@ -50,7 +50,7 @@ GCM_SRC="$SRC/shared/Git-Credential-Manager"
 PROJ_OUT="$OUT/linux/Packaging.Linux"
 
 # Build parameters
-FRAMEWORK=net6.0
+FRAMEWORK=net7.0
 RUNTIME=linux-x64
 
 # Perform pre-execution checks
@@ -114,7 +114,6 @@ $DOTNET_ROOT/dotnet publish "$GCM_SRC" \
 	--framework="$FRAMEWORK" \
 	--runtime="$RUNTIME" \
 	--self-contained=true \
-	-p:PublishSingleFile=true \
 	--output="$(make_absolute "$PAYLOAD")" || exit 1
 
 # Collect symbols

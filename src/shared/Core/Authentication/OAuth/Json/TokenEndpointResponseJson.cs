@@ -6,11 +6,11 @@ namespace GitCredentialManager.Authentication.OAuth.Json
     public class TokenEndpointResponseJson
     {
         [JsonPropertyName("access_token")]
-        // [JsonRequired]
+        [JsonRequired]
         public string AccessToken { get; set; }
 
         [JsonPropertyName("token_type")]
-        // [JsonRequired]
+        [JsonRequired]
         public string TokenType { get; set; }
 
         [JsonPropertyName("expires_in")]

@@ -7,7 +7,7 @@ namespace GitCredentialManager.Authentication.OAuth.Json
     public class ErrorResponseJson
     {
         [JsonPropertyName("error")]
-        // [JsonRequired]
+        [JsonRequired]
         public string Error { get; set; }
 
         [JsonPropertyName("error_description")]
