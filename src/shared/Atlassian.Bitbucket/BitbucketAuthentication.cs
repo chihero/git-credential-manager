@@ -70,8 +70,6 @@ namespace Atlassian.Bitbucket
         {
             ThrowIfUserInteractionDisabled();
 
-            string password;
-
             // If we don't have a desktop session/GUI then we cannot offer OAuth since the only
             // supported grant is authcode (i.e, using a web browser; device code is not supported).
             if (!Context.SessionManager.IsDesktopSession)
@@ -95,103 +93,111 @@ namespace Atlassian.Bitbucket
             if (Context.Settings.IsGuiPromptsEnabled && Context.SessionManager.IsDesktopSession &&
                 TryFindHelperCommand(out string helperCommand, out string args))
             {
-                var promptArgs = new StringBuilder(args);
-                promptArgs.Append("prompt");
-                if (!BitbucketHelper.IsBitbucketOrg(targetUri))
-                {
-                    promptArgs.AppendFormat(" --url {0}", QuoteCmdArg(targetUri.ToString()));
-                }
+                return await GetCredentialsByHelperAsync(targetUri, userName, modes, helperCommand, args);
+            }
 
-                if (!string.IsNullOrWhiteSpace(userName))
-                {
-                    promptArgs.AppendFormat(" --username {0}", QuoteCmdArg(userName));
-                }
+            return GetCredentialsByTty(targetUri, userName, modes);
+        }
 
-                if ((modes & AuthenticationModes.Basic) != 0)
-                {
-                    promptArgs.Append(" --show-basic");
-                }
+        private async Task<CredentialsPromptResult> GetCredentialsByHelperAsync(
+            Uri targetUri, string userName, AuthenticationModes modes, string helperCommand, string args)
+        {
+            var promptArgs = new StringBuilder(args);
+            promptArgs.Append("prompt");
+            if (!BitbucketHelper.IsBitbucketOrg(targetUri))
+            {
+                promptArgs.AppendFormat(" --url {0}", QuoteCmdArg(targetUri.ToString()));
+            }
 
-                if ((modes & AuthenticationModes.OAuth) != 0)
-                {
-                    promptArgs.Append(" --show-oauth");
-                }
+            if (!string.IsNullOrWhiteSpace(userName))
+            {
+                promptArgs.AppendFormat(" --username {0}", QuoteCmdArg(userName));
+            }
 
-                IDictionary<string, string> output = await InvokeHelperAsync(helperCommand, promptArgs.ToString());
+            if ((modes & AuthenticationModes.Basic) != 0)
+            {
+                promptArgs.Append(" --show-basic");
+            }
 
-                if (output.TryGetValue("mode", out string mode) &&
-                    StringComparer.OrdinalIgnoreCase.Equals(mode, "oauth"))
-                {
-                    return new CredentialsPromptResult(AuthenticationModes.OAuth);
-                }
-                else
-                {
-                    if (!output.TryGetValue("username", out userName))
+            if ((modes & AuthenticationModes.OAuth) != 0)
+            {
+                promptArgs.Append(" --show-oauth");
+            }
+
+            IDictionary<string, string> output = await InvokeHelperAsync(helperCommand, promptArgs.ToString());
+
+            if (output.TryGetValue("mode", out string mode) &&
+                StringComparer.OrdinalIgnoreCase.Equals(mode, "oauth"))
+            {
+                return new CredentialsPromptResult(AuthenticationModes.OAuth);
+            }
+
+            if (!output.TryGetValue("username", out userName))
+            {
+                throw new Exception("Missing username in response");
+            }
+
+            if (!output.TryGetValue("password", out string password))
+            {
+                throw new Exception("Missing password in response");
+            }
+
+            return new CredentialsPromptResult(
+                AuthenticationModes.Basic,
+                new GitCredential(userName, password));
+        }
+
+        private CredentialsPromptResult GetCredentialsByTty(Uri targetUri, string userName, AuthenticationModes modes)
+        {
+            ThrowIfTerminalPromptsDisabled();
+
+            switch (modes)
+            {
+                case AuthenticationModes.Basic:
+                    Context.Terminal.WriteLine("Enter Bitbucket credentials for '{0}'...", targetUri);
+
+                    if (!string.IsNullOrWhiteSpace(userName))
                     {
-                        throw new Exception("Missing username in response");
+                        // Don't need to prompt for the username if it has been specified already
+                        Context.Terminal.WriteLine("Username: {0}", userName);
+                    }
+                    else
+                    {
+                        // Prompt for username
+                        userName = Context.Terminal.Prompt("Username");
                     }
 
-                    if (!output.TryGetValue("password", out password))
-                    {
-                        throw new Exception("Missing password in response");
-                    }
+                    // Prompt for password
+                    string password = Context.Terminal.PromptSecret("Password");
 
                     return new CredentialsPromptResult(
                         AuthenticationModes.Basic,
                         new GitCredential(userName, password));
-                }
-            }
-            else
-            {
-                ThrowIfTerminalPromptsDisabled();
 
-                switch (modes)
-                {
-                    case AuthenticationModes.Basic:
-                        Context.Terminal.WriteLine("Enter Bitbucket credentials for '{0}'...", targetUri);
+                case AuthenticationModes.OAuth:
+                    return new CredentialsPromptResult(AuthenticationModes.OAuth);
 
-                        if (!string.IsNullOrWhiteSpace(userName))
-                        {
-                            // Don't need to prompt for the username if it has been specified already
-                            Context.Terminal.WriteLine("Username: {0}", userName);
-                        }
-                        else
-                        {
-                            // Prompt for username
-                            userName = Context.Terminal.Prompt("Username");
-                        }
+                case AuthenticationModes.None:
+                    throw new ArgumentOutOfRangeException(nameof(modes),
+                        @$"At least one {nameof(AuthenticationModes)} must be supplied");
 
-                        // Prompt for password
-                        password = Context.Terminal.PromptSecret("Password");
+                default:
+                    var menuTitle = $"Select an authentication method for '{targetUri}'";
+                    var menu = new TerminalMenu(Context.Terminal, menuTitle);
 
-                        return new CredentialsPromptResult(
-                            AuthenticationModes.Basic,
-                            new GitCredential(userName, password));
+                    TerminalMenuItem oauthItem = null;
+                    TerminalMenuItem basicItem = null;
 
-                    case AuthenticationModes.OAuth:
-                        return new CredentialsPromptResult(AuthenticationModes.OAuth);
+                    if ((modes & AuthenticationModes.OAuth) != 0) oauthItem = menu.Add("OAuth");
+                    if ((modes & AuthenticationModes.Basic) != 0) basicItem = menu.Add("Username/password");
 
-                    case AuthenticationModes.None:
-                        throw new ArgumentOutOfRangeException(nameof(modes), @$"At least one {nameof(AuthenticationModes)} must be supplied");
+                    // Default to the 'first' choice in the menu
+                    TerminalMenuItem choice = menu.Show(0);
 
-                    default:
-                        var menuTitle = $"Select an authentication method for '{targetUri}'";
-                        var menu = new TerminalMenu(Context.Terminal, menuTitle);
+                    if (choice == oauthItem) goto case AuthenticationModes.OAuth;
+                    if (choice == basicItem) goto case AuthenticationModes.Basic;
 
-                        TerminalMenuItem oauthItem = null;
-                        TerminalMenuItem basicItem = null;
-
-                        if ((modes & AuthenticationModes.OAuth) != 0) oauthItem = menu.Add("OAuth");
-                        if ((modes & AuthenticationModes.Basic) != 0) basicItem = menu.Add("Username/password");
-
-                        // Default to the 'first' choice in the menu
-                        TerminalMenuItem choice = menu.Show(0);
-
-                        if (choice == oauthItem) goto case AuthenticationModes.OAuth;
-                        if (choice == basicItem) goto case AuthenticationModes.Basic;
-
-                        throw new Exception();
-                }
+                    throw new Exception();
             }
         }
 
