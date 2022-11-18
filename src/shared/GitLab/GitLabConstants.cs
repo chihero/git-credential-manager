@@ -6,8 +6,6 @@ namespace GitLab
     {
         public static readonly Uri GitLabDotCom = new Uri("https://gitlab.com");
 
-        public const string DefaultAuthenticationHelper = "GitLab.UI";
-
         // Owned by https://gitlab.com/gitcredentialmanager
         public const string OAuthClientId = "172b9f227872b5dde33f4d9b1db06a6a5515ae79508e7a00c973c85ce490671e";
         public const string OAuthClientSecret = "7da92770d1447508601e4ba026bc5eb655c8268e818cd609889cc9bae2023f39";

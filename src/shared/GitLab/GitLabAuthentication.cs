@@ -7,6 +7,9 @@ using System.Threading;
 using GitCredentialManager;
 using GitCredentialManager.Authentication;
 using GitCredentialManager.Authentication.OAuth;
+using GitCredentialManager.UI;
+using GitLab.UI.ViewModels;
+using GitLab.UI.Views;
 
 namespace GitLab
 {
@@ -67,13 +70,67 @@ namespace GitLab
                 throw new ArgumentException(@$"Must specify at least one {nameof(AuthenticationModes)}", nameof(modes));
             }
 
-            if (Context.Settings.IsGuiPromptsEnabled && Context.SessionManager.IsDesktopSession &&
-                TryFindHelperCommand(out string helperCommand, out string args))
+            if (Context.Settings.IsGuiPromptsEnabled && Context.SessionManager.IsDesktopSession)
             {
-                return await GetAuthenticationByHelperAsync(targetUri, userName, modes, helperCommand, args);
+                if (TryFindHelperCommand(out string helperCommand, out string args))
+                {
+                    return await GetAuthenticationByHelperAsync(targetUri, userName, modes, helperCommand, args);
+                }
+
+                return await GetAuthenticationByUiAsync(targetUri, userName, modes);
             }
 
             return GetAuthenticationByTty(targetUri, userName, modes);
+        }
+
+        private async Task<AuthenticationPromptResult> GetAuthenticationByUiAsync(
+            Uri targetUri, string userName, AuthenticationModes modes)
+        {
+            var viewModel = new CredentialsViewModel(Context.Environment)
+            {
+                ShowBrowserLogin = (modes & AuthenticationModes.Browser) != 0,
+                ShowTokenLogin   = (modes & AuthenticationModes.Pat) != 0,
+                ShowBasicLogin   = (modes & AuthenticationModes.Basic) != 0,
+            };
+
+            if (!GitLabConstants.IsGitLabDotCom(targetUri))
+            {
+                viewModel.Url = targetUri.ToString();
+            }
+
+            if (!string.IsNullOrWhiteSpace(userName))
+            {
+                viewModel.UserName = userName;
+                viewModel.TokenUserName = userName;
+            }
+
+            await AvaloniaUi.ShowViewAsync<CredentialsView>(viewModel, GetParentHandle(), CancellationToken.None);
+
+            if (!viewModel.WindowResult)
+            {
+                throw new Exception("User cancelled dialog.");
+            }
+
+            switch (viewModel.SelectedMode)
+            {
+                case AuthenticationModes.Basic:
+                    return new AuthenticationPromptResult(
+                        AuthenticationModes.Basic,
+                        new GitCredential(viewModel.UserName, viewModel.Password)
+                    );
+
+                case AuthenticationModes.Browser:
+                    return new AuthenticationPromptResult(AuthenticationModes.Browser);
+
+                case AuthenticationModes.Pat:
+                    return new AuthenticationPromptResult(
+                        AuthenticationModes.Pat,
+                        new GitCredential(viewModel.Token, viewModel.TokenUserName)
+                    );
+
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
         }
 
         private async Task<AuthenticationPromptResult> GetAuthenticationByHelperAsync(
@@ -242,7 +299,7 @@ namespace GitLab
             return TryFindHelperCommand(
                 GitLabConstants.EnvironmentVariables.AuthenticationHelper,
                 GitLabConstants.GitConfiguration.Credential.AuthenticationHelper,
-                GitLabConstants.DefaultAuthenticationHelper,
+                null,
                 out command,
                 out args);
         }

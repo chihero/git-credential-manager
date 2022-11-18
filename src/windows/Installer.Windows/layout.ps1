@@ -9,7 +9,6 @@ $ROOT = (Get-Item $THISDIR).parent.parent.parent.FullName
 $SRC = "$ROOT/src"
 $GCM_SRC = "$SRC/shared/Git-Credential-Manager"
 $GCM_UI_SRC = "$SRC/shared/Git-Credential-Manager.UI.Avalonia"
-$GITLAB_UI_SRC = "$SRC/shared/GitLab.UI.Avalonia"
 
 $FRAMEWORK = "net472"
 $RUNTIME = "win-x86"
@@ -49,13 +48,6 @@ dotnet publish "$GCM_SRC" `
 
 Write-Output "Publishing core UI helper..."
 dotnet publish "$GCM_UI_SRC" `
-	--framework "$FRAMEWORK" `
-	--configuration "$CONFIGURATION" `
-	--runtime "$RUNTIME" `
-	--output "$PAYLOAD"
-
-Write-Output "Publishing GitLab UI helper..."
-dotnet publish "$GITLAB_UI_SRC" `
 	--framework "$FRAMEWORK" `
 	--configuration "$CONFIGURATION" `
 	--runtime "$RUNTIME" `
