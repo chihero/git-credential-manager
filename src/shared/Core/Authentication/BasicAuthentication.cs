@@ -37,7 +37,7 @@ namespace GitCredentialManager.Authentication
             if (Context.Settings.IsGuiPromptsEnabled && Context.SessionManager.IsDesktopSession &&
                 TryFindHelperCommand(out string command, out string args))
             {
-                return await GetCredentialsByUiAsync(command, args, resource, userName);
+                return await GetCredentialsByHelperAsync(command, args, resource, userName);
             }
 
             ThrowIfTerminalPromptsDisabled();
@@ -66,7 +66,7 @@ namespace GitCredentialManager.Authentication
             return new GitCredential(userName, password);
         }
 
-        private async Task<ICredential> GetCredentialsByUiAsync(string command, string args, string resource, string userName)
+        private async Task<ICredential> GetCredentialsByHelperAsync(string command, string args, string resource, string userName)
         {
             var promptArgs = new StringBuilder(args);
             promptArgs.Append("basic");
