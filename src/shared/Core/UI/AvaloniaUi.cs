@@ -61,6 +61,9 @@ namespace GitCredentialManager.UI
 
                     // Run the application loop
                     appBuilder.Instance.Run(_appCts.Token);
+
+                    // Run-loop exited!
+                    ;
                 });
 
                 // Wait for the action posted above to be dequeued from the dispatcher's job queue

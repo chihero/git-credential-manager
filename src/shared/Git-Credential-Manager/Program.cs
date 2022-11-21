@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using Atlassian.Bitbucket;
 using GitHub;
@@ -11,6 +12,8 @@ namespace GitCredentialManager
 {
     public static class Program
     {
+        private static int s_exitCode;
+
         public static void Main(string[] args)
         {
             // Create the dispatcher on the main thread. This is required
@@ -21,7 +24,11 @@ namespace GitCredentialManager
 
             // Run AppMain in a new thread and keep the main thread free
             // to process the dispatcher's job queue.
-            var appMain = new Thread(AppMain) {Name = nameof(AppMain)};
+            var appMain = new Thread(AppMain)
+            {
+                Name = nameof(AppMain),
+                IsBackground = true
+            };
             appMain.Start(args);
 
             // Process the dispatcher job queue (aka: message pump, run-loop, etc...)
@@ -29,6 +36,13 @@ namespace GitCredentialManager
             // (the main thread) so we cannot use any async/await calls between
             // Dispatcher.Initialize and Run.
             Dispatcher.MainThread.Run();
+
+            Console.Error.WriteLine("exiting...");
+            appMain.Join();
+            Debugger.Break();
+            Console.WriteLine("PID: {0}", Environment.ProcessId);
+            var threads = Process.GetCurrentProcess().Threads;
+            Environment.ExitCode = s_exitCode;
         }
 
         private static void AppMain(object o)
@@ -87,7 +101,7 @@ namespace GitCredentialManager
                 app.RegisterProvider(new GitLabHostProvider(context),     HostProviderPriority.Normal);
                 app.RegisterProvider(new GenericHostProvider(context),    HostProviderPriority.Low);
 
-                Environment.ExitCode = app.RunAsync(args)
+                s_exitCode = app.RunAsync(args)
                     .ConfigureAwait(false)
                     .GetAwaiter()
                     .GetResult();
