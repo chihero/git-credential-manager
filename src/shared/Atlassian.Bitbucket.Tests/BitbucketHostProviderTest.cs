@@ -107,10 +107,10 @@ namespace Atlassian.Bitbucket.Tests
 
             var provider = new BitbucketHostProvider(context, bitbucketAuthentication.Object, MockRestApiRegistry(input, bitbucketApi).Object);
 
-            var credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.Equal(username, credential.Account);
-            Assert.Equal(password, credential.Password);
+            Assert.Equal(username, result.Credential.Account);
+            Assert.Equal(password, result.Credential.Password);
 
             // Verify bitbucket.org credentials were validated
                 VerifyValidateBasicAuthCredentialsRan(input, password);
@@ -141,13 +141,13 @@ namespace Atlassian.Bitbucket.Tests
             }
             MockStoredAccount(context, input, token);
             MockRemoteAccessTokenValid(input, token);
-            
+
             var provider = new BitbucketHostProvider(context, bitbucketAuthentication.Object, MockRestApiRegistry(input, bitbucketApi).Object);
 
-            var credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.Equal(username, credential.Account);
-            Assert.Equal(token, credential.Password);
+            Assert.Equal(username, result.Credential.Account);
+            Assert.Equal(token, result.Credential.Password);
 
             // Verify bitbucket.org credentials were validated
             VerifyValidateAccessTokenRan(input, token);
@@ -179,10 +179,10 @@ namespace Atlassian.Bitbucket.Tests
 
             var provider = new BitbucketHostProvider(context, bitbucketAuthentication.Object, MockRestApiRegistry(input, bitbucketApi).Object);
 
-            var credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.Equal(username, credential.Account);
-            Assert.Equal(password, credential.Password);
+            Assert.Equal(username, result.Credential.Account);
+            Assert.Equal(password, result.Credential.Password);
 
             VerifyInteractiveAuthRan(input);
         }
@@ -203,10 +203,10 @@ namespace Atlassian.Bitbucket.Tests
 
             var provider = new BitbucketHostProvider(context, bitbucketAuthentication.Object, MockRestApiRegistry(input, bitbucketApi).Object);
 
-            var credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.Equal(username, credential.Account);
-            Assert.Equal(accessToken, credential.Password);
+            Assert.Equal(username, result.Credential.Account);
+            Assert.Equal(accessToken, result.Credential.Password);
 
             VerifyInteractiveAuthRan(input);
             VerifyOAuthFlowRan(input, accessToken);
@@ -231,10 +231,10 @@ namespace Atlassian.Bitbucket.Tests
 
             var provider = new BitbucketHostProvider(context, bitbucketAuthentication.Object, MockRestApiRegistry(input, bitbucketApi).Object);
 
-            var credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.Equal(username, credential.Account);
-            Assert.Equal(accessToken, credential.Password);
+            Assert.Equal(username, result.Credential.Account);
+            Assert.Equal(accessToken, result.Credential.Password);
 
             VerifyValidateAccessTokenRan(input, accessToken);
             VerifyOAuthRefreshRan(input, refreshToken);
@@ -261,10 +261,10 @@ namespace Atlassian.Bitbucket.Tests
 
             var provider = new BitbucketHostProvider(context, bitbucketAuthentication.Object, MockRestApiRegistry(input, bitbucketApi).Object);
 
-            var credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.Equal(username, credential.Account);
-            Assert.Equal(accessToken, credential.Password);
+            Assert.Equal(username, result.Credential.Account);
+            Assert.Equal(accessToken, result.Credential.Password);
 
             VerifyValidateAccessTokenRan(input, accessToken);
             VerifyOAuthRefreshRan(input, refreshToken);
@@ -316,10 +316,10 @@ namespace Atlassian.Bitbucket.Tests
 
             var provider = new BitbucketHostProvider(context, bitbucketAuthentication.Object, MockRestApiRegistry(input, bitbucketApi).Object);
 
-            var credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.Equal(username, credential.Account);
-            Assert.Equal(newToken, credential.Password);
+            Assert.Equal(username, result.Credential.Account);
+            Assert.Equal(newToken, result.Credential.Password);
 
             VerifyInteractiveAuthNeverRan();
             VerifyOAuthRefreshRan(input, refreshToken);
@@ -345,10 +345,10 @@ namespace Atlassian.Bitbucket.Tests
 
             var provider = new BitbucketHostProvider(context, bitbucketAuthentication.Object, MockRestApiRegistry(input, bitbucketApi).Object);
 
-            var credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.Equal(username, credential.Account);
-            Assert.Equal(freshPassword, credential.Password);
+            Assert.Equal(username, result.Credential.Account);
+            Assert.Equal(freshPassword, result.Credential.Password);
 
             VerifyInteractiveAuthRan(input);
         }
@@ -363,7 +363,7 @@ namespace Atlassian.Bitbucket.Tests
         // Cloud - supports Basic, OAuth
         [InlineData("https", "bitbucket.org", "oauth", AuthenticationModes.OAuth)]
         [InlineData("https", "bitbucket.org", "basic", AuthenticationModes.Basic)]
-        [InlineData("https", "bitbucket.org", "NOT-A-REAL-VALUE", CloudConstants.DotOrgAuthenticationModes)]    
+        [InlineData("https", "bitbucket.org", "NOT-A-REAL-VALUE", CloudConstants.DotOrgAuthenticationModes)]
         [InlineData("https", "bitbucket.org", "none", CloudConstants.DotOrgAuthenticationModes)]
         [InlineData("https", "bitbucket.org", null, CloudConstants.DotOrgAuthenticationModes)]
         public async Task BitbucketHostProvider_GetSupportedAuthenticationModes(string protocol, string host, string bitbucketAuthModes, AuthenticationModes expectedModes)
@@ -499,7 +499,7 @@ namespace Atlassian.Bitbucket.Tests
 
         private void MockRemoteBasicValid(InputArguments input, string password, bool twoFactor = true)
         {
-            var userInfo = new Mock<IUserInfo>(MockBehavior.Strict); 
+            var userInfo = new Mock<IUserInfo>(MockBehavior.Strict);
             userInfo.Setup(ui => ui.IsTwoFactorAuthenticationEnabled).Returns(twoFactor);
             userInfo.Setup(ui => ui.UserName).Returns(input.UserName);
 
@@ -517,7 +517,7 @@ namespace Atlassian.Bitbucket.Tests
 
         private void MockRemoteAccessTokenValid(InputArguments input, string token, bool twoFactor = true)
         {
-            var userInfo = new Mock<IUserInfo>(MockBehavior.Strict); 
+            var userInfo = new Mock<IUserInfo>(MockBehavior.Strict);
             userInfo.Setup(ui => ui.IsTwoFactorAuthenticationEnabled).Returns(twoFactor);
             userInfo.Setup(ui => ui.UserName).Returns(input.UserName);
 
@@ -565,9 +565,9 @@ namespace Atlassian.Bitbucket.Tests
         private static Mock<IRegistry<IBitbucketRestApi>> MockRestApiRegistry(InputArguments input, Mock<IBitbucketRestApi> bitbucketApi)
         {
             var restApiRegistry = new Mock<IRegistry<IBitbucketRestApi>>(MockBehavior.Strict);
-            
+
             restApiRegistry.Setup(rar => rar.Get(input)).Returns(bitbucketApi.Object);
-            
+
             return restApiRegistry;
         }
 

@@ -73,7 +73,7 @@ namespace Microsoft.AzureRepos
             return false;
         }
 
-        public async Task<ICredential> GetCredentialAsync(InputArguments input)
+        public async Task<GetCredentialResult> GetCredentialAsync(InputArguments input)
         {
             Uri remoteUri = input.GetRemoteUri();
 
@@ -99,14 +99,16 @@ namespace Microsoft.AzureRepos
                     _context.Trace.WriteLine("Existing credential found.");
                 }
 
-                return credential;
+                return new GetCredentialResult(credential);
             }
             else
             {
                 // Include the username request here so that we may use it as an override
                 // for user account lookups when getting Azure Access Tokens.
                 var azureResult = await GetAzureAccessTokenAsync(remoteUri, input.UserName);
-                return new GitCredential(azureResult.AccountUpn, azureResult.AccessToken);
+                return new GetCredentialResult(
+                    new GitCredential(azureResult.AccountUpn, azureResult.AccessToken)
+                );
             }
         }
 

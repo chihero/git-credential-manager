@@ -73,7 +73,7 @@ namespace Atlassian.Bitbucket
             return supported;
         }
 
-        public async Task<ICredential> GetCredentialAsync(InputArguments input)
+        public async Task<GetCredentialResult> GetCredentialAsync(InputArguments input)
         {
             // We should not allow unencrypted communication and should inform the user
             if (StringComparer.OrdinalIgnoreCase.Equals(input.Protocol, "http")
@@ -84,8 +84,10 @@ namespace Atlassian.Bitbucket
 
             var authModes = await GetSupportedAuthenticationModesAsync(input);
 
-            return await GetStoredCredentials(input, authModes) ??
-                   await GetRefreshedCredentials(input, authModes);
+            return new GetCredentialResult(
+                await GetStoredCredentials(input, authModes) ??
+                await GetRefreshedCredentials(input, authModes)
+            );
         }
 
         private async Task<ICredential> GetStoredCredentials(InputArguments input, AuthenticationModes authModes)
@@ -279,7 +281,7 @@ namespace Atlassian.Bitbucket
             try
             {
                 var authenticationMethods = await _restApiRegistry.Get(input).GetAuthenticationMethodsAsync();
-                
+
                 var modes = AuthenticationModes.None;
 
                 if (authenticationMethods.Contains(AuthenticationMethod.BasicAuth))

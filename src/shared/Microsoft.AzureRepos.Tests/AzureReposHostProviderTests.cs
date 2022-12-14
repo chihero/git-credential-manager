@@ -180,11 +180,11 @@ namespace Microsoft.AzureRepos.Tests
 
             var provider = new AzureReposHostProvider(context, azDevOpsMock.Object, msAuthMock.Object, authorityCacheMock.Object, userMgrMock.Object);
 
-            ICredential credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.NotNull(credential);
-            Assert.Equal(urlAccount, credential.Account);
-            Assert.Equal(accessToken, credential.Password);
+            Assert.NotNull(result?.Credential);
+            Assert.Equal(urlAccount, result.Credential.Account);
+            Assert.Equal(accessToken, result.Credential.Password);
         }
 
         [Fact]
@@ -229,11 +229,11 @@ namespace Microsoft.AzureRepos.Tests
 
             var provider = new AzureReposHostProvider(context, azDevOpsMock.Object, msAuthMock.Object, authorityCacheMock.Object, userMgrMock.Object);
 
-            ICredential credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.NotNull(credential);
-            Assert.Equal(urlAccount, credential.Account);
-            Assert.Equal(accessToken, credential.Password);
+            Assert.NotNull(result?.Credential);
+            Assert.Equal(urlAccount, result.Credential.Account);
+            Assert.Equal(accessToken, result.Credential.Password);
         }
 
         [Fact]
@@ -279,11 +279,11 @@ namespace Microsoft.AzureRepos.Tests
 
             var provider = new AzureReposHostProvider(context, azDevOpsMock.Object, msAuthMock.Object, authorityCacheMock.Object, userMgrMock.Object);
 
-            ICredential credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.NotNull(credential);
-            Assert.Equal(account, credential.Account);
-            Assert.Equal(accessToken, credential.Password);
+            Assert.NotNull(result?.Credential);
+            Assert.Equal(account, result.Credential.Account);
+            Assert.Equal(accessToken, result.Credential.Password);
         }
 
         [Fact]
@@ -326,11 +326,11 @@ namespace Microsoft.AzureRepos.Tests
 
             var provider = new AzureReposHostProvider(context, azDevOpsMock.Object, msAuthMock.Object, authorityCacheMock.Object, userMgrMock.Object);
 
-            ICredential credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.NotNull(credential);
-            Assert.Equal(account, credential.Account);
-            Assert.Equal(accessToken, credential.Password);
+            Assert.NotNull(result?.Credential);
+            Assert.Equal(account, result.Credential.Account);
+            Assert.Equal(accessToken, result.Credential.Password);
         }
 
         [Fact]
@@ -375,11 +375,11 @@ namespace Microsoft.AzureRepos.Tests
 
             var provider = new AzureReposHostProvider(context, azDevOpsMock.Object, msAuthMock.Object, authorityCacheMock.Object, userMgrMock.Object);
 
-            ICredential credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.NotNull(credential);
-            Assert.Equal(account, credential.Account);
-            Assert.Equal(accessToken, credential.Password);
+            Assert.NotNull(result?.Credential);
+            Assert.Equal(account, result.Credential.Account);
+            Assert.Equal(accessToken, result.Credential.Password);
         }
 
         [Fact]
@@ -425,11 +425,11 @@ namespace Microsoft.AzureRepos.Tests
 
             var provider = new AzureReposHostProvider(context, azDevOpsMock.Object, msAuthMock.Object, authorityCacheMock.Object, userMgrMock.Object);
 
-            ICredential credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.NotNull(credential);
-            Assert.Equal(account, credential.Account);
-            Assert.Equal(accessToken, credential.Password);
+            Assert.NotNull(result?.Credential);
+            Assert.Equal(account, result.Credential.Account);
+            Assert.Equal(accessToken, result.Credential.Password);
         }
 
         [Fact]
@@ -471,11 +471,11 @@ namespace Microsoft.AzureRepos.Tests
 
             var provider = new AzureReposHostProvider(context, azDevOpsMock.Object, msAuthMock.Object, authorityCacheMock.Object, userMgrMock.Object);
 
-            ICredential credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.NotNull(credential);
-            Assert.Equal(account, credential.Account);
-            Assert.Equal(personalAccessToken, credential.Password);
+            Assert.NotNull(result?.Credential);
+            Assert.Equal(account, result.Credential.Account);
+            Assert.Equal(accessToken, result.Credential.Password);
         }
 
         [Fact]
@@ -504,11 +504,11 @@ namespace Microsoft.AzureRepos.Tests
 
             var provider = new AzureReposHostProvider(context, azDevOps, msAuth, authorityCache, userMgr);
 
-            ICredential credential = await provider.GetCredentialAsync(input);
+            GetCredentialResult result = await provider.GetCredentialAsync(input);
 
-            Assert.NotNull(credential);
-            Assert.Equal(account, credential.Account);
-            Assert.Equal(personalAccessToken, credential.Password);
+            Assert.NotNull(result?.Credential);
+            Assert.Equal(account, result.Credential.Account);
+            Assert.Equal(personalAccessToken, result.Credential.Password);
         }
 
         [Fact]
